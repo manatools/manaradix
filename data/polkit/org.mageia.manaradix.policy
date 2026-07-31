@@ -7,7 +7,7 @@
   <vendor_url>https://mageia.org/</vendor_url>
   <icon_name>manaradix</icon_name>
 
-  <action id="org.mageia.btrfs-assistant.read">
+  <action id="org.mageia.manaradix.read">
     <description>Read btrfs filesystem information</description>
     <message>Authentication is required to query btrfs subvolume,
     snapshot, and filesystem usage data.</message>
@@ -18,7 +18,7 @@
     </defaults>
   </action>
 
-  <action id="org.mageia.btrfs-assistant.manage-snapshots">
+  <action id="org.mageia.manaradix.manage-snapshots">
     <description>Manage btrfs snapshots</description>
     <message>Authentication is required to create, delete, restore,
     export, or import btrfs snapshots.</message>
@@ -29,7 +29,7 @@
     </defaults>
   </action>
 
-  <action id="org.mageia.btrfs-assistant.manage-policies">
+  <action id="org.mageia.manaradix.manage-policies">
     <description>Manage snapshot policies</description>
     <message>Authentication is required to create, modify, or remove
     automated snapshot schedules and systemd timer units.</message>
@@ -40,7 +40,7 @@
     </defaults>
   </action>
 
-  <action id="org.mageia.btrfs-assistant.manage-filesystem">
+  <action id="org.mageia.manaradix.manage-filesystem">
     <description>Manage btrfs filesystem parameters</description>
     <message>Authentication is required to run scrub, balance,
     defragmentation, or change compression settings.</message>

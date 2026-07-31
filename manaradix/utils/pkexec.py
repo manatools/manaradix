@@ -3,7 +3,7 @@
 Determines which CLI operations require elevated privileges and handles
 re-executing the process via ``pkexec``.
 
-Polkit actions (from ``data/polkit/org.mageia.btrfs-assistant.policy``):
+Polkit actions (from ``data/polkit/org.mageia.manaradix.policy``):
 
 =====================  =============================================
 Action ID               Required for

@@ -1,4 +1,4 @@
-# Manaradix — Btrfs Assistant for Mageia
+# Manaradix — Btrfs Snapshot Management for Mageia
 
 A system utility for **Mageia 10** and **Cauldron** providing a unified
 graphical, text, and web interface for managing Btrfs snapshots, subvolumes,
@@ -282,7 +282,7 @@ Default location: `/etc/manaradix/config.toml` (TOML format).
 
 ## Polkit Privilege Model
 
-Four action levels under the `org.mageia.btrfs-assistant.*` namespace:
+Four action levels under the `org.mageia.manaradix.*` namespace:
 
 | Action | Who can perform | Description |
 |---|---|---|
@@ -292,7 +292,7 @@ Four action levels under the `org.mageia.btrfs-assistant.*` namespace:
 | `manage-filesystem` | `auth_admin_keep` | Scrub, balance, defrag, compression |
 
 The policy file is installed at
-`/usr/share/polkit-1/actions/org.mageia.btrfs-assistant.policy`.
+`/usr/share/polkit-1/actions/org.mageia.manaradix.policy`.
 
 ## Project Structure
 
