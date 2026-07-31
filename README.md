@@ -371,4 +371,4 @@ The translation template is at `locale/manaradix.pot`.  System-installed
 
 ## License
 
-GPL-2.0-or-later — see [LICENSE](LICENSE) (not yet in-tree).
+GPL-2.0-or-later — see [LICENSE](LICENSE).
