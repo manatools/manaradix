@@ -1,0 +1,133 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the manaradix package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: manaradix 0.1.0\n"
+"Report-Msgid-Bugs-To: mageia-community@mageia.org\n"
+"POT-Creation-Date: 2026-08-01 01:32+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:170
+#, python-format
+msgid "Path to config file (default: %(default)s)"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:338
+#, python-format
+msgid "Created snapshot: %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:339
+#, python-format
+msgid "  Subvolume:   %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:340
+#, python-format
+msgid "  Path:        %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:341
+#, python-format
+msgid "  Type:        %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:343
+#, python-format
+msgid "  Schedule:    %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:345
+#, python-format
+msgid "  Description: %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:361
+msgid "No snapshots found."
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:393
+#, python-format
+msgid "Deleted snapshot: %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:433
+#, python-format
+msgid "[DRY RUN] Would delete %d snapshot(s):"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:437
+#, python-format
+msgid "[DRY RUN] Nothing to prune (%d kept, 0 excess)."
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:439
+#, python-format
+msgid "Pruned %d snapshot(s):"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:443
+#, python-format
+msgid "Nothing to prune (%d kept, no excess)."
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:454
+#, python-format
+msgid "ID:          %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:455
+#, python-format
+msgid "Subvolume:   %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:456
+#, python-format
+msgid "Path:        %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:457
+#, python-format
+msgid "Date:        %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:458
+#, python-format
+msgid "Type:        %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:459
+#, python-format
+msgid "Read-only:   %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:460
+#, python-format
+msgid "Schedule:    %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/module.py:461
+#, python-format
+msgid "Description: %s"
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/utils/pkexec.py:118
+#, python-format
+msgid ""
+"error: %s not found. Install polkit to use privileged manaradix commands."
+msgstr ""
+
+#: /home/xquiet/Workspace/manaradix/manaradix/utils/pkexec.py:124
+#, python-format
+msgid "error: pkexec failed: %s"
+msgstr ""

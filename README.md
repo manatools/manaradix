@@ -343,6 +343,32 @@ manaradix/
 - **Journaled** — `SnapshotManager` keeps an in-memory journal of applied
   changes for potential rollback.
 
+## Translations
+
+User-visible strings are marked with `_()` for gettext translation.
+
+```bash
+# Generate / update the template
+xgettext --language=Python --keyword=_ --from-code=UTF-8 \
+    --output=locale/manaradix.pot \
+    --package-name=manaradix --package-version=0.1.0 \
+    manaradix/module.py manaradix/utils/pkexec.py
+
+# Create a new translation (example: Italian)
+msginit --locale=it --input=locale/manaradix.pot \
+    --output-file=locale/it.po
+
+# Compile a translation for testing
+msgfmt locale/it.po -o locale/it/LC_MESSAGES/manaradix.mo
+
+# Test with a specific locale
+LANG=it.UTF-8 MANARADIX_LOCALE_DIR=./locale manaradix snapshot list
+```
+
+The translation template is at `locale/manaradix.pot`.  System-installed
+``.mo`` files go to ``/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo``
+(handled by the RPM ``%find_lang`` macro).
+
 ## License
 
 GPL-2.0-or-later — see [LICENSE](LICENSE) (not yet in-tree).

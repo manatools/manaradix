@@ -20,6 +20,8 @@ from __future__ import annotations
 import os
 import sys
 
+from manaradix.i18n import _
+
 # ---------------------------------------------------------------------------
 # Environment guard — prevents infinite pkexec re-exec loops
 # ---------------------------------------------------------------------------
@@ -113,11 +115,11 @@ def reexec_with_pkexec() -> None:
         os.execve(_PKEXEC_BIN, pkexec_args, env)
     except FileNotFoundError:
         print(
-            f"error: {_PKEXEC_BIN} not found. "
-            "Install polkit to use privileged manaradix commands.",
+            _("error: %s not found. Install polkit to use privileged manaradix commands.")
+            % _PKEXEC_BIN,
             file=sys.stderr,
         )
         sys.exit(1)
     except OSError as exc:
-        print(f"error: pkexec failed: {exc}", file=sys.stderr)
+        print(_("error: pkexec failed: %s") % exc, file=sys.stderr)
         sys.exit(1)

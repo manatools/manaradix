@@ -18,6 +18,7 @@ from manaradix.core.policy_engine import PolicyEngine
 from manaradix.core.snapshot_manager import SnapshotManager
 from manaradix.model.snapshot import SnapshotType
 from manaradix.ui.navigation import build_navigation
+from manaradix.i18n import _
 from manaradix.utils.pkexec import (
     already_reexecuted,
     is_root,
@@ -166,7 +167,7 @@ def _add_global_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--config",
         default=ConfigStore.DEFAULT_PATH,
-        help="Path to config file (default: %(default)s)",
+        help=_("Path to config file (default: %(default)s)"),
     )
     parser.add_argument(
         "--snapshot-dir",
@@ -334,14 +335,14 @@ def _cmd_snapshot_create(ctx: AppContext, args: argparse.Namespace) -> int:
         logger.info("[DRY RUN] Would create snapshot of %s", args.subvolume)
         return 0
 
-    print(f"Created snapshot: {snap.id}")
-    print(f"  Subvolume:   {snap.subvolume}")
-    print(f"  Path:        {snap.path}")
-    print(f"  Type:        {snap.type.value}")
+    print(_("Created snapshot: %s") % snap.id)
+    print(_("  Subvolume:   %s") % snap.subvolume)
+    print(_("  Path:        %s") % snap.path)
+    print(_("  Type:        %s") % snap.type.value)
     if snap.schedule:
-        print(f"  Schedule:    {snap.schedule}")
+        print(_("  Schedule:    %s") % snap.schedule)
     if snap.description:
-        print(f"  Description: {snap.description}")
+        print(_("  Description: %s") % snap.description)
     return 0
 
 
@@ -357,7 +358,7 @@ def _cmd_snapshot_list(ctx: AppContext, args: argparse.Namespace) -> int:
         snapshots = [s for s in snapshots if s.subvolume == args.subvolume]
 
     if not snapshots:
-        print("No snapshots found.")
+        print(_("No snapshots found."))
         return 0
 
     for snap in snapshots:
@@ -389,7 +390,7 @@ def _cmd_snapshot_delete(ctx: AppContext, args: argparse.Namespace) -> int:
         logger.info("[DRY RUN] Would delete snapshot %s", snap.id)
         return 0
 
-    print(f"Deleted snapshot: {snap.id}")
+    print(_("Deleted snapshot: %s") % snap.id)
     return 0
 
 
@@ -429,17 +430,17 @@ def _cmd_snapshot_prune(ctx: AppContext, args: argparse.Namespace) -> int:
 
     if args.dry_run:
         if deleted:
-            print(f"[DRY RUN] Would delete {len(deleted)} snapshot(s):")
+            print(_("[DRY RUN] Would delete %d snapshot(s):") % len(deleted))
             for sid in deleted:
-                print(f"  - {sid}")
+                print("  - %s" % sid)
         else:
-            print(f"[DRY RUN] Nothing to prune ({keep_count} kept, 0 excess).")
+            print(_("[DRY RUN] Nothing to prune (%d kept, 0 excess).") % keep_count)
     elif deleted:
-        print(f"Pruned {len(deleted)} snapshot(s):")
+        print(_("Pruned %d snapshot(s):") % len(deleted))
         for sid in deleted:
-            print(f"  - {sid}")
+            print("  - %s" % sid)
     else:
-        print(f"Nothing to prune ({keep_count} kept, no excess).")
+        print(_("Nothing to prune (%d kept, no excess).") % keep_count)
     return 0
 
 
@@ -450,14 +451,14 @@ def _cmd_snapshot_info(ctx: AppContext, args: argparse.Namespace) -> int:
         logger.error("Snapshot not found: %s", args.snapshot_id)
         return 1
 
-    print(f"ID:          {snap.id}")
-    print(f"Subvolume:   {snap.subvolume}")
-    print(f"Path:        {snap.path}")
-    print(f"Date:        {snap.date.isoformat()}")
-    print(f"Type:        {snap.type.value}")
-    print(f"Read-only:   {snap.is_read_only}")
-    print(f"Schedule:    {snap.schedule or '-'}")
-    print(f"Description: {snap.description or '-'}")
+    print(_("ID:          %s") % snap.id)
+    print(_("Subvolume:   %s") % snap.subvolume)
+    print(_("Path:        %s") % snap.path)
+    print(_("Date:        %s") % snap.date.isoformat())
+    print(_("Type:        %s") % snap.type.value)
+    print(_("Read-only:   %s") % snap.is_read_only)
+    print(_("Schedule:    %s") % (snap.schedule or "-"))
+    print(_("Description: %s") % (snap.description or "-"))
     return 0
 
 
