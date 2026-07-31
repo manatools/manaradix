@@ -18,6 +18,12 @@ from manaradix.core.policy_engine import PolicyEngine
 from manaradix.core.snapshot_manager import SnapshotManager
 from manaradix.model.snapshot import SnapshotType
 from manaradix.ui.navigation import build_navigation
+from manaradix.utils.pkexec import (
+    already_reexecuted,
+    is_root,
+    needs_elevation,
+    reexec_with_pkexec,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -479,6 +485,18 @@ def main() -> None:
         level=logging.DEBUG if args.debug else logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
+
+    # ---- Privilege escalation ----
+    # If the operation needs root and we're not already running as root
+    # (and haven't already tried pkexec), re-exec via pkexec.
+    subcmd = getattr(args, "snapshot_command", None)
+    if needs_elevation(args.command, subcmd) and not is_root() and not already_reexecuted():
+        logger.info(
+            "Operation requires elevated privileges; re-executing via pkexec."
+        )
+        reexec_with_pkexec()
+        # reexec_with_pkexec does not return
+        return  # pragma: no cover
 
     # No subcommand → launch GUI
     if args.command is None:
