@@ -1,0 +1,202 @@
+"""Unit tests for CLI subcommand dispatch in module.py."""
+
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from manaradix.core.config_store import ConfigStore
+from manaradix.model.policy import RetentionPolicy, SnapshotPolicy
+from manaradix.module import (
+    _build_parser,
+    _cmd_snapshot_create,
+    _cmd_snapshot_delete,
+    _cmd_snapshot_info,
+    _cmd_snapshot_list,
+    _cmd_snapshot_prune,
+    _init_services,
+)
+
+
+# ---------------------------------------------------------------------------
+# Parser tests
+# ---------------------------------------------------------------------------
+
+
+class TestParser:
+    def test_default_gui_mode(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args([])
+        assert args.command is None
+        assert args.frontend == "qt"
+
+    def test_snapshot_create_minimal(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args(["snapshot", "create"])
+        assert args.command == "snapshot"
+        assert args.snapshot_command == "create"
+        assert args.subvolume == "/"
+        assert args.snapshot_type == "manual"
+        assert args.schedule == ""
+
+    def test_snapshot_create_full(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args([
+            "snapshot", "create",
+            "--subvolume", "/home",
+            "--type", "timed",
+            "--schedule", "daily",
+            "--description", "auto daily",
+            "--read-write",
+            "--dry-run",
+        ])
+        assert args.subvolume == "/home"
+        assert args.snapshot_type == "timed"
+        assert args.schedule == "daily"
+        assert args.description == "auto daily"
+        assert args.read_write is True
+        assert args.dry_run is True
+
+    def test_snapshot_list(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args(["snapshot", "list"])
+        assert args.snapshot_command == "list"
+        assert args.mount == "/"
+
+    def test_snapshot_delete(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args(["snapshot", "delete", "--id", "snap1"])
+        assert args.snapshot_command == "delete"
+        assert args.snapshot_id == "snap1"
+
+    def test_snapshot_delete_requires_id(self) -> None:
+        parser = _build_parser()
+        with pytest.raises(SystemExit):
+            parser.parse_args(["snapshot", "delete"])
+
+    def test_snapshot_prune(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args([
+            "snapshot", "prune",
+            "--subvolume", "/",
+            "--schedule", "daily",
+        ])
+        assert args.snapshot_command == "prune"
+        assert args.subvolume == "/"
+        assert args.schedule == "daily"
+
+    def test_snapshot_info(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args(["snapshot", "info", "--id", "snap1"])
+        assert args.snapshot_command == "info"
+        assert args.snapshot_id == "snap1"
+
+
+# ---------------------------------------------------------------------------
+# Service init tests
+# ---------------------------------------------------------------------------
+
+
+class TestInitServices:
+    def test_creates_app_context(self, tmp_path) -> None:
+        config = tmp_path / "config.toml"
+        ctx = _init_services(str(config), ".snapshots")
+        assert ctx.btrfs_ops is not None
+        assert ctx.snapshot_manager is not None
+        assert ctx.config_store is not None
+        assert ctx.policy_engine is not None
+        assert ctx.grub_integration is not None
+
+
+# ---------------------------------------------------------------------------
+# CLI handler tests
+# ---------------------------------------------------------------------------
+
+
+class TestCmdSnapshotCreate:
+    def _ctx(self):
+        return _init_services("/nonexistent/config.toml", ".snapshots")
+
+    @patch("subprocess.run")
+    @patch("os.makedirs")
+    @patch("builtins.open", new_callable=MagicMock)
+    def test_create_success(
+        self, mock_file: MagicMock, mock_makedirs: MagicMock, mock_run: MagicMock
+    ) -> None:
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        ctx = self._ctx()
+        args = MagicMock(
+            subvolume="/", snapshot_type="manual", schedule="",
+            description="test", read_write=False, mount="/", dry_run=False,
+        )
+        exit_code = _cmd_snapshot_create(ctx, args)
+        assert exit_code == 0
+
+    def test_create_dry_run(self) -> None:
+        ctx = self._ctx()
+        args = MagicMock(
+            subvolume="/", snapshot_type="manual", schedule="",
+            description="", read_write=False, mount="/", dry_run=True,
+        )
+        exit_code = _cmd_snapshot_create(ctx, args)
+        assert exit_code == 0
+
+
+class TestCmdSnapshotList:
+    def _ctx(self):
+        return _init_services("/nonexistent/config.toml", ".snapshots")
+
+    @patch.object(ConfigStore, "load", return_value=None)
+    def test_list_empty(self, mock_load: MagicMock) -> None:
+        ctx = self._ctx()
+        args = MagicMock(mount="/", subvolume=None)
+        exit_code = _cmd_snapshot_list(ctx, args)
+        assert exit_code == 0
+
+
+class TestCmdSnapshotDelete:
+    def _ctx(self):
+        return _init_services("/nonexistent/config.toml", ".snapshots")
+
+    def test_delete_not_found(self) -> None:
+        ctx = self._ctx()
+        args = MagicMock(snapshot_id="nonexistent", mount="/", dry_run=False)
+        exit_code = _cmd_snapshot_delete(ctx, args)
+        assert exit_code == 1
+
+
+class TestCmdSnapshotPrune:
+    def _make_ctx(self):
+        ctx = _init_services("/nonexistent/config.toml", ".snapshots")
+        # Register a policy so prune has retention config
+        ctx.config_store.set_policy(
+            SnapshotPolicy(
+                subvolume="/",
+                schedule_daily=True,
+                retention=RetentionPolicy(keep_daily=3),
+            )
+        )
+        return ctx
+
+    def test_prune_no_policy(self) -> None:
+        ctx = _init_services("/nonexistent/config.toml", ".snapshots")
+        args = MagicMock(subvolume="/nonexistent", schedule="daily", mount="/", dry_run=False)
+        exit_code = _cmd_snapshot_prune(ctx, args)
+        assert exit_code == 0  # Warns and exits cleanly
+
+    @patch.object(ConfigStore, "load", return_value=None)
+    def test_prune_with_policy_dry_run(self, mock_load: MagicMock) -> None:
+        ctx = self._make_ctx()
+        args = MagicMock(subvolume="/", schedule="daily", mount="/", dry_run=True)
+        exit_code = _cmd_snapshot_prune(ctx, args)
+        assert exit_code == 0
+
+
+class TestCmdSnapshotInfo:
+    def _ctx(self):
+        return _init_services("/nonexistent/config.toml", ".snapshots")
+
+    def test_info_not_found(self) -> None:
+        ctx = self._ctx()
+        args = MagicMock(snapshot_id="nonexistent", mount="/")
+        exit_code = _cmd_snapshot_info(ctx, args)
+        assert exit_code == 1

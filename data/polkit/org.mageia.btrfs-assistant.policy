@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>Mageia</vendor>
+  <vendor_url>https://mageia.org/</vendor_url>
+  <icon_name>manaradix</icon_name>
+
+  <action id="org.mageia.btrfs-assistant.read">
+    <description>Read btrfs filesystem information</description>
+    <message>Authentication is required to query btrfs subvolume,
+    snapshot, and filesystem usage data.</message>
+    <defaults>
+      <allow_any>yes</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.mageia.btrfs-assistant.manage-snapshots">
+    <description>Manage btrfs snapshots</description>
+    <message>Authentication is required to create, delete, restore,
+    export, or import btrfs snapshots.</message>
+    <defaults>
+      <allow_any>auth_admin_keep</allow_any>
+      <allow_inactive>auth_admin_keep</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.mageia.btrfs-assistant.manage-policies">
+    <description>Manage snapshot policies</description>
+    <message>Authentication is required to create, modify, or remove
+    automated snapshot schedules and systemd timer units.</message>
+    <defaults>
+      <allow_any>auth_admin_keep</allow_any>
+      <allow_inactive>auth_admin_keep</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.mageia.btrfs-assistant.manage-filesystem">
+    <description>Manage btrfs filesystem parameters</description>
+    <message>Authentication is required to run scrub, balance,
+    defragmentation, or change compression settings.</message>
+    <defaults>
+      <allow_any>auth_admin_keep</allow_any>
+      <allow_inactive>auth_admin_keep</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+</policyconfig>

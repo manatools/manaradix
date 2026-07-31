@@ -1,0 +1,230 @@
+"""Unit tests for BtrfsOps — mocking the btrfs CLI."""
+
+import subprocess
+from datetime import datetime
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
+
+from manaradix.core.btrfs_ops import (
+    BtrfsError,
+    BtrfsOps,
+    BtrfsPermissionError,
+    SnapshotNotFoundError,
+)
+from manaradix.model.snapshot import SnapshotType
+
+
+class TestBtrfsOpsInit:
+    def test_default_snapshot_dir(self) -> None:
+        ops = BtrfsOps()
+        assert ops.snapshot_dir == ".snapshots"
+
+    def test_custom_snapshot_dir(self) -> None:
+        ops = BtrfsOps(snapshot_dir="/mnt/data/.my-snaps")
+        assert ops.snapshot_dir == "/mnt/data/.my-snaps"
+
+    def test_strips_trailing_slash(self) -> None:
+        ops = BtrfsOps(snapshot_dir=".snapshots/")
+        assert ops.snapshot_dir == ".snapshots"
+
+
+class TestRunDryRun:
+    def test_dry_run_does_not_execute(self) -> None:
+        ops = BtrfsOps()
+        result = ops._run(["subvolume", "list", "/"], dry_run=True)
+        assert result.returncode == 0
+        assert result.stdout == ""
+
+    def test_dry_run_returns_fake_completed_process(self) -> None:
+        ops = BtrfsOps()
+        result = ops._run(["some", "command"], dry_run=True)
+        assert isinstance(result, subprocess.CompletedProcess)
+
+
+class TestRunReal:
+    @patch("subprocess.run")
+    def test_successful_run(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "subvolume", "list", "/"],
+            returncode=0,
+            stdout="ID 257 gen 42 top level 5 path root\n",
+            stderr="",
+        )
+        ops = BtrfsOps()
+        result = ops._run(["subvolume", "list", "/"])
+        assert result.returncode == 0
+        assert "ID 257" in result.stdout
+
+    @patch("subprocess.run")
+    def test_permission_error(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1,
+            cmd=["btrfs"],
+            stderr="operation not permitted",
+        )
+        ops = BtrfsOps()
+        with pytest.raises(BtrfsPermissionError):
+            ops._run(["subvolume", "create", "/test"])
+
+    @patch("subprocess.run")
+    def test_generic_error(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1,
+            cmd=["btrfs"],
+            stderr="something went wrong",
+        )
+        ops = BtrfsOps()
+        with pytest.raises(BtrfsError):
+            ops._run(["subvolume", "delete", "/nope"])
+
+
+class TestCreateSnapshot:
+    @patch("subprocess.run")
+    def test_create_read_only(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "subvolume", "snapshot", "-r", "/", "/dest"],
+            returncode=0,
+            stdout="",
+            stderr="",
+        )
+        ops = BtrfsOps()
+        snap = ops.create_snapshot("/", "/dest", read_only=True)
+        assert snap.type == SnapshotType.READ_ONLY
+        assert snap.subvolume == "/"
+        assert snap.path == "/dest"
+
+    @patch("subprocess.run")
+    def test_create_read_write(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "subvolume", "snapshot", "/", "/dest"],
+            returncode=0,
+            stdout="",
+            stderr="",
+        )
+        ops = BtrfsOps()
+        snap = ops.create_snapshot("/", "/dest", read_only=False)
+        assert snap.type == SnapshotType.MANUAL
+
+    def test_create_dry_run(self) -> None:
+        ops = BtrfsOps()
+        snap = ops.create_snapshot("/", "/dest", dry_run=True)
+        assert snap.type == SnapshotType.READ_ONLY
+        assert snap.subvolume == "/"
+
+
+class TestListSubvolumes:
+    @patch("subprocess.run")
+    def test_parses_list_output(self, mock_run: MagicMock) -> None:
+        # First call: subvolume list
+        list_output = (
+            "ID 257 gen 42 parent 5 top level 5 path root\n"
+            "ID 258 gen 43 parent 5 top level 5 path home\n"
+        )
+        # Second call: subvolume show (one per subvolume)
+        show_output = "UUID: aaaa-bbbb\nParent UUID: cccc-dddd\n"
+
+        mock_run.side_effect = [
+            subprocess.CompletedProcess(
+                ["btrfs", "subvolume", "list", "-p", "/"],
+                returncode=0,
+                stdout=list_output,
+                stderr="",
+            ),
+            subprocess.CompletedProcess(
+                ["btrfs", "subvolume", "show", "/root"],
+                returncode=0,
+                stdout=show_output,
+                stderr="",
+            ),
+            subprocess.CompletedProcess(
+                ["btrfs", "subvolume", "show", "/home"],
+                returncode=0,
+                stdout=show_output,
+                stderr="",
+            ),
+        ]
+
+        ops = BtrfsOps()
+        subvols = ops.list_subvolumes("/")
+        assert len(subvols) == 2
+        assert subvols[0].id == 257
+        assert subvols[0].path == "root"
+        assert subvols[0].parent_id == 5
+        assert subvols[1].id == 258
+        assert subvols[1].path == "home"
+
+    def test_dry_run_returns_empty(self) -> None:
+        ops = BtrfsOps()
+        result = ops.list_subvolumes("/", dry_run=True)
+        assert result == []
+
+
+class TestSnapshotPath:
+    @patch("subprocess.run")
+    def test_snapshot_path_root(self, mock_run: MagicMock) -> None:
+        ops = BtrfsOps()
+        # Freeze time so the timestamp is deterministic
+        with patch(
+            "manaradix.core.btrfs_ops.datetime"
+        ) as mock_dt:
+            mock_dt.now.return_value = datetime(2025, 1, 15, 14, 0, 0)
+            mock_dt.strftime = datetime.strftime
+            path = ops._snapshot_path("/", "/", "2025-01-15_14-00-00")
+            assert path == "/.snapshots/2025-01-15_14-00-00/root"
+
+    def test_snapshot_path_home(self) -> None:
+        ops = BtrfsOps()
+        path = ops._snapshot_path("/", "/home", "2025-01-15_14-00-00")
+        assert path == "/.snapshots/2025-01-15_14-00-00/home"
+
+
+class TestParseHelpers:
+    def test_parse_subvol_list_line(self) -> None:
+        from manaradix.core.btrfs_ops import (
+            _parse_subvol_list_line,
+        )
+
+        result = _parse_subvol_list_line(
+            "ID 257 gen 42 parent 5 top level 5 path root"
+        )
+        assert result is not None
+        assert result["id"] == 257
+        assert result["path"] == "root"
+        assert result["parent_id"] == 5
+
+    def test_parse_subvol_list_line_no_parent(self) -> None:
+        from manaradix.core.btrfs_ops import (
+            _parse_subvol_list_line,
+        )
+
+        result = _parse_subvol_list_line(
+            "ID 5 gen 10 top level 5 path <FS_TREE>/"
+        )
+        assert result is not None
+        assert result["id"] == 5
+        assert result["parent_id"] == 0
+
+    def test_parse_subvol_list_line_invalid(self) -> None:
+        from manaradix.core.btrfs_ops import (
+            _parse_subvol_list_line,
+        )
+
+        assert _parse_subvol_list_line("some random text") is None
+
+    def test_parse_subvol_show(self) -> None:
+        from manaradix.core.btrfs_ops import (
+            _parse_subvol_show,
+        )
+
+        text = "UUID:\t01234567-89ab-cdef-0123-456789abcdef\nParent UUID:\tdeadbeef-dead-beef-dead-beefdeadbeef\n"
+        result = _parse_subvol_show(text)
+        assert result["uuid"] == "01234567-89ab-cdef-0123-456789abcdef"
+        assert result["parent_uuid"] == "deadbeef-dead-beef-dead-beefdeadbeef"
+
+    def test_parse_subvol_show_no_match(self) -> None:
+        from manaradix.core.btrfs_ops import (
+            _parse_subvol_show,
+        )
+
+        assert _parse_subvol_show("no uuids here") == {}

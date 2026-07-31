@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Manaradix
+GenericName=Btrfs Assistant
+Comment=Manage Btrfs snapshots, subvolumes, and filesystem parameters
+Icon=manaradix
+Exec=manaradix
+Terminal=false
+Categories=System;Utility;FileTools;
+Keywords=btrfs;snapshot;subvolume;filesystem;backup;restore;
+StartupNotify=true
+X-Mageia-Polkit=org.mageia.btrfs-assistant.manage-snapshots
