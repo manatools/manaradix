@@ -23,11 +23,24 @@ packaging conventions.
 
 ## Development Setup
 
+A Python virtual environment is **required** for development. All commands
+below assume an activated venv.
+
 ```bash
-# Clone and install in editable mode with dev tools
+# Clone the repository
 git clone <repo-url> manaradix
 cd manaradix
+
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate       # Linux / macOS
+# .venv\Scripts\activate        # Windows (untested)
+
+# Install in editable mode with dev tools
 pip install -e ".[dev]"
+
+# Verify the install
+manaradix --help
 
 # Run the test suite (143 tests)
 pytest
@@ -40,12 +53,24 @@ pytest --cov=manaradix --cov-report=term
 ```
 
 The tests use mocked subprocess calls — no live btrfs filesystem is required.
+Python 3.11+ is the only hard Python dependency; `btrfs-progs`, `systemd`,
+`polkit`, and `grub2` are system-level runtime dependencies needed only when
+running the actual tool.
+
+### Python dependencies
+
+| Package | Version | Purpose |
+|---|---|---|
+| `tomlkit` | ≥ 0.12.0 | TOML config file parsing (`/etc/manaradix/config.toml`) |
+| `pytest` | ≥ 8.0 | Test runner (dev only) |
+| `pytest-cov` | ≥ 5.0 | Coverage reporting (dev only) |
+| `python-manatools` | latest (aui branch) | UI abstraction layer (optional — only needed for the GUI) |
 
 ## Quick Start
 
 ```bash
-# Install
-pip install -e .
+# Activate the venv first
+source .venv/bin/activate
 
 # Launch the GUI (requires python-manatools)
 manaradix
