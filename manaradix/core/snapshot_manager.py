@@ -283,56 +283,55 @@ class SnapshotManager:
             )
         return pre_restore
 
-    def browse(self, snapshot: Snapshot, mount_point: str = "/mnt/manaradix-snapshot") -> None:
+    def browse(
+        self,
+        snapshot: Snapshot,
+        mount_point: str = "/mnt/manaradix-snapshot",
+        *,
+        dry_run: bool = False,
+    ) -> None:
         """Mount a snapshot read-only for browsing.
 
-        Uses ``mount -o subvol=... -o ro``.
+        The backing device is resolved by ``BtrfsOps`` from the btrfs
+        mounts of the snapshot's subvolume.
 
         Args:
             snapshot: The snapshot to mount.
             mount_point: Where to mount it.
+            dry_run: Preview the mount without executing.
 
         Raises:
-            BtrfsError: If the mount fails.
+            BtrfsError: If the device cannot be resolved or the mount fails.
         """
-        import subprocess
-
         os.makedirs(mount_point, exist_ok=True)
         try:
-            subprocess.run(
-                [
-                    "mount",
-                    "-o",
-                    f"subvol={snapshot.path}",
-                    "-o",
-                    "ro",
-                    snapshot.subvolume,
-                    mount_point,
-                ],
-                check=True,
-                text=True,
-                capture_output=True,
+            self.ops.mount_subvolume(
+                snapshot.path,
+                mount_point,
+                dry_run=dry_run,
             )
-        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-            stderr = getattr(exc, "stderr", None)
-            msg = f"Failed to mount snapshot at {mount_point}: {stderr or exc}"
-            raise BtrfsError(msg) from exc
+        except BtrfsError as exc:
+            raise BtrfsError(
+                f"Failed to mount snapshot at {mount_point}: {exc}"
+            ) from exc
 
-    def unbrowse(self, mount_point: str = "/mnt/manaradix-snapshot") -> None:
-        """Unmount a previously browsed snapshot."""
-        import subprocess
+    def unbrowse(
+        self,
+        mount_point: str = "/mnt/manaradix-snapshot",
+        *,
+        dry_run: bool = False,
+    ) -> None:
+        """Unmount a previously browsed snapshot.
 
+        Raises:
+            BtrfsError: If the unmount fails.
+        """
         try:
-            subprocess.run(
-                ["umount", mount_point],
-                check=True,
-                text=True,
-                capture_output=True,
-            )
-        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-            stderr = getattr(exc, "stderr", None)
-            msg = f"Failed to unmount {mount_point}: {stderr or exc}"
-            raise BtrfsError(msg) from exc
+            self.ops.umount(mount_point, dry_run=dry_run)
+        except BtrfsError as exc:
+            raise BtrfsError(
+                f"Failed to unmount {mount_point}: {exc}"
+            ) from exc
 
     # ------------------------------------------------------------------
     # Snapshot export (send/receive)

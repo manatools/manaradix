@@ -756,6 +756,112 @@ class BtrfsOps:
         return mounts
 
     # ------------------------------------------------------------------
+    # Mount helpers (mount/umount are util-linux binaries)
+    # ------------------------------------------------------------------
+
+    def _resolve_device(self, subvol_path: str) -> str:
+        """Return the block device backing *subvol_path*'s filesystem.
+
+        Matches the btrfs mount whose target equals the subvolume path,
+        falling back to the longest-prefix match (e.g. a nested subvolume
+        under a mounted parent).
+        """
+        mounts = self.btrfs_mounts()
+        exact = [m for m in mounts if m["target"] == subvol_path]
+        if exact:
+            return exact[0]["source"]
+        matches = [
+            m for m in mounts
+            if subvol_path.startswith(m["target"].rstrip("/") + "/")
+            or subvol_path == m["target"].rstrip("/")
+        ]
+        if not matches:
+            raise BtrfsError(
+                f"Cannot determine the btrfs device for subvolume {subvol_path!r}: "
+                "no matching btrfs mount found"
+            )
+        return max(matches, key=lambda m: len(m["target"]))["source"]
+
+    def mount_subvolume(
+        self,
+        subvol_path: str,
+        mount_point: str,
+        *,
+        device: str | None = None,
+        read_only: bool = True,
+        dry_run: bool = False,
+    ) -> None:
+        """Mount a btrfs subvolume (e.g. a snapshot) at *mount_point*.
+
+        The backing device is resolved from ``findmnt`` unless given
+        explicitly.
+
+        Raises:
+            BtrfsError: If the device cannot be resolved or mount fails.
+        """
+        if device is None:
+            device = self._resolve_device(subvol_path)
+        cmd = [
+            "mount",
+            "-o",
+            f"subvol={subvol_path}",
+            "-o",
+            "ro" if read_only else "rw",
+            device,
+            mount_point,
+        ]
+        if dry_run:
+            logger.info("[DRY RUN] %s", " ".join(cmd))
+            return
+        logger.debug("Running: %s", " ".join(cmd))
+        try:
+            subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=60,
+            )
+        except subprocess.CalledProcessError as exc:
+            stderr = exc.stderr or ""
+            if "permission denied" in stderr.lower() or "operation not permitted" in stderr.lower():
+                raise BtrfsPermissionError(stderr.strip()) from exc
+            raise BtrfsError(stderr.strip()) from exc
+        except FileNotFoundError:
+            raise BtrfsError(
+                "mount binary not found. Is util-linux installed?"
+            ) from None
+
+    def umount(self, mount_point: str, *, dry_run: bool = False) -> None:
+        """Unmount a previously mounted subvolume.
+
+        Raises:
+            BtrfsError: If the unmount fails.
+        """
+        cmd = ["umount", mount_point]
+        if dry_run:
+            logger.info("[DRY RUN] %s", " ".join(cmd))
+            return
+        logger.debug("Running: %s", " ".join(cmd))
+        try:
+            subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=60,
+            )
+        except subprocess.CalledProcessError as exc:
+            stderr = exc.stderr or ""
+            if "permission denied" in stderr.lower() or "operation not permitted" in stderr.lower():
+                raise BtrfsPermissionError(stderr.strip()) from exc
+            raise BtrfsError(stderr.strip()) from exc
+        except FileNotFoundError:
+            raise BtrfsError(
+                "umount binary not found. Is util-linux installed?"
+            ) from None
+
+    # ------------------------------------------------------------------
     # Compression helpers
     # ------------------------------------------------------------------
 

@@ -177,27 +177,47 @@ class TestSnapshotManagerExport:
 
 
 class TestSnapshotManagerBrowse:
-    @patch("subprocess.run")
     @patch("os.makedirs")
-    def test_browse_mounts_snapshot(
-        self, mock_makedirs: MagicMock, mock_run: MagicMock
-    ) -> None:
-        ops = BtrfsOps()
+    def test_browse_mounts_snapshot(self, mock_makedirs: MagicMock) -> None:
+        ops = MagicMock(spec=BtrfsOps)
         mgr = SnapshotManager(ops)
         snap = _make_snapshot()
         mgr.browse(snap, "/mnt/test-browse")
-        mock_run.assert_called_once()
+        ops.mount_subvolume.assert_called_once_with(
+            snap.path, "/mnt/test-browse", dry_run=False
+        )
 
-    @patch("subprocess.run", side_effect=FileNotFoundError)
     @patch("os.makedirs")
-    def test_browse_mount_failure(
-        self, mock_makedirs: MagicMock, mock_run: MagicMock
-    ) -> None:
-        ops = BtrfsOps()
+    def test_browse_dry_run(self, mock_makedirs: MagicMock) -> None:
+        ops = MagicMock(spec=BtrfsOps)
         mgr = SnapshotManager(ops)
         snap = _make_snapshot()
-        with pytest.raises(BtrfsError, match="Failed to mount"):
+        mgr.browse(snap, "/mnt/test-browse", dry_run=True)
+        ops.mount_subvolume.assert_called_once_with(
+            snap.path, "/mnt/test-browse", dry_run=True
+        )
+
+    @patch("os.makedirs")
+    def test_browse_mount_failure(self, mock_makedirs: MagicMock) -> None:
+        ops = MagicMock(spec=BtrfsOps)
+        ops.mount_subvolume.side_effect = BtrfsError("mount: permission denied")
+        mgr = SnapshotManager(ops)
+        snap = _make_snapshot()
+        with pytest.raises(BtrfsError, match="Failed to mount snapshot at /mnt/manaradix-snapshot"):
             mgr.browse(snap)
+
+    def test_unbrowse_unmounts(self) -> None:
+        ops = MagicMock(spec=BtrfsOps)
+        mgr = SnapshotManager(ops)
+        mgr.unbrowse("/mnt/test-browse")
+        ops.umount.assert_called_once_with("/mnt/test-browse", dry_run=False)
+
+    def test_unbrowse_failure(self) -> None:
+        ops = MagicMock(spec=BtrfsOps)
+        ops.umount.side_effect = BtrfsError("umount: target is busy")
+        mgr = SnapshotManager(ops)
+        with pytest.raises(BtrfsError, match="Failed to unmount /mnt/test-browse"):
+            mgr.unbrowse("/mnt/test-browse")
 
 
 class TestSnapshotManagerCreateWithSchedule:

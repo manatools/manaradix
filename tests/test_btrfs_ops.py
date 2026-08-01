@@ -331,3 +331,101 @@ class TestBtrfsMounts:
 
     def test_dry_run_returns_empty(self) -> None:
         assert BtrfsOps().btrfs_mounts(dry_run=True) == []
+
+
+# ---------------------------------------------------------------------------
+# mount_subvolume / umount tests
+# ---------------------------------------------------------------------------
+
+
+class TestMountSubvolume:
+    def _mounts_stdout(self):
+        return (
+            "TARGET\tSOURCE\tUUID\n"
+            "/\t/dev/nvme0n1p3\t3149ac5f-25ee-4805-b0ae-e6679af72699\n"
+            "/home\t/dev/mapper/crypt_nvme0n1p6\tefff4471-576f-4fbb-976e-162761395cfa\n"
+        )
+
+    @patch("subprocess.run")
+    def test_explicit_device(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess([], 0, "", "")
+        BtrfsOps().mount_subvolume("/.snapshots/s1/root", "/mnt/x", device="/dev/sda2")
+        args = mock_run.call_args[0][0]
+        assert args[0] == "mount"
+        assert "subvol=/.snapshots/s1/root" in args
+        assert "ro" in args
+        assert args[-2:] == ["/dev/sda2", "/mnt/x"]
+
+    @patch("subprocess.run")
+    def test_read_write_option(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess([], 0, "", "")
+        BtrfsOps().mount_subvolume("/subvol", "/mnt/x", device="/dev/sda2", read_only=False)
+        args = mock_run.call_args[0][0]
+        assert "rw" in args
+
+    @patch("subprocess.run")
+    def test_device_resolved_from_mounts(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            [], 0, self._mounts_stdout(), ""
+        )
+        ops = BtrfsOps()
+        ops.mount_subvolume("/.snapshots/s1/root", "/mnt/x")
+        # Two calls: findmnt lookup, then the mount itself
+        assert mock_run.call_count == 2
+        mount_args = mock_run.call_args_list[1][0][0]
+        assert mount_args[-2] == "/dev/nvme0n1p3"  # device of the "/" mount
+
+    @patch("subprocess.run")
+    def test_nested_subvolume_uses_longest_prefix(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            [], 0, self._mounts_stdout(), ""
+        )
+        ops = BtrfsOps()
+        ops.mount_subvolume("/home/data/sub", "/mnt/x")
+        mount_args = mock_run.call_args_list[1][0][0]
+        assert mount_args[-2] == "/dev/mapper/crypt_nvme0n1p6"
+
+    @patch("subprocess.run")
+    def test_no_matching_mount_raises(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            [], 0, "TARGET\tSOURCE\tUUID\n", ""
+        )
+        with pytest.raises(BtrfsError, match="Cannot determine the btrfs device"):
+            BtrfsOps().mount_subvolume("/nonexistent", "/mnt/x")
+
+    @patch("subprocess.run")
+    def test_mount_failure_raises_btrfs_error(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=["mount"], stderr="mount: permission denied",
+        )
+        with pytest.raises(BtrfsPermissionError):
+            BtrfsOps().mount_subvolume("/s", "/mnt/x", device="/dev/sda2")
+
+    @patch("subprocess.run")
+    def test_mount_binary_missing(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = FileNotFoundError("mount")
+        with pytest.raises(BtrfsError, match="util-linux"):
+            BtrfsOps().mount_subvolume("/s", "/mnt/x", device="/dev/sda2")
+
+    def test_dry_run_skips_execution(self) -> None:
+        BtrfsOps().mount_subvolume("/s", "/mnt/x", device="/dev/sda2", dry_run=True)
+
+
+class TestUmount:
+    @patch("subprocess.run")
+    def test_unmounts(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess([], 0, "", "")
+        BtrfsOps().umount("/mnt/x")
+        args = mock_run.call_args[0][0]
+        assert args == ["umount", "/mnt/x"]
+
+    @patch("subprocess.run")
+    def test_unmount_failure(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=["umount"], stderr="target is busy",
+        )
+        with pytest.raises(BtrfsError, match="target is busy"):
+            BtrfsOps().umount("/mnt/x")
+
+    def test_dry_run_skips_execution(self) -> None:
+        BtrfsOps().umount("/mnt/x", dry_run=True)
