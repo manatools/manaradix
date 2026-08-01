@@ -9,6 +9,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from manaradix.ui.model import PageModel, Widget
+
 if TYPE_CHECKING:
     from manaradix.module import AppContext
 
@@ -28,8 +30,6 @@ class SettingsPage:
 
     def build_model(self):
         """Return a ``PageModel`` for global settings."""
-        from manatools.aui import PageModel, Widget
-
         sections = [
             self._global_settings_section(),
             self._compression_section(),
@@ -42,8 +42,6 @@ class SettingsPage:
 
     def _global_settings_section(self) -> dict:
         """Global configuration fields."""
-        from manatools.aui import Widget
-
         return {
             "title": "Global Configuration",
             "fields": [
@@ -73,8 +71,6 @@ class SettingsPage:
 
     def _compression_section(self) -> dict | None:
         """Compression status and management."""
-        from manatools.aui import Widget
-
         subvol = self.app.config_store.default_subvolume
         try:
             algo = self.app.btrfs_ops.get_compression(subvol)
@@ -106,8 +102,6 @@ class SettingsPage:
 
     def _maintenance_section(self) -> dict:
         """Balance, scrub, and defrag controls."""
-        from manatools.aui import Widget
-
         # Read current statuses
         balance_status = "idle"
         scrub_status = "idle"
@@ -167,8 +161,6 @@ class SettingsPage:
 
     def _grub_section(self) -> dict:
         """GRUB integration controls."""
-        from manatools.aui import Widget
-
         installed = self.app.grub_integration.is_installed()
 
         return {

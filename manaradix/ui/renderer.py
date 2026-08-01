@@ -1,0 +1,288 @@
+"""Render manaradix declarative page models onto the manatools YUI API.
+
+The released python-manatools exposes a libyui-style API (``YUI``,
+``YWidgetFactory``, ``YDialog``) rather than a PageModel/Widget abstraction.
+This module bridges the two: it walks the
+:class:`~manaradix.ui.model.PageModel` descriptors produced by the pages and
+builds real YUI widgets via ``YUI.widgetFactory()``, then drives the dialog
+event loop, dispatching widget events to the callbacks stored on the
+descriptors.
+
+Notes on the real API (manatools 0.99.3):
+- ``manatools.aui`` itself is an empty package; everything lives in
+  ``manatools.aui.yui`` (``YUI``) and ``manatools.aui.yui_common``
+  (widget bases, events, ``YTableHeader``/``YTableItem``).
+- Backend selection: the ``MUI_BACKEND`` env var (qt/gtk/ncurses) or
+  auto-detection — there is no web backend.
+- ``YWidget`` has no ``setId()``; ids are assigned by setting ``_id``
+  directly.
+- ``YDumbTab`` holds exactly one child; page bodies are swapped into a
+  ``YReplacePoint`` on tab switches and after state-changing callbacks.
+
+The event loop is duck-typed against the real classes (``eventType()``,
+``reason()``, ``widget().id()``), so tests can drive it with fakes and the
+pure-Python event objects from ``yui_common``.
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
+
+_TABS_ID = "main_tabs"
+
+# Widget kinds wired to callbacks, and the event reasons each backend posts.
+# Verified against manatools 0.99.3: pushbutton -> Activated; checkbox /
+# intfield -> ValueChanged; combobox -> SelectionChanged (ValueChanged when
+# editable); table selection -> SelectionChanged; dumbtab -> Activated.
+_BUTTON_REASONS = ("Activated",)
+_CHANGE_REASONS = ("Activated", "ValueChanged", "SelectionChanged")
+_SELECT_REASONS = ("SelectionChanged",)
+
+
+class AuiRenderer:
+    """Renders a list of pages onto a YUI main dialog with tab navigation.
+
+    Each page in *pages* must expose ``title`` and ``build_model()``
+    (returning a :class:`~manaradix.ui.model.PageModel`).  Widget events
+    are dispatched to the callbacks stored on the field descriptors; after
+    any dispatched callback the current page is re-rendered so state
+    changes (e.g. a deleted snapshot) appear immediately.
+    """
+
+    def __init__(self, pages, *, factory=None) -> None:
+        self._pages = list(pages)
+        # Injectable factory for tests; defaults to the real YUI factory.
+        self._factory = factory
+        self._handlers: dict[str, tuple[str, Callable]] = {}
+        self._table_headers: dict[Any, Any] = {}
+        self._tabs = None
+        self._replace_point = None
+        self._current_index = 0
+
+    # -- Lifecycle ----------------------------------------------------------
+
+    def run(self) -> None:
+        """Build the main dialog and run the event loop until closed."""
+        from manatools.aui.yui import YUI  # lazy: keep CLI importable without manatools
+
+        factory = self._factory or YUI.widgetFactory()
+
+        if self._factory is None:
+            try:
+                YUI.application().setApplicationTitle("Manaradix")
+            except Exception as exc:  # cosmetic only
+                logger.debug("Could not set application title: %s", exc)
+
+        dialog = factory.createMainDialog()
+        root = factory.createVBox(dialog)
+        factory.createHeading(root, "Manaradix")
+
+        tabs = factory.createDumbTab(root)
+        tabs._id = _TABS_ID  # noqa: SLF001 -- YWidget has no setId()
+        tabs.setNotify(True)
+        for page in self._pages:
+            tabs.addItem(page.title)  # strings are wrapped into YItem
+        self._tabs = tabs
+
+        # The DumbTab accepts a single content child; page bodies are
+        # swapped into this replace point on tab switch / refresh.
+        replace_point = factory.createReplacePoint(tabs)
+        self._replace_point = replace_point
+
+        if self._pages:
+            self._show_page(factory, 0)
+
+        dialog.open()
+        try:
+            while True:
+                event = dialog.waitForEvent(0)
+                event_type = event.eventType().name
+                if event_type == "CancelEvent":
+                    break
+                if event_type != "WidgetEvent":
+                    continue
+                widget = event.widget()
+                widget_id = widget.id()
+                if widget_id == _TABS_ID:
+                    self._switch_tab(factory)
+                    continue
+                self._dispatch(factory, event)
+        finally:
+            try:
+                dialog.destroy()
+            except Exception as exc:  # teardown must not mask real errors
+                logger.debug("Dialog teardown failed: %s", exc)
+
+    # -- Rendering ----------------------------------------------------------
+
+    def _show_page(self, factory, index: int) -> None:
+        """Render one page's model into the replace point."""
+        page = self._pages[index]
+        replace_point = self._replace_point
+
+        replace_point.deleteChildren()
+        self._handlers.clear()
+        self._table_headers.clear()
+
+        content = factory.createVBox(replace_point)
+        factory.createHeading(content, page.title)
+
+        model = page.build_model()
+        for section in model.sections:
+            frame = factory.createFrame(content, section.get("title", ""))
+            box = factory.createVBox(frame)
+            for field in section.get("fields", []):
+                self._render_field(factory, box, field)
+
+        replace_point.showChild()
+        self._current_index = index
+
+    def _render_field(self, factory, parent, field: dict[str, Any]) -> None:
+        """Create the YUI widget for one field descriptor."""
+        kind = field.get("widget")
+
+        if kind == "label":
+            factory.createLabel(parent, field.get("text", ""))
+
+        elif kind == "button":
+            widget = factory.createPushButton(parent, field.get("label", ""))
+            self._wire(widget, field.get("id"), "button", field.get("callback"))
+
+        elif kind == "checkbox":
+            widget = factory.createCheckBox(
+                parent, field.get("label", ""), field.get("checked", False)
+            )
+            self._wire(widget, field.get("id"), "checkbox", field.get("on_change"))
+
+        elif kind == "text":
+            widget = factory.createInputField(parent, field.get("label", ""))
+            if field.get("id"):
+                widget._id = field["id"]  # noqa: SLF001 -- YWidget has no setId()
+            widget.setValue(str(field.get("value", "")))
+
+        elif kind == "dropdown":
+            widget = factory.createComboBox(parent, field.get("label", ""), editable=False)
+            for option in field.get("options", []):
+                widget.addItem(option)
+            widget.setValue(str(field.get("selected", "")))
+            self._wire(widget, field.get("id"), "dropdown", field.get("on_change"))
+
+        elif kind == "spinner":
+            widget = factory.createIntField(
+                parent,
+                field.get("label", ""),
+                field.get("min_val", 0),
+                field.get("max_val", 999),
+                field.get("value", 0),
+            )
+            self._wire(widget, field.get("id"), "spinner", field.get("on_change"))
+
+        elif kind == "tree":
+            self._render_tree(factory, parent, field)
+
+        else:
+            logger.warning("Unknown widget kind: %r", kind)
+
+    def _render_tree(self, factory, parent, field: dict[str, Any]) -> None:
+        """Multi-column tree rows map onto a YUI table."""
+        from manatools.aui.yui_common import YTableHeader, YTableItem  # pure Python
+
+        rows = field.get("rows", [])
+        if not rows:
+            factory.createLabel(parent, "(no data)")
+            return
+
+        # Columns: union of row keys, first-appearance order.
+        columns: list[str] = []
+        for row in rows:
+            for key in row:
+                if key not in columns:
+                    columns.append(key)
+
+        header = YTableHeader()
+        for column in columns:
+            header.addColumn(column)
+
+        widget = factory.createTable(parent, header)
+        for row in rows:
+            item = YTableItem()
+            for column in columns:
+                item.addCell(str(row.get(column, "")))
+            widget.addItem(item)
+
+        if field.get("id"):
+            widget._id = field["id"]  # noqa: SLF001 -- YWidget has no setId()
+        if field.get("selectable"):
+            self._handlers[widget.id()] = ("tree", field["on_select"])
+            widget.setNotify(True)
+        self._table_headers[widget] = header
+
+    def _wire(self, widget, widget_id, kind: str, callback) -> None:
+        """Assign the descriptor id and register the event handler."""
+        if widget_id:
+            widget._id = widget_id  # noqa: SLF001 -- YWidget has no setId()
+        if callback is not None:
+            widget.setNotify(True)
+            self._handlers[widget.id()] = (kind, callback)
+
+    # -- Events -------------------------------------------------------------
+
+    def _switch_tab(self, factory) -> None:
+        """Render the page belonging to the newly selected tab."""
+        selected = self._tabs.selectedItem()
+        if selected is None:
+            return
+        label = selected.label()
+        for index, page in enumerate(self._pages):
+            if page.title == label:
+                self._show_page(factory, index)
+                return
+
+    def _dispatch(self, factory, event) -> None:
+        """Dispatch a widget event to the descriptor's callback."""
+        widget = event.widget()
+        entry = self._handlers.get(widget.id())
+        if entry is None:
+            return
+        kind, callback = entry
+        reason = event.reason().name
+
+        if kind == "tree":
+            if reason in _SELECT_REASONS:
+                callback(self._selected_row(widget))
+            else:
+                return
+        elif kind == "button":
+            if reason not in _BUTTON_REASONS:
+                return
+            callback()
+        elif kind in ("checkbox", "spinner", "dropdown"):
+            if reason not in _CHANGE_REASONS:
+                return
+            callback()
+        else:
+            return
+
+        # Callbacks may mutate state (create/delete snapshots, apply
+        # policies); re-render the current page so the UI reflects it.
+        self._show_page(factory, self._current_index)
+
+    def _selected_row(self, table) -> dict[str, Any]:
+        """Return the row dict of the table's selected item."""
+        header = self._table_headers.get(table)
+        if header is None:
+            return {}
+        selected = getattr(table, "selectedItem", None)
+        item = selected() if selected else None
+        if item is None:
+            return {}
+        row: dict[str, Any] = {}
+        for column in range(header.columns()):
+            try:
+                row[header.header(column)] = item.cell(column).label()
+            except Exception:
+                continue
+        return row

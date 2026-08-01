@@ -9,6 +9,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from manaradix.ui.model import PageModel, Widget
+
 if TYPE_CHECKING:
     from manaradix.module import AppContext
 
@@ -28,8 +30,6 @@ class OverviewPage:
 
     def build_model(self):
         """Return a ``PageModel`` for the overview dashboard."""
-        from manatools.aui import PageModel, Widget
-
         sections = [
             self._filesystem_section(),
             self._recent_snapshots_section(),

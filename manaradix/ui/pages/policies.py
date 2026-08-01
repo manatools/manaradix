@@ -9,6 +9,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from manaradix.model.policy import RetentionPolicy, SnapshotPolicy
+from manaradix.ui.model import PageModel, Widget
 
 if TYPE_CHECKING:
     from manaradix.module import AppContext
@@ -34,8 +35,6 @@ class PoliciesPage:
 
     def build_model(self):
         """Return a ``PageModel`` for policy management."""
-        from manatools.aui import PageModel, Widget
-
         policies = self._list_policies()
         sections = [
             self._policies_list_section(policies),
@@ -80,8 +79,6 @@ class PoliciesPage:
 
     def _policy_editor_section(self, policies: list[SnapshotPolicy]) -> dict | None:
         """Editor form for the selected policy, or a form to add a new one."""
-        from manatools.aui import Widget
-
         policy = self._get_selected_policy(policies)
 
         if policy is None:
@@ -158,8 +155,6 @@ class PoliciesPage:
 
     def _systemd_status_section(self) -> dict:
         """Show installed systemd units."""
-        from manatools.aui import Widget
-
         try:
             units = self.app.policy_engine.list_generated_units()
         except Exception as exc:

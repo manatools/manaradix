@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 
 from manaradix.core.btrfs_ops import BtrfsOps, SnapshotNotFoundError
@@ -115,7 +116,7 @@ def run_app(
     """Launch the application.
 
     Args:
-        frontend: One of ``qt``, ``gtk``, ``ncurses``, ``web``.
+        frontend: One of ``qt``, ``gtk``, ``ncurses``.
         config_path: Path to the TOML configuration file.
         snapshot_dir: Snapshot storage directory (relative to mount).
     """
@@ -141,7 +142,7 @@ def run_app(
     nav = build_navigation(app_context)
 
     try:
-        from manatools.aui import Application, Frontend
+        from manatools.aui.yui import YUI  # noqa: F401
     except ImportError:
         logger.error(
             "python-manatools is required for the UI. "
@@ -149,12 +150,20 @@ def run_app(
         )
         sys.exit(1)
 
-    application = Application(
-        title="Manaradix",
-        navigation=nav,
-        frontend=Frontend(frontend),
-    )
-    application.run()
+    # The YUI backend reads MUI_BACKEND when YUI.ui() is first touched.
+    os.environ["MUI_BACKEND"] = frontend
+
+    from manaradix.ui.renderer import AuiRenderer
+
+    try:
+        AuiRenderer(nav).run()
+    except ImportError as exc:
+        logger.error(
+            "The %s UI backend is not available (%s). "
+            "Choose another with --frontend (qt, gtk, ncurses).",
+            frontend, exc,
+        )
+        sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
@@ -190,7 +199,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_global_args(parser)
     parser.add_argument(
         "--frontend",
-        choices=["qt", "gtk", "ncurses", "web"],
+        choices=["qt", "gtk", "ncurses"],
         default="qt",
         help="UI toolkit frontend (default: qt)",
     )

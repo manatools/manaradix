@@ -1,10 +1,10 @@
 # Manaradix — Btrfs Snapshot Management for Mageia
 
 A system utility for **Mageia 10** and **Cauldron** providing a unified
-graphical, text, and web interface for managing Btrfs snapshots, subvolumes,
+graphical and text interface for managing Btrfs snapshots, subvolumes,
 and filesystem parameters. Built on top of `python-manatools` using the `aui`
-(Abstract UI) backend so a single codebase renders in Qt, GTK, ncurses, and
-web frontends.
+(Abstract UI) backend so a single codebase renders in Qt, GTK, and ncurses
+frontends.
 
 Conceptually similar to openSUSE's `btrfsmaintenance` + `btrfs-assistant` and
 Garuda's `btrfs-assistant`, but tailored to Mageia's infrastructure and
@@ -31,8 +31,10 @@ below assume an activated venv.
 git clone <repo-url> manaradix
 cd manaradix
 
-# Create and activate a virtual environment
-python -m venv .venv
+# Create and activate a virtual environment.
+# --system-site-packages is required: runtime deps such as python-manatools
+# and btrfs-progs are system packages and must stay visible from the venv.
+python -m venv --system-site-packages .venv
 source .venv/bin/activate       # Linux / macOS
 # .venv\Scripts\activate        # Windows (untested)
 
@@ -42,7 +44,7 @@ pip install -e ".[dev]"
 # Verify the install
 manaradix --help
 
-# Run the test suite (143 tests)
+# Run the test suite (188 tests)
 pytest
 
 # Run a single test file
@@ -54,8 +56,14 @@ pytest --cov=manaradix --cov-report=term
 
 The tests use mocked subprocess calls — no live btrfs filesystem is required.
 Python 3.11+ is the only hard Python dependency; `btrfs-progs`, `systemd`,
-`polkit`, and `grub2` are system-level runtime dependencies needed only when
-running the actual tool.
+`polkit`, `python-manatools`, and `grub2` are system-level runtime
+dependencies needed only when running the actual tool.  The UI renderer is
+tested against a fake widget factory, so no Qt/GTK/curses install is needed
+to run the suite.
+
+If an existing venv predates the `--system-site-packages` switch, enable
+system package visibility by setting `include-system-site-packages = true`
+in `.venv/pyvenv.cfg` (no recreation needed).
 
 ### Python dependencies
 
@@ -84,6 +92,11 @@ manaradix --debug
 # Use a custom config path
 manaradix --config /etc/manaradix/config.toml
 ```
+
+The GUI always re-executes via `pkexec` (polkit) so snapshot operations work
+from a normal user session.  The `--frontend` flag maps to the `MUI_BACKEND`
+environment variable understood by python-manatools; you can set it directly
+instead (`MUI_BACKEND=ncurses manaradix`).
 
 ## CLI Usage
 
@@ -314,8 +327,10 @@ manaradix/
 │   │   ├── policy_engine.py         # systemd unit generation
 │   │   ├── grub_integration.py      # /etc/grub.d/41_manaradix
 │   │   └── config_store.py          # /etc/manaradix/config.toml
-│   ├── ui/                          # AUI page definitions (toolkit-agnostic)
+│   ├── ui/                          # Declarative UI (toolkit-agnostic)
 │   │   ├── navigation.py
+│   │   ├── model.py                 # PageModel / Widget descriptor factories
+│   │   ├── renderer.py              # Descriptor → manatools YUI widgets
 │   │   └── pages/
 │   │       ├── overview.py          # Dashboard
 │   │       ├── snapshots.py         # Snapshot management
@@ -329,7 +344,10 @@ manaradix/
     ├── test_config_store.py
     ├── test_policy_engine.py
     ├── test_grub_integration.py
-    └── test_module.py
+    ├── test_module.py
+    ├── test_pkexec.py
+    ├── test_ui_model.py
+    └── test_ui_renderer.py
 ```
 
 ## Architecture Principles

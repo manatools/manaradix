@@ -1,7 +1,7 @@
 """Navigation structure for the manaradix UI.
 
-Builds the top-level page list and navigation tree used by the
-manatools aui ``Application``.
+Builds the top-level page list consumed by ``AuiRenderer``, which hosts
+the pages as tabs in the manatools YUI main dialog.
 """
 
 from __future__ import annotations

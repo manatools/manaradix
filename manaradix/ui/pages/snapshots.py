@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from manaradix.core.btrfs_ops import SnapshotNotFoundError
 from manaradix.model.snapshot import SnapshotType
+from manaradix.ui.model import PageModel, Widget
 
 if TYPE_CHECKING:
     from manaradix.module import AppContext
@@ -36,8 +37,6 @@ class SnapshotsPage:
 
     def build_model(self):
         """Return a ``PageModel`` for snapshot management."""
-        from manatools.aui import PageModel, Widget
-
         snapshots = self._list_snapshots()
 
         sections = [
