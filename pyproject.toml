@@ -26,7 +26,8 @@ classifiers = [
     "Topic :: System :: Systems Administration",
 ]
 
-# python-manatools (aui branch) may optionally be used for the UI layer.
+# python-manatools (in Mageia 10 official repositories) may optionally be
+# used for the UI layer; its aui backend is part of the released version.
 # btrfs-progs, systemd, polkit, and grub2 are system-level dependencies.
 dependencies = [
     "tomlkit>=0.12.0",

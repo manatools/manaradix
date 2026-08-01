@@ -144,7 +144,7 @@ def run_app(
         from manatools.aui import Application, Frontend
     except ImportError:
         logger.error(
-            "python-manatools (aui branch) is required for the UI. "
+            "python-manatools is required for the UI. "
             "Install it as a system package on Mageia."
         )
         sys.exit(1)
