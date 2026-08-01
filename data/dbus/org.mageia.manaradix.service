@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.mageia.manaradix
+Exec=/usr/bin/manaradix dbus serve
+User=root
+SystemdService=manaradix-dbus.service

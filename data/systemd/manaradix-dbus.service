@@ -1,0 +1,26 @@
+[Unit]
+Description=Manaradix D-Bus service
+Documentation=man:manaradix(8)
+Requires=dbus.service
+After=dbus.service
+
+[Service]
+Type=dbus
+BusName=org.mageia.manaradix
+ExecStart=/usr/bin/manaradix dbus serve
+User=root
+NoNewPrivileges=yes
+PrivateTmp=yes
+Restart=on-failure
+RestartSec=2
+
+# Deliberately no [Install] section: the service is never enabled at
+# boot.  It is activated on demand through
+# /usr/share/dbus-1/system-services/org.mageia.manaradix.service, which
+# forwards to systemd via SystemdService=.  Type=dbus + BusName= tells
+# systemd the unit is only "started" once the daemon holds its name.
+#
+# Hardening is intentionally minimal for v1: ProtectSystem=full/strict
+# would block the daemon's own writes (/etc/manaradix/config.toml,
+# /etc/systemd/system units, update-grub's /boot output).  Revisit with
+# ReadWritePaths= exceptions if a hardened profile is ever required.
