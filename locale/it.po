@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-01 22:19+0200\n"
+"POT-Creation-Date: 2026-08-01 22:42+0200\n"
 "PO-Revision-Date: 2026-08-01 19:00+0200\n"
 "Last-Translator: Mageia Community <mageia-community@mageia.org>\n"
 "Language-Team: Italian <https://www.mageia.org>\n"
@@ -284,6 +284,60 @@ msgstr ""
 #: manaradix/ui/renderer.py:204
 msgid "(no data)"
 msgstr "(nessun dato)"
+
+#: manaradix/ui/pages/about.py:26
+msgid ""
+"Manaradix is free software: you can redistribute it and/or modify it under "
+"the terms of the GNU General Public License as published by the Free "
+"Software Foundation, either version 2 of the License, or (at your option) "
+"any later version."
+msgstr ""
+"Manaradix è software libero: puoi ridistribuirlo e/o modificarlo secondo i "
+"termini della GNU General Public License come pubblicata dalla Free Software "
+"Foundation, versione 2 della Licenza, o (a tua scelta) qualsiasi versione "
+"successiva."
+
+#: manaradix/ui/pages/about.py:37
+msgid "About"
+msgstr "Informazioni"
+
+#: manaradix/ui/pages/about.py:51
+msgid "Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
+msgstr ""
+"Utilità di gestione di snapshot, subvolume e filesystem Btrfs per Mageia"
+
+#: manaradix/ui/pages/about.py:57
+#, python-format
+msgid "Version: %s"
+msgstr "Versione: %s"
+
+#: manaradix/ui/pages/about.py:61
+#, python-format
+msgid "Author: %s"
+msgstr "Autore: %s"
+
+#: manaradix/ui/pages/about.py:65
+msgid "Email: %s"
+msgstr "Email: %s"
+
+#: manaradix/ui/pages/about.py:69
+#, python-format
+msgid "Copyright: %s"
+msgstr "Copyright: %s"
+
+#: manaradix/ui/pages/about.py:73
+#, python-format
+msgid "License: %s"
+msgstr "Licenza: %s"
+
+#: manaradix/ui/pages/about.py:77
+#, python-format
+msgid "Website: %s"
+msgstr "Sito web: %s"
+
+#: manaradix/ui/pages/about.py:82
+msgid "License"
+msgstr "Licenza"
 
 #: manaradix/ui/pages/overview.py:25
 msgid "Overview"
@@ -691,3 +745,4 @@ msgstr "Aggiorna Descrizione"
 #: manaradix/ui/pages/snapshots.py:132
 msgid "New description"
 msgstr "Nuova descrizione"
+

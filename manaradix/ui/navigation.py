@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from manaradix.core.setup_wizard import needs_setup
+from manaradix.ui.pages.about import AboutPage
 from manaradix.ui.pages.overview import OverviewPage
 from manaradix.ui.pages.policies import PoliciesPage
 from manaradix.ui.pages.settings import SettingsPage
@@ -35,6 +36,7 @@ def build_navigation(app_context: AppContext) -> list:
         SnapshotsPage(app_context),
         PoliciesPage(app_context),
         SettingsPage(app_context),
+        AboutPage(app_context),
     ]
     if needs_setup(app_context):
         pages.insert(0, SetupWizardPage(app_context))
