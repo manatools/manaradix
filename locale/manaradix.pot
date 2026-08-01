@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-01 22:42+0200\n"
+"POT-Creation-Date: 2026-08-02 00:12+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,185 +22,195 @@ msgstr ""
 msgid "Path to config file (default: %(default)s)"
 msgstr ""
 
-#: manaradix/module.py:471
+#: manaradix/module.py:493
 #, python-format
 msgid "Created snapshot: %s"
 msgstr ""
 
-#: manaradix/module.py:472
+#: manaradix/module.py:494
 #, python-format
 msgid "  Subvolume:   %s"
 msgstr ""
 
-#: manaradix/module.py:473
+#: manaradix/module.py:495
 #, python-format
 msgid "  Path:        %s"
 msgstr ""
 
-#: manaradix/module.py:474
+#: manaradix/module.py:496
 #, python-format
 msgid "  Type:        %s"
 msgstr ""
 
-#: manaradix/module.py:476
+#: manaradix/module.py:498
 #, python-format
 msgid "  Schedule:    %s"
 msgstr ""
 
-#: manaradix/module.py:478
+#: manaradix/module.py:500
 #, python-format
 msgid "  Description: %s"
 msgstr ""
 
-#: manaradix/module.py:494
+#: manaradix/module.py:516
 msgid "No snapshots found."
 msgstr ""
 
-#: manaradix/module.py:526
+#: manaradix/module.py:548
 #, python-format
 msgid "Deleted snapshot: %s"
 msgstr ""
 
-#: manaradix/module.py:566
+#: manaradix/module.py:588
 #, python-format
 msgid "[DRY RUN] Would delete %d snapshot(s):"
 msgstr ""
 
-#: manaradix/module.py:570
+#: manaradix/module.py:592
 #, python-format
 msgid "[DRY RUN] Nothing to prune (%d kept, 0 excess)."
 msgstr ""
 
-#: manaradix/module.py:572
+#: manaradix/module.py:594
 #, python-format
 msgid "Pruned %d snapshot(s):"
 msgstr ""
 
-#: manaradix/module.py:576
+#: manaradix/module.py:598
 #, python-format
 msgid "Nothing to prune (%d kept, no excess)."
 msgstr ""
 
-#: manaradix/module.py:591
+#: manaradix/module.py:613
 msgid "Setup not needed: snapshots or policies already exist."
 msgstr ""
 
-#: manaradix/module.py:596
+#: manaradix/module.py:618
 msgid "Setup needed, but no btrfs filesystem was found on this system."
 msgstr ""
 
-#: manaradix/module.py:601
+#: manaradix/module.py:623
 msgid "Setup needed: no snapshots and no snapshot policies are configured."
-msgstr ""
-
-#: manaradix/module.py:602
-#, python-format
-msgid "Detected role: %s"
-msgstr ""
-
-#: manaradix/module.py:604 manaradix/module.py:652
-#: manaradix/core/setup_wizard.py:253 manaradix/ui/pages/setup.py:90
-msgid "No setup profiles are available on this system."
-msgstr ""
-
-#: manaradix/module.py:606
-#, python-format
-msgid "Default profile: %s"
-msgstr ""
-
-#: manaradix/module.py:607
-msgid "Run 'manaradix setup apply' to apply it."
-msgstr ""
-
-#: manaradix/module.py:622
-#, python-format
-msgid "[DRY RUN] Would apply the setup profile %s:"
 msgstr ""
 
 #: manaradix/module.py:624
 #, python-format
-msgid "Applied the setup profile %s:"
+msgid "Detected role: %s"
+msgstr ""
+
+#: manaradix/module.py:626 manaradix/module.py:674
+#: manaradix/core/setup_wizard.py:253 manaradix/ui/pages/setup.py:90
+msgid "No setup profiles are available on this system."
+msgstr ""
+
+#: manaradix/module.py:628
+#, python-format
+msgid "Default profile: %s"
 msgstr ""
 
 #: manaradix/module.py:629
+msgid "Run 'manaradix setup apply' to apply it."
+msgstr ""
+
+#: manaradix/module.py:644
+#, python-format
+msgid "[DRY RUN] Would apply the setup profile %s:"
+msgstr ""
+
+#: manaradix/module.py:646
+#, python-format
+msgid "Applied the setup profile %s:"
+msgstr ""
+
+#: manaradix/module.py:651
 #, python-format
 msgid "  %s: %s (retention: %s)"
 msgstr ""
 
-#: manaradix/module.py:636
+#: manaradix/module.py:658
 msgid "would be installed"
 msgstr ""
 
-#: manaradix/module.py:638
+#: manaradix/module.py:660
 msgid "not available"
 msgstr ""
 
-#: manaradix/module.py:641 manaradix/ui/pages/settings.py:172
+#: manaradix/module.py:663 manaradix/ui/pages/settings.py:172
 #: manaradix/ui/pages/setup.py:271
 msgid "installed"
 msgstr ""
 
-#: manaradix/module.py:641 manaradix/ui/pages/settings.py:172
+#: manaradix/module.py:663 manaradix/ui/pages/settings.py:172
 #: manaradix/ui/pages/setup.py:271
 msgid "not installed"
 msgstr ""
 
-#: manaradix/module.py:642
+#: manaradix/module.py:664
 #, python-format
 msgid "  GRUB recovery menu: %s"
 msgstr ""
 
-#: manaradix/module.py:655
+#: manaradix/module.py:677
 msgid "Available setup profiles:"
 msgstr ""
 
-#: manaradix/module.py:670
+#: manaradix/module.py:705
+msgid "The manaradix D-Bus service is running."
+msgstr ""
+
+#: manaradix/module.py:709
+msgid ""
+"The manaradix D-Bus service is not running; it starts automatically on first "
+"use."
+msgstr ""
+
+#: manaradix/module.py:723
 #, python-format
 msgid "ID:          %s"
 msgstr ""
 
-#: manaradix/module.py:671
+#: manaradix/module.py:724
 #, python-format
 msgid "Subvolume:   %s"
 msgstr ""
 
-#: manaradix/module.py:672
+#: manaradix/module.py:725
 #, python-format
 msgid "Path:        %s"
 msgstr ""
 
-#: manaradix/module.py:673
+#: manaradix/module.py:726
 #, python-format
 msgid "Date:        %s"
 msgstr ""
 
-#: manaradix/module.py:674
+#: manaradix/module.py:727
 #, python-format
 msgid "Type:        %s"
 msgstr ""
 
-#: manaradix/module.py:675
+#: manaradix/module.py:728
 #, python-format
 msgid "Read-only:   %s"
 msgstr ""
 
-#: manaradix/module.py:676
+#: manaradix/module.py:729
 #, python-format
 msgid "Schedule:    %s"
 msgstr ""
 
-#: manaradix/module.py:677
+#: manaradix/module.py:730
 #, python-format
 msgid "Description: %s"
 msgstr ""
 
-#: manaradix/utils/pkexec.py:121
+#: manaradix/utils/pkexec.py:131
 #, python-format
 msgid ""
 "error: %s not found. Install polkit to use privileged manaradix commands."
 msgstr ""
 
-#: manaradix/utils/pkexec.py:127
+#: manaradix/utils/pkexec.py:137
 #, python-format
 msgid "error: pkexec failed: %s"
 msgstr ""
@@ -262,11 +272,11 @@ msgid ""
 "GRUB recovery menu, no periodic snapshots."
 msgstr ""
 
-#: manaradix/ui/renderer.py:204
+#: manaradix/ui/renderer.py:212
 msgid "(no data)"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:26
+#: manaradix/ui/pages/about.py:27
 msgid ""
 "Manaradix is free software: you can redistribute it and/or modify it under "
 "the terms of the GNU General Public License as published by the Free "
@@ -274,45 +284,45 @@ msgid ""
 "any later version."
 msgstr ""
 
-#: manaradix/ui/pages/about.py:37
+#: manaradix/ui/pages/about.py:38
 msgid "About"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:51
+#: manaradix/ui/pages/about.py:55
 msgid "Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
-msgstr ""
-
-#: manaradix/ui/pages/about.py:57
-#, python-format
-msgid "Version: %s"
 msgstr ""
 
 #: manaradix/ui/pages/about.py:61
 #, python-format
-msgid "Author: %s"
+msgid "Version: %s"
 msgstr ""
 
 #: manaradix/ui/pages/about.py:65
 #, python-format
-msgid "Email: %s"
+msgid "Author: %s"
 msgstr ""
 
 #: manaradix/ui/pages/about.py:69
 #, python-format
-msgid "Copyright: %s"
+msgid "Email: %s"
 msgstr ""
 
 #: manaradix/ui/pages/about.py:73
 #, python-format
-msgid "License: %s"
+msgid "Copyright: %s"
 msgstr ""
 
 #: manaradix/ui/pages/about.py:77
 #, python-format
+msgid "License: %s"
+msgstr ""
+
+#: manaradix/ui/pages/about.py:81
+#, python-format
 msgid "Website: %s"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:82
+#: manaradix/ui/pages/about.py:90
 msgid "License"
 msgstr ""
 
@@ -715,4 +725,32 @@ msgstr ""
 
 #: manaradix/ui/pages/snapshots.py:132
 msgid "New description"
+msgstr ""
+
+#: manaradix/dbus/service.py:91
+#, python-format
+msgid "Unknown method: %s"
+msgstr ""
+
+#: manaradix/dbus/service.py:97
+#, python-format
+msgid "Unhandled method: %s"
+msgstr ""
+
+#: manaradix/dbus/service.py:121
+#, python-format
+msgid "Snapshot not found: %s"
+msgstr ""
+
+#: manaradix/dbus/service.py:131
+#, python-format
+msgid "Invalid snapshot type: %s"
+msgstr ""
+
+#: manaradix/dbus/wire.py:401
+msgid "error: 'manaradix dbus serve' must run as root (system service)."
+msgstr ""
+
+#: manaradix/dbus/wire.py:413
+msgid "error: the manaradix D-Bus service is already running."
 msgstr ""

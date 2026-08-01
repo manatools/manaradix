@@ -358,6 +358,45 @@ Four action levels under the `org.mageia.manaradix.*` namespace:
 The policy file is installed at
 `/usr/share/polkit-1/actions/org.mageia.manaradix.policy`.
 
+## D-Bus Service
+
+A system-bus service (`org.mageia.manaradix`, object
+`/org/mageia/manaradix`) exposes the same core operations programmatically,
+authorizing each call against the four polkit action tiers above — the
+read tier needs no authentication, the manage tiers prompt the caller's
+polkit agent.  The daemon runs as root and is **bus-activated on demand**
+(systemd unit + `/usr/share/dbus-1/system-services/` descriptor); it is
+never enabled at boot and starts only when first called.
+
+```bash
+# Is the service running? (never activates it)
+manaradix dbus status
+
+# Run the daemon manually (root only; normally started by the bus)
+sudo manaradix dbus serve
+
+# Call a read method as any user
+busctl --system call org.mageia.manaradix /org/mageia/manaradix \
+    org.mageia.manaradix ListSnapshots s /
+
+# A manage-tier call prompts for authorization (or fails with
+# org.mageia.manaradix.Error.AuthRequired if denied)
+busctl --system call org.mageia.manaradix /org/mageia/manaradix \
+    org.mageia.manaradix CreateSnapshot sssbsssb / "" true manual "" / false
+```
+
+The daemon is a thin shell over the same core services as the CLI
+(`manaradix/dbus/service.py` — no business logic), so every method maps
+1:1 to an existing library call.  The `manaradix.dbus.client` module
+wraps the bus for Python callers, translating D-Bus errors into typed
+exceptions and offering a `daemon_running()` probe that never activates
+the service.
+
+Files shipped: `data/systemd/manaradix-dbus.service` (unit),
+`data/dbus/org.mageia.manaradix.service` (activation descriptor),
+`data/dbus/org.mageia.manaradix.conf` (bus policy: anyone may call,
+polkit gates each method).
+
 ## Project Structure
 
 ```
@@ -367,7 +406,9 @@ manaradix/
 ├── spec.md                          # Full technical specification
 ├── data/
 │   ├── polkit/                      # Polkit policy XML
-│   └── desktop/                     # .desktop launcher
+│   ├── desktop/                     # .desktop launcher
+│   ├── systemd/                     # manaradix-dbus.service unit
+│   └── dbus/                        # Bus activation + bus policy files
 ├── manaradix/
 │   ├── __init__.py
 │   ├── module.py                    # AppContext, run_app(), main() CLI
@@ -378,6 +419,14 @@ manaradix/
 │   │   ├── policy_engine.py         # systemd unit generation
 │   │   ├── grub_integration.py      # /etc/grub.d/41_manaradix
 │   │   └── config_store.py          # /etc/manaradix/config.toml
+│   ├── dbus/                        # System D-Bus service + client
+│   │   ├── constants.py             # Interface + method→polkit-action map
+│   │   ├── convert.py               # Model ↔ D-Bus value conversion
+│   │   ├── errors.py                # Typed client exceptions
+│   │   ├── polkit.py                # GI Polkit authorization checks
+│   │   ├── service.py               # Per-method logic (auth + delegation)
+│   │   ├── wire.py                  # dbus.service.Object + serve_main()
+│   │   └── client.py                # Python client library
 │   ├── ui/                          # Declarative UI (toolkit-agnostic)
 │   │   ├── navigation.py
 │   │   ├── model.py                 # PageModel / Widget descriptor factories
@@ -422,7 +471,7 @@ xgettext --language=Python --keyword=_ --from-code=UTF-8 \
     --output=locale/manaradix.pot \
     --package-name=manaradix --package-version=0.1.0 \
     manaradix/module.py manaradix/utils/pkexec.py manaradix/i18n.py \
-    manaradix/core/*.py manaradix/ui/renderer.py \
+    manaradix/core/*.py manaradix/dbus/*.py manaradix/ui/renderer.py \
     manaradix/ui/navigation.py manaradix/ui/pages/*.py
 
 # Create a new translation (example: Spanish)
