@@ -95,6 +95,18 @@ class TestNeedsElevation:
     def test_unknown_subcommand_defaults_to_elevated(self) -> None:
         assert needs_elevation("snapshot", "unknown_action") is True
 
+    # -- D-Bus subcommands --------------------------------------------------
+
+    def test_dbus_serve_is_not_elevated(self) -> None:
+        # The daemon refuses non-root itself; pkexec must never be involved.
+        assert needs_elevation("dbus", "serve") is False
+
+    def test_dbus_status_is_not_elevated(self) -> None:
+        assert needs_elevation("dbus", "status") is False
+
+    def test_unknown_dbus_subcommand_defaults_to_elevated(self) -> None:
+        assert needs_elevation("dbus", "bogus") is True
+
 
 # ---------------------------------------------------------------------------
 # reexec_with_pkexec

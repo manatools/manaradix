@@ -437,6 +437,28 @@ def _build_parser() -> argparse.ArgumentParser:
         help="List the available setup profiles",
     )
 
+    # -- dbus ----------------------------------------------------------------
+    dbus_parser = subparsers.add_parser(
+        "dbus",
+        help="D-Bus daemon and status",
+        description="Manage the system D-Bus service: run the daemon "
+        "(normally started on demand by D-Bus activation) or report "
+        "whether it is running.",
+    )
+    dbus_subs = dbus_parser.add_subparsers(
+        title="dbus subcommands",
+        dest="dbus_command",
+        metavar="ACTION",
+    )
+    dbus_subs.add_parser(
+        "serve",
+        help="Run the D-Bus service (root only; the systemd unit calls this)",
+    )
+    dbus_subs.add_parser(
+        "status",
+        help="Report whether the D-Bus service is running",
+    )
+
     return parser
 
 
@@ -660,6 +682,37 @@ def _cmd_setup_list_profiles(ctx: AppContext, args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_dbus_serve(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``dbus serve`` — run the daemon (root only)."""
+    from manaradix.dbus.wire import serve_main
+
+    return serve_main(
+        config_path=args.config,
+        snapshot_dir=args.snapshot_dir,
+        debug=args.debug,
+    )
+
+
+def _cmd_dbus_status(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``dbus status`` — is the service running?"""
+    from manaradix.dbus.client import ManaradixClient
+
+    try:
+        running = ManaradixClient().daemon_running()
+    except Exception:
+        running = False
+    if running:
+        print(_("The manaradix D-Bus service is running."))
+        return 0
+    print(
+        _(
+            "The manaradix D-Bus service is not running; "
+            "it starts automatically on first use."
+        )
+    )
+    return 2
+
+
 def _cmd_snapshot_info(ctx: AppContext, args: argparse.Namespace) -> int:
     """Handle ``snapshot info``."""
     snap = ctx.snapshot_manager.get(args.snapshot_id, mount=args.mount)
@@ -688,6 +741,8 @@ _COMMAND_DISPATCH: dict[tuple[str, str], object] = {
     ("setup", "status"): _cmd_setup_status,
     ("setup", "apply"): _cmd_setup_apply,
     ("setup", "list-profiles"): _cmd_setup_list_profiles,
+    ("dbus", "serve"): _cmd_dbus_serve,
+    ("dbus", "status"): _cmd_dbus_status,
 }
 
 
@@ -709,8 +764,10 @@ def main() -> None:
     # ---- Privilege escalation ----
     # If the operation needs root and we're not already running as root
     # (and haven't already tried pkexec), re-exec via pkexec.
-    subcmd = getattr(args, "snapshot_command", None) or getattr(
-        args, "setup_command", None
+    subcmd = (
+        getattr(args, "snapshot_command", None)
+        or getattr(args, "setup_command", None)
+        or getattr(args, "dbus_command", None)
     )
     if needs_elevation(args.command, subcmd) and not is_root() and not already_reexecuted():
         logger.info(
@@ -737,7 +794,9 @@ def main() -> None:
 
     dispatch_key = (
         args.command,
-        getattr(args, "snapshot_command", None) or getattr(args, "setup_command", None),
+        getattr(args, "snapshot_command", None)
+        or getattr(args, "setup_command", None)
+        or getattr(args, "dbus_command", None),
     )
     handler = _COMMAND_DISPATCH.get(dispatch_key)
 

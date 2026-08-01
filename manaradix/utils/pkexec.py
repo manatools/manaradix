@@ -48,6 +48,14 @@ _PRIVILEGED_COMMANDS: set[tuple[str, str | None]] = {
     ("setup", "apply"),
 }
 
+# D-Bus subcommands never re-exec via pkexec: 'dbus serve' refuses
+# non-root itself (the systemd unit runs it as root) and 'dbus status'
+# is read-only.  Unknown dbus subcommands still hit the safe default.
+_DAEMON_COMMANDS: set[tuple[str, str | None]] = {
+    ("dbus", "serve"),
+    ("dbus", "status"),
+}
+
 _PKEXEC_BIN = "/usr/bin/pkexec"
 
 
@@ -86,6 +94,8 @@ def needs_elevation(command: str | None, subcommand: str | None) -> bool:
         return True
 
     key = (command, subcommand)
+    if key in _DAEMON_COMMANDS:
+        return False
     if key in _READ_ONLY_COMMANDS:
         return False
     if key in _PRIVILEGED_COMMANDS:
