@@ -718,8 +718,10 @@ class BtrfsOps:
         """Return mounted btrfs filesystems from findmnt.
 
         Runs ``findmnt -t btrfs -o TARGET,SOURCE,UUID -r`` (util-linux;
-        ``-r`` disables the tree decorations).  Returns a list of
-        ``{"target", "source", "uuid"}`` dicts, or an empty list on error.
+        ``-r`` disables the tree decorations).  In raw mode util-linux
+        separates columns with a single space (not tabs), so rows are
+        split on any whitespace.  Returns a list of ``{"target",
+        "source", "uuid"}`` dicts, or an empty list on error.
         """
         cmd = [
             self.FINMNT_BIN,
@@ -744,7 +746,7 @@ class BtrfsOps:
 
         mounts: list[dict] = []
         for line in proc.stdout.splitlines()[1:]:  # skip the header line
-            parts = line.split("\t")  # raw findmnt separates columns with tabs
+            parts = line.split()
             if len(parts) >= 3:
                 mounts.append(
                     {

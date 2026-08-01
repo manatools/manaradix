@@ -318,6 +318,28 @@ class TestBtrfsMounts:
         assert mounts[1]["target"] == "/home"
 
     @patch("subprocess.run")
+    def test_parses_space_separated_rows(self, mock_run: MagicMock) -> None:
+        # Real findmnt -r separates columns with single spaces, not tabs.
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["/usr/bin/findmnt", "-t", "btrfs", "-o", "TARGET,SOURCE,UUID", "-r"],
+            returncode=0,
+            stdout=(
+                "TARGET SOURCE UUID\n"
+                "/ /dev/nvme0n1p3 3149ac5f-25ee-4805-b0ae-e6679af72699\n"
+                "/home /dev/mapper/crypt_nvme0n1p6 efff4471-576f-4fbb-976e-162761395cfa\n"
+            ),
+            stderr="",
+        )
+        mounts = BtrfsOps().btrfs_mounts()
+        assert len(mounts) == 2
+        assert mounts[0] == {
+            "target": "/",
+            "source": "/dev/nvme0n1p3",
+            "uuid": "3149ac5f-25ee-4805-b0ae-e6679af72699",
+        }
+        assert mounts[1]["target"] == "/home"
+
+    @patch("subprocess.run")
     def test_no_mounts_returns_empty(self, mock_run: MagicMock) -> None:
         mock_run.return_value = subprocess.CompletedProcess(
             ["/usr/bin/findmnt"], returncode=0, stdout="TARGET\tSOURCE\tUUID\n", stderr="",
