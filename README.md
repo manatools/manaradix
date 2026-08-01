@@ -55,6 +55,15 @@ pytest --cov=manaradix --cov-report=term
 ```
 
 The tests use mocked subprocess calls — no live btrfs filesystem is required.
+
+An integration suite in `tests/test_integration_btrfs.py` validates the
+parsers and the full snapshot lifecycle (create, list, rename, prune,
+browse, restore) against a real loopback btrfs filesystem.  It needs root
+and is skipped in the normal run:
+
+```bash
+sudo -E .venv/bin/pytest tests/test_integration_btrfs.py -v
+```
 Python 3.11+ is the only hard Python dependency; `btrfs-progs`, `systemd`,
 `polkit`, `python-manatools`, and `grub2` are system-level runtime
 dependencies needed only when running the actual tool.  The UI renderer is
