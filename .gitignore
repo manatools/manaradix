@@ -26,3 +26,6 @@ locale/*/LC_MESSAGES/*.mo
 
 # Local agent guidance (never committed)
 CLAUDE.md
+
+# Local technical specification (never committed)
+spec.md

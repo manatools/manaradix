@@ -92,7 +92,7 @@ msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
 
 %files -f %{name}.lang
 %license LICENSE
-%doc README.md spec.md
+%doc README.md
 %{_bindir}/manaradix
 %{python3_sitelib}/manaradix/
 %{python3_sitelib}/manaradix-%{version}*.egg-info/
