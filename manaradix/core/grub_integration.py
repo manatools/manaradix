@@ -16,6 +16,13 @@ logger = logging.getLogger(__name__)
 _GRUB_SCRIPT_PATH = "/etc/grub.d/41_manaradix"
 _GRUB_UPDATE_BIN = "/usr/sbin/update-grub"
 
+#: Candidate GRUB configuration files (BIOS layouts); EFI layouts are
+#: covered by the ``/boot/efi/EFI/*/grub.cfg`` glob in has_system_grub().
+_GRUB_CFG_CANDIDATES = (
+    "/boot/grub2/grub.cfg",
+    "/boot/grub/grub.cfg",
+)
+
 _GRUB_SCRIPT_TEMPLATE = """\
 #!/bin/sh
 # 41_manaradix — GRUB menu entries for btrfs snapshots
@@ -149,6 +156,26 @@ class GrubIntegration:
             self._script_path,
             os.X_OK,
         )
+
+    def has_system_grub(self, prefix: str = "") -> bool:
+        """Return True when GRUB is the system bootloader.
+
+        Detection is conservative: a GRUB configuration file must exist
+        (BIOS or EFI layout).  This is what makes boot-from-snapshot
+        meaningful — a btrfs root alone is not enough.  ``prefix`` is
+        prepended to every path (used by tests to probe a temp tree).
+        """
+        import glob
+
+        for candidate in _GRUB_CFG_CANDIDATES:
+            if os.path.isfile(prefix + candidate):
+                return True
+        try:
+            if glob.glob(prefix + "/boot/efi/EFI/*/grub.cfg"):
+                return True
+        except OSError:
+            pass
+        return False
 
     def update_grub(self, *, dry_run: bool = False) -> None:
         """Run ``update-grub`` (or ``grub-mkconfig``) to regenerate the GRUB menu.

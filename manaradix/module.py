@@ -408,8 +408,8 @@ def _build_parser() -> argparse.ArgumentParser:
     setup_parser = subparsers.add_parser(
         "setup",
         help="First-run setup wizard",
-        description="Check whether a recommended btrfs snapshot baseline "
-        "is in place, and apply it.",
+        description="Check whether a btrfs snapshot baseline is in place, "
+        "and apply a setup profile (desktop, server, kiosk, ...).",
     )
     setup_subs = setup_parser.add_subparsers(
         title="setup subcommands",
@@ -422,11 +422,19 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     setup_apply = setup_subs.add_parser(
         "apply",
-        help="Apply the recommended setup (config, policy, systemd units, GRUB)",
+        help="Apply a setup profile (config, policies, systemd units, GRUB)",
+    )
+    setup_apply.add_argument(
+        "--profile", default=None,
+        help="Profile to apply (default: detected for this system)",
     )
     setup_apply.add_argument(
         "--dry-run", action="store_true",
         help="Preview the setup without applying anything",
+    )
+    setup_list = setup_subs.add_parser(
+        "list-profiles",
+        help="List the available setup profiles",
     )
 
     return parser
@@ -571,37 +579,84 @@ def _cmd_snapshot_prune(ctx: AppContext, args: argparse.Namespace) -> int:
 
 def _cmd_setup_status(ctx: AppContext, args: argparse.Namespace) -> int:
     """Handle ``setup status``."""
-    from manaradix.core.setup_wizard import needs_setup
+    from manaradix.core.setup_wizard import (
+        detect_role,
+        needs_setup,
+        select_default_profile,
+        system_layout,
+    )
+    from manaradix.core.templates import load_profiles
 
-    if needs_setup(ctx):
-        print(_("Setup needed: no snapshots and no snapshot policies are configured."))
-        print(_("Run 'manaradix setup apply' to apply the recommended baseline."))
-    else:
+    if not needs_setup(ctx):
         print(_("Setup not needed: snapshots or policies already exist."))
+        return 0
+
+    layout = system_layout(ctx)
+    if not layout["btrfs_targets"]:
+        print(_("Setup needed, but no btrfs filesystem was found on this system."))
+        return 0
+
+    role = detect_role()
+    default = select_default_profile(load_profiles(), role)
+    print(_("Setup needed: no snapshots and no snapshot policies are configured."))
+    print(_("Detected role: %s") % role)
+    if default is None:
+        print(_("No setup profiles are available on this system."))
+    else:
+        print(_("Default profile: %s") % _(default.name))
+        print(_("Run 'manaradix setup apply' to apply it."))
     return 0
 
 
 def _cmd_setup_apply(ctx: AppContext, args: argparse.Namespace) -> int:
     """Handle ``setup apply``."""
-    from manaradix.core.setup_wizard import apply_recommended
+    from manaradix.core.setup_wizard import apply_profile
 
     try:
-        summary = apply_recommended(ctx, dry_run=args.dry_run)
+        summary = apply_profile(ctx, args.profile, dry_run=args.dry_run)
     except Exception as exc:
         logger.error("Setup failed: %s", exc)
         return 1
 
     if args.dry_run:
-        print(_("[DRY RUN] Would apply the recommended setup:"))
+        print(_("[DRY RUN] Would apply the setup profile %s:") % summary["profile_id"])
     else:
-        print(_("Applied the recommended setup:"))
-    print(_("  Schedules: %s") % ", ".join(summary["schedules"]))
-    print(
-        _("  Retention: %s")
-        % ", ".join(f"{k}={v}" for k, v in summary["retention"].items())
-    )
-    grub = _("installed") if summary.get("grub_installed") else _("not installed")
+        print(_("Applied the setup profile %s:") % summary["profile_id"])
+    for entry in summary.get("policies", []):
+        schedules = ", ".join(entry.get("schedules", []))
+        retention = ", ".join(f"{k}={v}" for k, v in entry.get("retention", {}).items())
+        print(
+            _("  %s: %s (retention: %s)")
+            % (entry["subvolume"], schedules, retention)
+        )
+    if args.dry_run:
+        # Preview mode: report what the effective layout allows, not what
+        # was (nothing) actually installed.
+        grub = (
+            _("would be installed")
+            if summary.get("grub_effective")
+            else _("not available")
+        )
+    else:
+        grub = _("installed") if summary.get("grub_installed") else _("not installed")
     print(_("  GRUB recovery menu: %s") % grub)
+    return 0
+
+
+def _cmd_setup_list_profiles(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``setup list-profiles``."""
+    from manaradix.core.templates import load_profiles
+
+    profiles = load_profiles()
+    if not profiles:
+        print(_("No setup profiles are available on this system."))
+        return 0
+
+    print(_("Available setup profiles:"))
+    for profile in profiles:
+        print(f"  {profile.id:10s}  {_(profile.name)} ({profile.role})")
+        if profile.description:
+            print(f"      {_(profile.description)}")
     return 0
 
 
@@ -632,6 +687,7 @@ _COMMAND_DISPATCH: dict[tuple[str, str], object] = {
     ("snapshot", "info"): _cmd_snapshot_info,
     ("setup", "status"): _cmd_setup_status,
     ("setup", "apply"): _cmd_setup_apply,
+    ("setup", "list-profiles"): _cmd_setup_list_profiles,
 }
 
 

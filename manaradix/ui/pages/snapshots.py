@@ -246,7 +246,7 @@ class SnapshotsPage:
         """Called when a row in the snapshot tree is selected."""
         self._selected_snapshot_id = row.get("ID")
 
-    def on_filter_change(self) -> None:
+    def on_filter_change(self, value=None) -> None:
         """Called when a filter dropdown changes.  Triggers UI refresh."""
         pass
 

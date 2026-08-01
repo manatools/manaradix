@@ -70,6 +70,9 @@ class TestNeedsElevation:
     def test_setup_status_is_readonly(self) -> None:
         assert needs_elevation("setup", "status") is False
 
+    def test_setup_list_profiles_is_readonly(self) -> None:
+        assert needs_elevation("setup", "list-profiles") is False
+
     # -- Privileged subcommands --------------------------------------------
 
     def test_snapshot_create_needs_elevation(self) -> None:

@@ -1,0 +1,29 @@
+# Manaradix setup profile: Server
+# Frequent snapshots with longer retention for a headless machine,
+# plus extra daily coverage for data subvolumes when they exist,
+# a boot-time recovery point and the GRUB recovery menu.
+id = "server"
+name = "Server"
+description = "Frequent hourly snapshots with long retention, extra coverage for data subvolumes, a boot-time recovery point and the GRUB recovery menu."
+role = "server"
+
+[global]
+boot_from_snapshot = true
+snapshot_dir = ".snapshots"
+
+[[policies]]
+subvolume = "/"
+required = true
+schedules = ["hourly", "daily", "weekly", "monthly", "boot"]
+
+[[policies]]
+subvolume = "/srv"
+required = false
+schedules = ["daily"]
+keep_daily = 7
+
+[[policies]]
+subvolume = "/var"
+required = false
+schedules = ["daily"]
+keep_daily = 7

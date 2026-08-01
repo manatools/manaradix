@@ -182,23 +182,35 @@ normally don't run it by hand.
 ### First-run setup wizard
 
 When the system has no snapshots and no snapshot policies (a stock Mageia
-btrfs install), the GUI opens on a **Setup Wizard** tab proposing a
-recommended baseline: daily/weekly/boot snapshots for `/` with default
-retention, and the GRUB boot-from-snapshot recovery menu.  Apply it in one
-click, or configure everything manually from Policies and Settings.
+btrfs install), the GUI opens on a **Setup Wizard** tab proposing a setup
+profile for this system — desktop, server, or kiosk — auto-selected from
+the detected role (graphical → desktop, headless → server) and switchable
+from a dropdown.  The plan is adapted to the actual layout: only btrfs
+subvolumes get policies, and boot snapshots / the GRUB recovery menu are
+only proposed when the root filesystem is btrfs (and GRUB is present).
+Apply it in one click, or configure everything manually from Policies and
+Settings.
 
-The same baseline is available headless (spec.md §15):
+The same setup is available headless (spec.md §15):
 
 ```bash
 # Is setup needed?
 manaradix setup status
 
-# Apply the recommended setup (config, policy, systemd units, GRUB script)
+# Which profiles are available?
+manaradix setup list-profiles
+
+# Apply the default profile (config, policies, systemd units, GRUB script)
 manaradix setup apply
 
-# Preview what would be applied
+# Apply a specific profile, or preview what would be applied
+manaradix setup apply --profile server
 manaradix setup apply --dry-run
 ```
+
+Profiles are TOML templates: the shipped ones live in
+`/usr/share/manaradix/templates/`, admin overrides and extras in
+`/etc/manaradix/templates.d/`.
 
 ## Automated Snapshots (systemd Timers)
 
@@ -410,8 +422,8 @@ xgettext --language=Python --keyword=_ --from-code=UTF-8 \
     --output=locale/manaradix.pot \
     --package-name=manaradix --package-version=0.1.0 \
     manaradix/module.py manaradix/utils/pkexec.py manaradix/i18n.py \
-    manaradix/ui/renderer.py manaradix/ui/navigation.py \
-    manaradix/ui/pages/*.py
+    manaradix/core/*.py manaradix/ui/renderer.py \
+    manaradix/ui/navigation.py manaradix/ui/pages/*.py
 
 # Create a new translation (example: Spanish)
 msginit --locale=es --input=locale/manaradix.pot \

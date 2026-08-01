@@ -74,6 +74,10 @@ install -D -m 0644 data/polkit/org.mageia.manaradix.policy \
 install -D -m 0644 data/desktop/manaradix.desktop \
     %{buildroot}%{_datadir}/applications/manaradix.desktop
 
+# --- Setup wizard profiles (TOML templates) ---
+install -d %{buildroot}%{_datadir}/manaradix/templates
+cp -a data/templates/*.toml %{buildroot}%{_datadir}/manaradix/templates/
+
 # --- Locale files (translations ship as .mo, compiled from .po) ---
 install -d %{buildroot}%{_datadir}/locale/it/LC_MESSAGES
 msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
@@ -88,6 +92,7 @@ msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
 %{python3_sitelib}/manaradix-%{version}*.egg-info/
 %{_datadir}/polkit-1/actions/org.mageia.manaradix.policy
 %{_datadir}/applications/manaradix.desktop
+%{_datadir}/manaradix/templates/
 
 %post
 # Polkit: reload policy definitions

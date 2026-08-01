@@ -1,0 +1,22 @@
+# Manaradix setup profile: Desktop workstation
+# Daily and weekly history plus a boot-time recovery point, with the
+# GRUB recovery menu — the classic baseline for a graphical workstation.
+id = "desktop"
+name = "Desktop workstation"
+description = "Daily and weekly snapshots with a boot-time recovery point, plus the GRUB recovery menu — suited for a graphical workstation."
+role = "desktop"
+
+[global]
+boot_from_snapshot = true
+snapshot_dir = ".snapshots"
+
+[[policies]]
+subvolume = "/"
+required = true
+schedules = ["daily", "weekly", "boot"]
+
+[[policies]]
+subvolume = "/home"
+required = false
+schedules = ["daily"]
+keep_daily = 7

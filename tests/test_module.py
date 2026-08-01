@@ -10,6 +10,7 @@ from manaradix.model.policy import RetentionPolicy, SnapshotPolicy
 from manaradix.module import (
     _build_parser,
     _cmd_setup_apply,
+    _cmd_setup_list_profiles,
     _cmd_setup_status,
     _cmd_snapshot_create,
     _cmd_snapshot_delete,
@@ -105,7 +106,20 @@ class TestParser:
         args = parser.parse_args(["setup", "apply", "--dry-run"])
         assert args.command == "setup"
         assert args.setup_command == "apply"
+        assert args.profile is None
         assert args.dry_run is True
+
+    def test_setup_apply_with_profile(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args(["setup", "apply", "--profile", "kiosk"])
+        assert args.setup_command == "apply"
+        assert args.profile == "kiosk"
+
+    def test_setup_list_profiles(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args(["setup", "list-profiles"])
+        assert args.command == "setup"
+        assert args.setup_command == "list-profiles"
 
 
 # ---------------------------------------------------------------------------
@@ -251,12 +265,18 @@ class TestCmdSnapshotInfo:
 
 
 class TestCmdSetup:
+    _LAYOUT = {"btrfs_targets": ["/"], "root_is_btrfs": True, "grub_present": True}
+
     @patch("manaradix.module._init_services")
     def test_status_reports_needed(self, mock_init) -> None:
         ctx = MagicMock()
         ctx.snapshot_manager.list_all.return_value = []
         ctx.config_store.list_policies.return_value = []
-        exit_code = _cmd_setup_status(ctx, MagicMock())
+        with patch(
+            "manaradix.core.setup_wizard.system_layout", return_value=self._LAYOUT
+        ), patch("manaradix.core.setup_wizard.detect_role", return_value="desktop"), \
+             patch("manaradix.core.templates.load_profiles", return_value=[]):
+            exit_code = _cmd_setup_status(ctx, MagicMock())
         assert exit_code == 0
 
     @patch("manaradix.module._init_services")
@@ -266,24 +286,64 @@ class TestCmdSetup:
         exit_code = _cmd_setup_status(ctx, MagicMock())
         assert exit_code == 0
 
+    def test_status_without_btrfs(self, capsys) -> None:
+        ctx = MagicMock()
+        ctx.snapshot_manager.list_all.return_value = []
+        ctx.config_store.list_policies.return_value = []
+        with patch(
+            "manaradix.core.setup_wizard.system_layout",
+            return_value={"btrfs_targets": [], "root_is_btrfs": False,
+                          "grub_present": False},
+        ):
+            exit_code = _cmd_setup_status(ctx, MagicMock())
+        assert exit_code == 0
+        assert "no btrfs filesystem" in capsys.readouterr().out
+
     def test_apply_dry_run(self) -> None:
         ctx = MagicMock()
+        summary = {
+            "config_written": False,
+            "profile_id": "desktop",
+            "policies": [
+                {"subvolume": "/", "schedules": ["daily"],
+                 "retention": {"keep_daily": 7}},
+            ],
+            "grub_installed": False,
+        }
         with patch(
-            "manaradix.core.setup_wizard.apply_recommended",
-            return_value={
-                "schedules": ["daily"],
-                "retention": {"keep_daily": 7},
-                "grub_installed": False,
-            },
+            "manaradix.core.setup_wizard.apply_profile",
+            return_value=summary,
         ):
-            exit_code = _cmd_setup_apply(ctx, MagicMock(dry_run=True))
+            exit_code = _cmd_setup_apply(ctx, MagicMock(dry_run=True, profile=None))
         assert exit_code == 0
+
+    def test_apply_forwards_profile(self) -> None:
+        ctx = MagicMock()
+        with patch(
+            "manaradix.core.setup_wizard.apply_profile",
+            return_value={"config_written": False, "profile_id": "kiosk",
+                          "policies": [], "grub_installed": False},
+        ) as mock_apply:
+            _cmd_setup_apply(ctx, MagicMock(dry_run=True, profile="kiosk"))
+        mock_apply.assert_called_once_with(ctx, "kiosk", dry_run=True)
 
     def test_apply_failure(self) -> None:
         ctx = MagicMock()
         with patch(
-            "manaradix.core.setup_wizard.apply_recommended",
+            "manaradix.core.setup_wizard.apply_profile",
             side_effect=RuntimeError("boom"),
         ):
-            exit_code = _cmd_setup_apply(ctx, MagicMock(dry_run=False))
+            exit_code = _cmd_setup_apply(ctx, MagicMock(dry_run=False, profile=None))
         assert exit_code == 1
+
+    def test_list_profiles(self, capsys) -> None:
+        from manaradix.core.templates import SetupProfile
+
+        ctx = MagicMock()
+        profile = SetupProfile(
+            id="desktop", name="Desktop", description="desc", role="desktop"
+        )
+        with patch("manaradix.core.templates.load_profiles", return_value=[profile]):
+            exit_code = _cmd_setup_list_profiles(ctx, MagicMock())
+        assert exit_code == 0
+        assert "desktop" in capsys.readouterr().out

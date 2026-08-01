@@ -37,6 +37,7 @@ _READ_ONLY_COMMANDS: set[tuple[str, str | None]] = {
     ("snapshot", "list"),
     ("snapshot", "info"),
     ("setup", "status"),
+    ("setup", "list-profiles"),
 }
 
 # Operations requiring write access to the btrfs filesystem

@@ -71,6 +71,37 @@ class TestPoValidity:
         assert mo.exists()
 
 
+class TestTemplateMetadata:
+    """The shipped setup-profile name/description strings live in TOML
+    files that xgettext cannot scan; manaradix/core/template_strings.py
+    anchors them.  The pot must cover them and the po must translate
+    them."""
+
+    @staticmethod
+    def _template_metadata() -> list[str]:
+        import tomlkit
+
+        repo_root = Path(__file__).resolve().parent.parent
+        metadata: list[str] = []
+        for toml_path in sorted((repo_root / "data" / "templates").glob("*.toml")):
+            doc = tomlkit.parse(toml_path.read_text(encoding="utf-8"))
+            for key in ("name", "description"):
+                value = doc.get(key)
+                if value:
+                    metadata.append(str(value))
+        return metadata
+
+    def test_metadata_present_in_pot(self) -> None:
+        pot = TestPoValidity._parse((REPO_LOCALE / "manaradix.pot").read_text())
+        missing = [m for m in self._template_metadata() if m not in pot]
+        assert not missing, f"template metadata missing from pot: {missing}"
+
+    def test_metadata_translated_in_po(self) -> None:
+        po = TestPoValidity._parse((REPO_LOCALE / "it.po").read_text())
+        untranslated = [m for m in self._template_metadata() if not po.get(m)]
+        assert not untranslated, f"untranslated template metadata: {untranslated}"
+
+
 def _translate(locale_dir: Path, message: str) -> str:
     """Return the translation of *message* from a fresh interpreter."""
     env = {

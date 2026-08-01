@@ -209,6 +209,7 @@ class PageA:
         self.clicks = 0
         self.changed = 0
         self.selected = None
+        self.last_drop = None
         self.build_count = 0
 
     def build_model(self):
@@ -250,8 +251,9 @@ class PageA:
     def on_toggle(self):
         self.changed += 1
 
-    def on_drop(self):
+    def on_drop(self, value=None):
         self.changed += 1
+        self.last_drop = value
 
     def on_spin(self):
         self.changed += 1
@@ -394,6 +396,8 @@ class TestDispatch:
         renderer, factory = make_renderer([page], [dd_changed, YCancelEvent()])
         renderer.run()
         assert page.changed == 1
+        # The callback receives the combo box's current value.
+        assert page.last_drop == "a"
 
     def test_spinner_on_change(self) -> None:
         page = PageA()

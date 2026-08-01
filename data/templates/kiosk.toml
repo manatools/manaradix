@@ -1,0 +1,18 @@
+# Manaradix setup profile: Kiosk
+# Minimal setup for a single-purpose device: one snapshot at every boot
+# (a known-good point to return to) with the GRUB recovery menu, and no
+# periodic snapshots — the machine's state barely changes between boots.
+id = "kiosk"
+name = "Kiosk"
+description = "Minimal setup for a single-purpose device: a snapshot at every boot with the GRUB recovery menu, no periodic snapshots."
+role = "any"
+
+[global]
+boot_from_snapshot = true
+snapshot_dir = ".snapshots"
+
+[[policies]]
+subvolume = "/"
+required = true
+schedules = ["boot"]
+keep_boot = 10

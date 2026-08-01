@@ -225,6 +225,42 @@ class TestUpdateGrub:
 
 
 # ---------------------------------------------------------------------------
+# has_system_grub
+# ---------------------------------------------------------------------------
+
+
+class TestHasSystemGrub:
+    def test_grub2_bios_cfg(self, tmp_path) -> None:
+        grub = GrubIntegration()
+        os.makedirs(tmp_path / "boot" / "grub2")
+        (tmp_path / "boot" / "grub2" / "grub.cfg").write_text("menu")
+        assert grub.has_system_grub(str(tmp_path)) is True
+
+    def test_grub_bios_cfg(self, tmp_path) -> None:
+        grub = GrubIntegration()
+        os.makedirs(tmp_path / "boot" / "grub")
+        (tmp_path / "boot" / "grub" / "grub.cfg").write_text("menu")
+        assert grub.has_system_grub(str(tmp_path)) is True
+
+    def test_efi_cfg(self, tmp_path) -> None:
+        grub = GrubIntegration()
+        os.makedirs(tmp_path / "boot" / "efi" / "EFI" / "mageia")
+        (tmp_path / "boot" / "efi" / "EFI" / "mageia" / "grub.cfg").write_text("menu")
+        assert grub.has_system_grub(str(tmp_path)) is True
+
+    def test_no_grub_config(self, tmp_path) -> None:
+        grub = GrubIntegration()
+        assert grub.has_system_grub(str(tmp_path)) is False
+
+    def test_default_prefix_probes_root(self) -> None:
+        # Without a prefix, real system paths are probed; on a machine
+        # without GRUB this is False — the method must never raise.
+        grub = GrubIntegration()
+        result = grub.has_system_grub()
+        assert isinstance(result, bool)
+
+
+# ---------------------------------------------------------------------------
 # list_snapshot_entries
 # ---------------------------------------------------------------------------
 

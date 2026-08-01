@@ -308,7 +308,15 @@ class AuiRenderer:
             if reason not in _BUTTON_REASONS:
                 return
             callback()
-        elif kind in ("checkbox", "spinner", "dropdown"):
+        elif kind == "dropdown":
+            if reason not in _CHANGE_REASONS:
+                return
+            # The combo box's current selection is not stored back on the
+            # descriptor (the page is re-built after every dispatch), so
+            # hand the widget's value to the callback.
+            get_value = getattr(widget, "value", None)
+            callback(get_value() if callable(get_value) else None)
+        elif kind in ("checkbox", "spinner"):
             if reason not in _CHANGE_REASONS:
                 return
             callback()
