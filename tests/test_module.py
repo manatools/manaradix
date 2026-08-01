@@ -1,5 +1,6 @@
 """Unit tests for CLI subcommand dispatch in module.py."""
 
+import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,6 +14,7 @@ from manaradix.module import (
     _cmd_snapshot_info,
     _cmd_snapshot_list,
     _cmd_snapshot_prune,
+    _frontend_available,
     _init_services,
 )
 
@@ -27,7 +29,7 @@ class TestParser:
         parser = _build_parser()
         args = parser.parse_args([])
         assert args.command is None
-        assert args.frontend == "qt"
+        assert args.frontend is None  # None → YUI auto-detect
 
     def test_snapshot_create_minimal(self) -> None:
         parser = _build_parser()
@@ -89,6 +91,37 @@ class TestParser:
         args = parser.parse_args(["snapshot", "info", "--id", "snap1"])
         assert args.snapshot_command == "info"
         assert args.snapshot_id == "snap1"
+
+
+# ---------------------------------------------------------------------------
+# Frontend availability probe tests
+# ---------------------------------------------------------------------------
+
+
+class TestFrontendAvailable:
+    def test_ncurses_always_available(self) -> None:
+        assert _frontend_available("ncurses") is True
+
+    @patch("subprocess.run")
+    def test_qt_probe_success(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = MagicMock(returncode=0)
+        assert _frontend_available("qt") is True
+        mock_run.assert_called_once()
+
+    @patch("subprocess.run")
+    def test_qt_probe_failure(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = MagicMock(returncode=1)
+        assert _frontend_available("qt") is False
+
+    @patch("subprocess.run")
+    def test_probe_timeout(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd="probe", timeout=15)
+        assert _frontend_available("qt") is False
+
+    @patch("subprocess.run")
+    def test_probe_oserror(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = OSError("no python")
+        assert _frontend_available("gtk") is False
 
 
 # ---------------------------------------------------------------------------

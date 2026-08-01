@@ -8,8 +8,10 @@ registered as the ``manaradix`` console script.
 from __future__ import annotations
 
 import argparse
+import curses
 import logging
 import os
+import subprocess
 import sys
 
 from manaradix.core.btrfs_ops import BtrfsOps, SnapshotNotFoundError
@@ -107,8 +109,46 @@ def _init_services(
 # ---------------------------------------------------------------------------
 
 
+def _frontend_available(frontend: str) -> bool:
+    """Return True if a graphical frontend can actually initialize here.
+
+    Qt/GTK initialization failures (missing platform plugin libraries,
+    no display reachable) abort the process hard (qFatal), so probe in a
+    child process with core dumps disabled and let the caller fall back
+    to ncurses when the probe fails.
+    """
+    if frontend == "ncurses":
+        return True
+
+    probe = (
+        "import resource, sys\n"
+        "resource.setrlimit(resource.RLIMIT_CORE, (0, 0))\n"
+        "if sys.argv[1] == 'qt':\n"
+        "    from PySide6.QtWidgets import QApplication\n"
+        "    QApplication([])\n"
+        "elif sys.argv[1] == 'gtk':\n"
+        "    import gi\n"
+        "    gi.require_version('Gtk', '4.0')\n"
+        "    from gi.repository import Gtk\n"
+        "    if not Gtk.init_check():\n"
+        "        sys.exit(1)\n"
+        "else:\n"
+        "    sys.exit(2)\n"
+    )
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-c", probe, frontend],
+            timeout=15,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return proc.returncode == 0
+
+
 def run_app(
-    frontend: str = "qt",
+    frontend: str | None = None,
     *,
     config_path: str | None = None,
     snapshot_dir: str = ".snapshots",
@@ -116,7 +156,10 @@ def run_app(
     """Launch the application.
 
     Args:
-        frontend: One of ``qt``, ``gtk``, ``ncurses``.
+        frontend: One of ``qt``, ``gtk``, ``ncurses``, or None to let the
+            manatools YUI auto-detect (which also recovers the display
+            environment after a pkexec re-exec).  Graphical frontends are
+            probed first and fall back to ncurses if they cannot start.
         config_path: Path to the TOML configuration file.
         snapshot_dir: Snapshot storage directory (relative to mount).
     """
@@ -142,7 +185,7 @@ def run_app(
     nav = build_navigation(app_context)
 
     try:
-        from manatools.aui.yui import YUI  # noqa: F401
+        from manatools.aui.yui import YUI, Backend  # noqa: F401
     except ImportError:
         logger.error(
             "python-manatools is required for the UI. "
@@ -151,7 +194,37 @@ def run_app(
         sys.exit(1)
 
     # The YUI backend reads MUI_BACKEND when YUI.ui() is first touched.
-    os.environ["MUI_BACKEND"] = frontend
+    if frontend is not None:
+        # Explicit --frontend choice: verify a graphical backend can
+        # actually start here (missing display / plugin libraries would
+        # otherwise abort the process hard), then fall back to ncurses.
+        if frontend in ("qt", "gtk") and not _frontend_available(frontend):
+            logger.warning(
+                "The %s frontend cannot initialize here; "
+                "falling back to ncurses.",
+                frontend,
+            )
+            frontend = "ncurses"
+        os.environ["MUI_BACKEND"] = frontend
+    else:
+        # Auto-detect: let YUI pick the backend.  Its detection also
+        # recovers the display environment lost in a pkexec re-exec
+        # (PKEXEC_UID → /run/user/<uid> sockets) so the elevated GUI
+        # process can still reach the user's display; then verify the
+        # graphical choice actually initializes.
+        try:
+            detected = YUI._detect_backend()  # noqa: SLF001 -- library API
+        except RuntimeError:
+            detected = None
+        if detected in (Backend.QT, Backend.GTK) and not _frontend_available(
+            detected.value
+        ):
+            logger.warning(
+                "The detected %s frontend cannot initialize here; "
+                "falling back to ncurses.",
+                detected.value,
+            )
+            os.environ["MUI_BACKEND"] = "ncurses"
 
     from manaradix.ui.renderer import AuiRenderer
 
@@ -162,6 +235,24 @@ def run_app(
             "The %s UI backend is not available (%s). "
             "Choose another with --frontend (qt, gtk, ncurses).",
             frontend, exc,
+        )
+        sys.exit(1)
+    except RuntimeError as exc:
+        # Auto-detection found nothing usable; retry with the last-resort
+        # backend instead of dying with a traceback.
+        if "ncurses" in os.environ.get("MUI_BACKEND", ""):
+            raise
+        logger.warning(
+            "No usable UI backend (%s); retrying with ncurses.", exc
+        )
+        os.environ["MUI_BACKEND"] = "ncurses"
+        AuiRenderer(nav).run()
+    except curses.error as exc:
+        # The curses backend needs a real terminal (e.g. when launched
+        # from a desktop menu without a TTY).
+        logger.error(
+            "The ncurses UI needs a terminal; cannot start the GUI here (%s).",
+            exc,
         )
         sys.exit(1)
 
@@ -200,8 +291,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--frontend",
         choices=["qt", "gtk", "ncurses"],
-        default="qt",
-        help="UI toolkit frontend (default: qt)",
+        default=None,
+        help="UI toolkit frontend (default: auto-detect; qt/gtk fall back to ncurses)",
     )
 
     subparsers = parser.add_subparsers(

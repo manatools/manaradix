@@ -44,7 +44,7 @@ pip install -e ".[dev]"
 # Verify the install
 manaradix --help
 
-# Run the test suite (188 tests)
+# Run the test suite (208 tests)
 pytest
 
 # Run a single test file
@@ -74,6 +74,10 @@ in `.venv/pyvenv.cfg` (no recreation needed).
 | `pytest-cov` | ≥ 5.0 | Coverage reporting (dev only) |
 | `python-manatools` | Mageia 10 official repos | UI abstraction layer (optional — only needed for the GUI; `python3-manatools` on Mageia) |
 
+The Overview page shows a dashboard with filesystem usage, a table of all
+btrfs filesystems (label, uuid, devices, sizes, mount points), recent
+snapshots, and active policies.
+
 ## Quick Start
 
 ```bash
@@ -94,9 +98,14 @@ manaradix --config /etc/manaradix/config.toml
 ```
 
 The GUI always re-executes via `pkexec` (polkit) so snapshot operations work
-from a normal user session.  The `--frontend` flag maps to the `MUI_BACKEND`
-environment variable understood by python-manatools; you can set it directly
-instead (`MUI_BACKEND=ncurses manaradix`).
+from a normal user session.  By default the UI backend is auto-detected —
+manatools recovers the display environment that pkexec strips, so the
+elevated GUI can still reach your desktop (Qt > GTK > ncurses).  Pass
+`--frontend {qt,gtk,ncurses}` to force a backend; graphical frontends are
+probed first and fall back to ncurses with a warning if they cannot start.
+The flag maps to the `MUI_BACKEND` environment variable understood by
+python-manatools; you can set it directly instead
+(`MUI_BACKEND=ncurses manaradix`).
 
 ## CLI Usage
 

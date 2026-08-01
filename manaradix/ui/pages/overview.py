@@ -32,6 +32,7 @@ class OverviewPage:
         """Return a ``PageModel`` for the overview dashboard."""
         sections = [
             self._filesystem_section(),
+            self._filesystems_section(),
             self._recent_snapshots_section(),
             self._active_policies_section(),
             self._quick_actions_section(),
@@ -66,6 +67,62 @@ class OverviewPage:
                          f"Used: {self._fmt_bytes(used)} ({pct})  |  "
                          f"Free: {self._fmt_bytes(free)}",
                 ),
+            ],
+        }
+
+    def _filesystems_section(self) -> dict | None:
+        """All btrfs filesystems with devices, sizes, and mount points."""
+        try:
+            filesystems = self.app.btrfs_ops.filesystem_show()
+        except Exception as exc:
+            logger.warning("Could not list btrfs filesystems: %s", exc)
+            return None
+
+        if not filesystems:
+            return {
+                "title": "Btrfs Filesystems",
+                "fields": [
+                    Widget.label(id="no_filesystems", text="No btrfs filesystems found."),
+                ],
+            }
+
+        # Mount targets by device path and by uuid, so each filesystem row
+        # can show where its devices are mounted.  The uuid index is a
+        # fallback: btrfs may report /dev/mapper/name while findmnt shows
+        # the underlying /dev/dm-N device.
+        mounts_by_source: dict[str, list[str]] = {}
+        mounts_by_uuid: dict[str, list[str]] = {}
+        try:
+            for mount in self.app.btrfs_ops.btrfs_mounts():
+                mounts_by_source.setdefault(mount["source"], []).append(mount["target"])
+                mounts_by_uuid.setdefault(mount["uuid"], []).append(mount["target"])
+        except Exception as exc:
+            logger.warning("Could not read btrfs mount points: %s", exc)
+
+        rows = []
+        for fs in filesystems:
+            devices = ", ".join(d["path"] for d in fs["devices"]) or "-"
+            total = sum(d["size"] for d in fs["devices"])
+            mount_targets = [
+                target
+                for device in fs["devices"]
+                for target in mounts_by_source.get(device["path"], [])
+            ]
+            if not mount_targets:
+                mount_targets = mounts_by_uuid.get(fs["uuid"], [])
+            rows.append({
+                "Label": fs["label"] or "-",
+                "UUID": fs["uuid"][:8],
+                "Devices": devices,
+                "Total": self._fmt_bytes(total) if total else "-",
+                "Used": self._fmt_bytes(fs["fs_bytes_used"]) if fs["fs_bytes_used"] else "-",
+                "Mount": ", ".join(dict.fromkeys(mount_targets)) or "-",
+            })
+
+        return {
+            "title": "Btrfs Filesystems",
+            "fields": [
+                Widget.tree(id="btrfs_filesystems", rows=rows, selectable=False),
             ],
         }
 

@@ -228,3 +228,106 @@ class TestParseHelpers:
         )
 
         assert _parse_subvol_show("no uuids here") == {}
+
+
+# ---------------------------------------------------------------------------
+# btrfs filesystem show / findmnt tests
+# ---------------------------------------------------------------------------
+
+_FS_SHOW_SAMPLE = """\
+Label: none  uuid: 3149ac5f-25ee-4805-b0ae-e6679af72699
+\tTotal devices 1 FS bytes used 19005067264
+\tdevid    1 size 0 used 0 path /dev/nvme0n1p3 MISSING
+
+Label: 'root'  uuid: efff4471-576f-4fbb-976e-162761395cfa
+\tTotal devices 2 FS bytes used 13139845120
+\tdevid    1 size 32212254720 used 13139845120 path /dev/sda2
+\tdevid    2 size 32212254720 used 0 path /dev/sdb2
+"""
+
+
+class TestFilesystemShow:
+    @patch("subprocess.run")
+    def test_parses_multiple_filesystems(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "filesystem", "show", "--raw"],
+            returncode=0,
+            stdout=_FS_SHOW_SAMPLE,
+            stderr="",
+        )
+        ops = BtrfsOps()
+        filesystems = ops.filesystem_show()
+
+        assert len(filesystems) == 2
+
+        first = filesystems[0]
+        assert first["label"] == ""  # "Label: none"
+        assert first["uuid"] == "3149ac5f-25ee-4805-b0ae-e6679af72699"
+        assert first["total_devices"] == 1
+        assert first["fs_bytes_used"] == 19005067264
+        assert first["devices"] == [
+            {
+                "devid": 1, "size": 0, "used": 0,
+                "path": "/dev/nvme0n1p3", "missing": True,
+            },
+        ]
+
+        second = filesystems[1]
+        assert second["label"] == "root"  # quotes stripped
+        assert second["total_devices"] == 2
+        assert len(second["devices"]) == 2
+        assert second["devices"][0] == {
+            "devid": 1, "size": 32212254720, "used": 13139845120,
+            "path": "/dev/sda2", "missing": False,
+        }
+        assert second["devices"][1]["path"] == "/dev/sdb2"
+
+    @patch("subprocess.run")
+    def test_error_returns_empty_list(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=["btrfs"], stderr="ERROR: not a btrfs filesystem",
+        )
+        assert BtrfsOps().filesystem_show() == []
+
+    def test_dry_run_returns_empty(self) -> None:
+        assert BtrfsOps().filesystem_show(dry_run=True) == []
+
+
+class TestBtrfsMounts:
+    @patch("subprocess.run")
+    def test_parses_mount_rows(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["/usr/bin/findmnt", "-t", "btrfs", "-o", "TARGET,SOURCE,UUID", "-r"],
+            returncode=0,
+            stdout=(
+                "TARGET\tSOURCE\tUUID\n"
+                "/\t/dev/nvme0n1p3\t3149ac5f-25ee-4805-b0ae-e6679af72699\n"
+                "/home\t/dev/mapper/crypt_nvme0n1p6\tefff4471-576f-4fbb-976e-162761395cfa\n"
+            ),
+            stderr="",
+        )
+        ops = BtrfsOps()
+        mounts = ops.btrfs_mounts()
+
+        assert len(mounts) == 2
+        assert mounts[0] == {
+            "target": "/",
+            "source": "/dev/nvme0n1p3",
+            "uuid": "3149ac5f-25ee-4805-b0ae-e6679af72699",
+        }
+        assert mounts[1]["target"] == "/home"
+
+    @patch("subprocess.run")
+    def test_no_mounts_returns_empty(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["/usr/bin/findmnt"], returncode=0, stdout="TARGET\tSOURCE\tUUID\n", stderr="",
+        )
+        assert BtrfsOps().btrfs_mounts() == []
+
+    @patch("subprocess.run")
+    def test_findmnt_missing_returns_empty(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = OSError("findmnt not found")
+        assert BtrfsOps().btrfs_mounts() == []
+
+    def test_dry_run_returns_empty(self) -> None:
+        assert BtrfsOps().btrfs_mounts(dry_run=True) == []

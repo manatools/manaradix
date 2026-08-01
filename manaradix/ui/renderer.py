@@ -60,6 +60,7 @@ class AuiRenderer:
         self._table_headers: dict[Any, Any] = {}
         self._tabs = None
         self._replace_point = None
+        self._dialog = None
         self._current_index = 0
 
     # -- Lifecycle ----------------------------------------------------------
@@ -77,6 +78,7 @@ class AuiRenderer:
                 logger.debug("Could not set application title: %s", exc)
 
         dialog = factory.createMainDialog()
+        self._dialog = dialog
         root = factory.createVBox(dialog)
         factory.createHeading(root, "Manaradix")
 
@@ -139,6 +141,7 @@ class AuiRenderer:
 
         replace_point.showChild()
         self._current_index = index
+        self._fit_window()
 
     def _render_field(self, factory, parent, field: dict[str, Any]) -> None:
         """Create the YUI widget for one field descriptor."""
@@ -188,7 +191,11 @@ class AuiRenderer:
 
     def _render_tree(self, factory, parent, field: dict[str, Any]) -> None:
         """Multi-column tree rows map onto a YUI table."""
-        from manatools.aui.yui_common import YTableHeader, YTableItem  # pure Python
+        from manatools.aui.yui_common import (  # pure Python
+            YTableHeader,
+            YTableItem,
+            YUIDimension,
+        )
 
         rows = field.get("rows", [])
         if not rows:
@@ -207,6 +214,9 @@ class AuiRenderer:
             header.addColumn(column)
 
         widget = factory.createTable(parent, header)
+        # Stretch horizontally so the table fills its section frame
+        # instead of rendering at its natural (content) width.
+        widget.setStretchable(YUIDimension.YD_HORIZ, True)
         for row in rows:
             item = YTableItem()
             for column in columns:
@@ -229,6 +239,43 @@ class AuiRenderer:
             self._handlers[widget.id()] = (kind, callback)
 
     # -- Events -------------------------------------------------------------
+
+    def _fit_window(self) -> None:
+        """Fit the window to the current page content.
+
+        The manatools Qt backend deliberately grows the window to its
+        largest content and never shrinks it back (``showChild`` uses
+        ``max()``), so after every content swap we resize to the current
+        size hint.  ``adjustSize()`` alone is not enough — it applies an
+        expanding minimum and a screen-fraction cap — so we activate the
+        layout and resize to the exact ``sizeHint()``.  Backends without
+        this API (curses) are a natural no-op.
+        """
+        dialog = self._dialog
+        if dialog is None:
+            return
+        try:
+            get_backend = getattr(dialog, "get_backend_widget", None)
+            backend = get_backend() if callable(get_backend) else None
+            if backend is None:
+                return
+            size_hint = getattr(backend, "sizeHint", None)
+            resize = getattr(backend, "resize", None)
+            if not callable(size_hint) or not callable(resize):
+                return
+            # adjustSize is documented to do nothing useful on maximized
+            # or fullscreen windows; leave those alone.
+            if getattr(backend, "isMaximized", lambda: False)() or getattr(
+                backend, "isFullScreen", lambda: False
+            )():
+                return
+            layout = getattr(backend, "layout", None)
+            activate = getattr(layout(), "activate", None) if callable(layout) else None
+            if callable(activate):
+                activate()
+            resize(size_hint())
+        except Exception as exc:
+            logger.debug("Could not fit window to content: %s", exc)
 
     def _switch_tab(self, factory) -> None:
         """Render the page belonging to the newly selected tab."""

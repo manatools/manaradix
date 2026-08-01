@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import shutil
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
@@ -133,7 +134,10 @@ class BtrfsOps:
         print(ops.list_snapshots("/"))
     """
 
-    BTRFS_BIN = "/usr/bin/btrfs"
+    # Mageia installs btrfs-progs under /usr/sbin; resolve via PATH with a
+    # fallback so the elevated (pkexec) environment still finds it.
+    BTRFS_BIN = shutil.which("btrfs") or "/usr/sbin/btrfs"
+    FINMNT_BIN = "/usr/bin/findmnt"
 
     def __init__(self, snapshot_dir: str = ".snapshots") -> None:
         self.snapshot_dir = snapshot_dir.rstrip("/")
@@ -642,6 +646,114 @@ class BtrfsOps:
             elif in_device and not line:
                 in_device = False
         return info
+
+    def filesystem_show(self, *, dry_run: bool = False) -> list[dict]:
+        """Return all btrfs filesystems with device info.
+
+        Runs ``btrfs filesystem show --raw`` and parses each filesystem
+        block: the label/uuid line, the ``Total devices`` line, and one
+        ``devid`` line per device.  Sizes come back as raw bytes.
+
+        Returns an empty list on error (e.g. no btrfs filesystems).
+        """
+        try:
+            result = self._run(
+                ["filesystem", "show", "--raw"],
+                dry_run=dry_run,
+                check=False,
+            )
+            output = result.stdout
+        except BtrfsError:
+            return []
+
+        filesystems: list[dict] = []
+        current: dict | None = None
+        for line in output.splitlines():
+            line = line.strip()
+
+            label_match = re.match(
+                r"Label:\s*(?:'([^']*)'|none)\s+uuid:\s*(\S+)$", line
+            )
+            if label_match:
+                label, uuid = label_match.groups()
+                current = {
+                    "label": label or "",
+                    "uuid": uuid,
+                    "total_devices": 0,
+                    "fs_bytes_used": 0,
+                    "devices": [],
+                }
+                filesystems.append(current)
+                continue
+            if current is None:
+                continue
+
+            total_match = re.match(
+                r"Total devices\s+(\d+)\s+FS bytes used\s+(\d+)$", line
+            )
+            if total_match:
+                current["total_devices"] = int(total_match.group(1))
+                current["fs_bytes_used"] = int(total_match.group(2))
+                continue
+
+            devid_match = re.match(
+                r"devid\s+(\d+)\s+size\s+(\d+)\s+used\s+(\d+)\s+path\s+(\S+)"
+                r"(?:\s+(MISSING))?$",
+                line,
+            )
+            if devid_match:
+                devid, size, used, path, missing = devid_match.groups()
+                current["devices"].append(
+                    {
+                        "devid": int(devid),
+                        "size": int(size),
+                        "used": int(used),
+                        "path": path,
+                        "missing": missing is not None,
+                    }
+                )
+        return filesystems
+
+    def btrfs_mounts(self, *, dry_run: bool = False) -> list[dict]:
+        """Return mounted btrfs filesystems from findmnt.
+
+        Runs ``findmnt -t btrfs -o TARGET,SOURCE,UUID -r`` (util-linux;
+        ``-r`` disables the tree decorations).  Returns a list of
+        ``{"target", "source", "uuid"}`` dicts, or an empty list on error.
+        """
+        cmd = [
+            self.FINMNT_BIN,
+            "-t", "btrfs",
+            "-o", "TARGET,SOURCE,UUID",
+            "-r",
+        ]
+        if dry_run:
+            logger.info("[DRY RUN] %s", " ".join(cmd))
+            return []
+        try:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=60,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            logger.warning("Could not query btrfs mounts via findmnt: %s", exc)
+            return []
+
+        mounts: list[dict] = []
+        for line in proc.stdout.splitlines()[1:]:  # skip the header line
+            parts = line.split("\t")  # raw findmnt separates columns with tabs
+            if len(parts) >= 3:
+                mounts.append(
+                    {
+                        "target": parts[0],
+                        "source": parts[1],
+                        "uuid": parts[2],
+                    }
+                )
+        return mounts
 
     # ------------------------------------------------------------------
     # Compression helpers

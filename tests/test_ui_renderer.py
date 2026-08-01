@@ -29,6 +29,7 @@ class FakeWidget:
         self._value = ""
         self._id = None
         self.notify_enabled = False
+        self.stretch_horiz = False
         self.label_text = label
 
     def id(self):
@@ -36,6 +37,12 @@ class FakeWidget:
 
     def setNotify(self, on=True):
         self.notify_enabled = on
+
+    def setStretchable(self, dim, new_stretch):
+        self.stretch_horiz = new_stretch
+
+    def stretchable(self, dim):
+        return self.stretch_horiz
 
     def setValue(self, value):
         self._value = value
@@ -66,6 +73,38 @@ class FakeWidget:
         pass
 
 
+class ScriptedBackend:
+    """Backend widget recording resize() calls with a stateful sizeHint.
+
+    ``sizeHint`` returns progressively taller hints per call so tests can
+    assert the window is re-fitted to the *current* page's hint after each
+    rebuild, not just that a fit happened.
+    """
+
+    def __init__(self):
+        self.resizes = []
+        self._hint_calls = 0
+
+    def sizeHint(self):
+        self._hint_calls += 1
+        return (300, 100 * self._hint_calls)
+
+    def resize(self, size):
+        self.resizes.append(size)
+
+    def layout(self):
+        return self
+
+    def activate(self):
+        pass
+
+    def isMaximized(self):
+        return False
+
+    def isFullScreen(self):
+        return False
+
+
 class FakeDialog(FakeWidget):
     """Dialog whose event queue is scripted by the test."""
 
@@ -75,12 +114,16 @@ class FakeDialog(FakeWidget):
         self.script = list(script)
         self.open_called = False
         self.destroy_called = False
+        self.backend = ScriptedBackend()
 
     def open(self):
         self.open_called = True
 
     def destroy(self):
         self.destroy_called = True
+
+    def get_backend_widget(self):
+        return self.backend
 
     def waitForEvent(self, timeout_millisec=0):
         if not self.script:
@@ -291,6 +334,13 @@ class TestBuild:
         renderer.run()
         assert "t" not in renderer._handlers
 
+    def test_table_stretches_horizontally(self) -> None:
+        page = PageA()
+        renderer, factory = make_renderer([page], [YCancelEvent()])
+        renderer.run()
+        table = widgets_of(factory, "table")[0]
+        assert table.stretch_horiz is True  # fills the section frame width
+
 
 # ---------------------------------------------------------------------------
 # Event dispatch
@@ -402,3 +452,45 @@ class TestFrontendChoices:
 
         with pytest.raises(SystemExit):
             _build_parser().parse_args(["--frontend", "web"])
+
+
+# ---------------------------------------------------------------------------
+# Window fit after rebuilds
+# ---------------------------------------------------------------------------
+
+
+class TestWindowFit:
+    def test_fits_after_initial_render(self) -> None:
+        renderer, factory = make_renderer([PageA()], [YCancelEvent()])
+        renderer.run()
+        assert factory.dialog.backend.resizes == [(300, 100)]
+
+    def test_fits_after_button_rebuild(self) -> None:
+        renderer, factory = make_renderer([PageA()], [btn_activated, YCancelEvent()])
+        renderer.run()
+        # initial render + rebuild after the callback; each fit uses the
+        # current content's size hint
+        assert factory.dialog.backend.resizes == [(300, 100), (300, 200)]
+
+    def test_fits_after_tab_switch(self) -> None:
+        renderer, factory = make_renderer(
+            [PageA(), PageB()], [tab_switched, YCancelEvent()]
+        )
+        renderer.run()
+        # the swap re-fits the window to the target page's hint
+        assert factory.dialog.backend.resizes[-1] == (300, 200)
+
+    def test_backend_without_fit_api_is_noop(self) -> None:
+        class PlainDialog(FakeDialog):
+            pass
+
+        PlainDialog.get_backend_widget = None  # e.g. curses backend
+
+        factory = FakeFactory([YCancelEvent()])
+        factory.dialog = PlainDialog(factory, factory.script)
+        # Make createMainDialog return the plain dialog
+        factory.createMainDialog = lambda color_mode=None: factory.dialog
+
+        renderer = AuiRenderer([PageA()], factory=factory)
+        renderer.run()  # must not raise
+        assert renderer._dialog is factory.dialog
