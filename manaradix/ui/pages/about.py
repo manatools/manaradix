@@ -89,7 +89,8 @@ class AboutPage:
             {
                 "title": _("License"),
                 "fields": [
-                    Widget.label(id="about_gpl", text=_GPL_NOTICE),
+                    # Wrapped: the notice must not stretch the window width.
+                    Widget.label(id="about_gpl", text=_GPL_NOTICE, wrap=True),
                 ],
             },
         ])

@@ -20,8 +20,11 @@ class TestWidgetDescriptors:
 
     def test_label(self) -> None:
         assert Widget.label(id="l1", text="hi") == {
-            "widget": "label", "id": "l1", "text": "hi",
+            "widget": "label", "id": "l1", "text": "hi", "wrap": False,
         }
+
+    def test_label_wrap(self) -> None:
+        assert Widget.label(id="l1", text="hi", wrap=True)["wrap"] is True
 
     def test_button(self) -> None:
         cb = lambda: None  # noqa: E731

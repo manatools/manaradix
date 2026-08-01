@@ -153,7 +153,9 @@ class AuiRenderer:
         kind = field.get("widget")
 
         if kind == "label":
-            factory.createLabel(parent, field.get("text", ""))
+            widget = factory.createLabel(parent, field.get("text", ""))
+            if field.get("wrap") and hasattr(widget, "setAutoWrap"):
+                widget.setAutoWrap(True)
 
         elif kind == "button":
             widget = factory.createPushButton(parent, field.get("label", ""))

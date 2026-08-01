@@ -29,8 +29,10 @@ class Widget:
     """
 
     @staticmethod
-    def label(*, id: str | None = None, text: str) -> dict[str, Any]:
-        return {"widget": "label", "id": id, "text": text}
+    def label(*, id: str | None = None, text: str, wrap: bool = False) -> dict[str, Any]:
+        """Static text.  ``wrap`` enables word wrapping (long lines wrap
+        instead of stretching the window; supported by all backends)."""
+        return {"widget": "label", "id": id, "text": text, "wrap": wrap}
 
     @staticmethod
     def image(*, id: str | None = None, path: str = "") -> dict[str, Any]:

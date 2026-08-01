@@ -33,6 +33,7 @@ class FakeWidget:
         self.notify_enabled = False
         self.stretch_horiz = False
         self.label_text = label
+        self._auto_wrap = False
 
     def id(self):
         return self._id
@@ -67,6 +68,9 @@ class FakeWidget:
 
     def selectedItems(self):
         return [self._selected] if self._selected is not None else []
+
+    def setAutoWrap(self, on=True):
+        self._auto_wrap = bool(on)
 
     def deleteChildren(self):
         self.children = []
@@ -236,7 +240,7 @@ class PageA:
                         on_change=self.on_spin,
                     ),
                     Widget.text(id="txt", label="Desc", value="hello"),
-                    Widget.label(id="lbl", text="some text"),
+                    Widget.label(id="lbl", text="some text", wrap=True),
                     Widget.image(id="img", path="/tmp/manaradix.svg"),
                     Widget.tree(
                         id="tbl",
@@ -356,6 +360,13 @@ class TestBuild:
         images = widgets_of(factory, "image")
         assert len(images) == 1
         assert images[0].label_text == "/tmp/manaradix.svg"
+
+    def test_wrapped_label_enables_autowrap(self) -> None:
+        page = PageA()
+        renderer, factory = make_renderer([page], [YCancelEvent()])
+        renderer.run()
+        labels = widgets_of(factory, "label")
+        assert labels[0]._auto_wrap is True
 
 
 # ---------------------------------------------------------------------------
