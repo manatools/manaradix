@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-01 19:59+0200\n"
+"POT-Creation-Date: 2026-08-01 20:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,112 +22,157 @@ msgstr ""
 msgid "Path to config file (default: %(default)s)"
 msgstr ""
 
-#: manaradix/module.py:438
+#: manaradix/module.py:463
 #, python-format
 msgid "Created snapshot: %s"
 msgstr ""
 
-#: manaradix/module.py:439
+#: manaradix/module.py:464
 #, python-format
 msgid "  Subvolume:   %s"
 msgstr ""
 
-#: manaradix/module.py:440
+#: manaradix/module.py:465
 #, python-format
 msgid "  Path:        %s"
 msgstr ""
 
-#: manaradix/module.py:441
+#: manaradix/module.py:466
 #, python-format
 msgid "  Type:        %s"
 msgstr ""
 
-#: manaradix/module.py:443
+#: manaradix/module.py:468
 #, python-format
 msgid "  Schedule:    %s"
 msgstr ""
 
-#: manaradix/module.py:445
+#: manaradix/module.py:470
 #, python-format
 msgid "  Description: %s"
 msgstr ""
 
-#: manaradix/module.py:461
+#: manaradix/module.py:486
 msgid "No snapshots found."
 msgstr ""
 
-#: manaradix/module.py:493
+#: manaradix/module.py:518
 #, python-format
 msgid "Deleted snapshot: %s"
 msgstr ""
 
-#: manaradix/module.py:533
+#: manaradix/module.py:558
 #, python-format
 msgid "[DRY RUN] Would delete %d snapshot(s):"
 msgstr ""
 
-#: manaradix/module.py:537
+#: manaradix/module.py:562
 #, python-format
 msgid "[DRY RUN] Nothing to prune (%d kept, 0 excess)."
 msgstr ""
 
-#: manaradix/module.py:539
+#: manaradix/module.py:564
 #, python-format
 msgid "Pruned %d snapshot(s):"
 msgstr ""
 
-#: manaradix/module.py:543
+#: manaradix/module.py:568
 #, python-format
 msgid "Nothing to prune (%d kept, no excess)."
 msgstr ""
 
-#: manaradix/module.py:554
+#: manaradix/module.py:577
+msgid "Setup needed: no snapshots and no snapshot policies are configured."
+msgstr ""
+
+#: manaradix/module.py:578
+msgid "Run 'manaradix setup apply' to apply the recommended baseline."
+msgstr ""
+
+#: manaradix/module.py:580
+msgid "Setup not needed: snapshots or policies already exist."
+msgstr ""
+
+#: manaradix/module.py:595
+msgid "[DRY RUN] Would apply the recommended setup:"
+msgstr ""
+
+#: manaradix/module.py:597
+msgid "Applied the recommended setup:"
+msgstr ""
+
+#: manaradix/module.py:598
+#, python-format
+msgid "  Schedules: %s"
+msgstr ""
+
+#: manaradix/module.py:600
+#, python-format
+msgid "  Retention: %s"
+msgstr ""
+
+#: manaradix/module.py:603 manaradix/ui/pages/settings.py:172
+#: manaradix/ui/pages/setup.py:150
+msgid "installed"
+msgstr ""
+
+#: manaradix/module.py:603 manaradix/ui/pages/settings.py:172
+#: manaradix/ui/pages/setup.py:150
+msgid "not installed"
+msgstr ""
+
+#: manaradix/module.py:604
+#, python-format
+msgid "  GRUB recovery menu: %s"
+msgstr ""
+
+#: manaradix/module.py:615
 #, python-format
 msgid "ID:          %s"
 msgstr ""
 
-#: manaradix/module.py:555
+#: manaradix/module.py:616
 #, python-format
 msgid "Subvolume:   %s"
 msgstr ""
 
-#: manaradix/module.py:556
+#: manaradix/module.py:617
 #, python-format
 msgid "Path:        %s"
 msgstr ""
 
-#: manaradix/module.py:557
+#: manaradix/module.py:618
 #, python-format
 msgid "Date:        %s"
 msgstr ""
 
-#: manaradix/module.py:558
+#: manaradix/module.py:619
 #, python-format
 msgid "Type:        %s"
 msgstr ""
 
-#: manaradix/module.py:559
+#: manaradix/module.py:620
 #, python-format
 msgid "Read-only:   %s"
 msgstr ""
 
-#: manaradix/module.py:560
+#: manaradix/module.py:621
 #, python-format
 msgid "Schedule:    %s"
 msgstr ""
 
-#: manaradix/module.py:561
+#: manaradix/module.py:622
 #, python-format
 msgid "Description: %s"
 msgstr ""
 
-#: manaradix/utils/pkexec.py:118
+#: manaradix/utils/pkexec.py:120
 #, python-format
 msgid ""
 "error: %s not found. Install polkit to use privileged manaradix commands."
 msgstr ""
 
-#: manaradix/utils/pkexec.py:124
+#: manaradix/utils/pkexec.py:126
 #, python-format
 msgid "error: pkexec failed: %s"
 msgstr ""
@@ -189,91 +234,23 @@ msgstr ""
 msgid "Refresh"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:30 manaradix/ui/pages/snapshots.py:45
-msgid "Snapshots"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:66
-msgid "Filters"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:70
-msgid "Subvolume"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:77
-msgid "Type"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:85
-msgid "Actions"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:89
-msgid "Create Snapshot…"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:94
-msgid "Delete Selected"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:99
-msgid "Restore Selected"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:104
-msgid "Browse Selected"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:109
-msgid "Export Selected"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:120
-#, python-format
-msgid "Snapshot Detail: %s"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:122
-#, python-format
-msgid "Path: %s"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:123
-#, python-format
-msgid "Date: %s"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:124
-#, python-format
-msgid "Read-only: %s"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:127
-msgid "Update Description"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:132
-msgid "New description"
-msgstr ""
-
-#: manaradix/ui/pages/policies.py:24
+#: manaradix/ui/pages/policies.py:24 manaradix/ui/pages/setup.py:24
 msgid "Hourly"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:25
+#: manaradix/ui/pages/policies.py:25 manaradix/ui/pages/setup.py:25
 msgid "Daily"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:26
+#: manaradix/ui/pages/policies.py:26 manaradix/ui/pages/setup.py:26
 msgid "Weekly"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:27
+#: manaradix/ui/pages/policies.py:27 manaradix/ui/pages/setup.py:27
 msgid "Monthly"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:28
+#: manaradix/ui/pages/policies.py:28 manaradix/ui/pages/setup.py:28
 msgid "Boot"
 msgstr ""
 
@@ -327,7 +304,7 @@ msgstr ""
 msgid "Edit Policy: %s"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:148
+#: manaradix/ui/pages/policies.py:148 manaradix/ui/pages/setup.py:77
 msgid "Enabled"
 msgstr ""
 
@@ -363,11 +340,11 @@ msgstr ""
 msgid "Default subvolume"
 msgstr ""
 
-#: manaradix/ui/pages/settings.py:56
+#: manaradix/ui/pages/settings.py:56 manaradix/ui/pages/setup.py:76
 msgid "Snapshot directory"
 msgstr ""
 
-#: manaradix/ui/pages/settings.py:61
+#: manaradix/ui/pages/settings.py:61 manaradix/ui/pages/setup.py:77
 msgid "Boot-from-snapshot (GRUB menu)"
 msgstr ""
 
@@ -446,14 +423,6 @@ msgstr ""
 msgid "GRUB snapshot script: %s"
 msgstr ""
 
-#: manaradix/ui/pages/settings.py:172
-msgid "installed"
-msgstr ""
-
-#: manaradix/ui/pages/settings.py:172
-msgid "not installed"
-msgstr ""
-
 #: manaradix/ui/pages/settings.py:176
 msgid "Install GRUB Script"
 msgstr ""
@@ -464,4 +433,141 @@ msgstr ""
 
 #: manaradix/ui/pages/settings.py:186
 msgid "Update GRUB Config"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:36
+msgid "Setup Wizard"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:52
+msgid "Setup Skipped"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:57
+msgid ""
+"You can configure snapshots and policies later from the Policies and "
+"Settings pages."
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:68 manaradix/ui/pages/snapshots.py:70
+msgid "Subvolume"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:69 manaradix/ui/pages/snapshots.py:30
+#: manaradix/ui/pages/snapshots.py:45
+msgid "Snapshots"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:72
+msgid "Retention"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:82
+msgid "Recommended Setup"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:87
+msgid ""
+"No snapshots or snapshot policies are configured yet. Apply the recommended "
+"baseline to protect this system:"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:95 manaradix/ui/pages/snapshots.py:85
+msgid "Actions"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:99
+msgid "Apply Recommended Setup"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:104
+msgid "Skip"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:131
+msgid "Setup Failed"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:135
+#, python-format
+msgid "The recommended setup could not be applied: %s"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:154
+msgid "Setup Applied"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:158
+msgid "The recommended setup is now in place:"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:162
+#, python-format
+msgid "Snapshots: %s"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:166
+#, python-format
+msgid "Retention: %s"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:170
+#, python-format
+msgid "GRUB recovery menu: %s"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:66
+msgid "Filters"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:77
+msgid "Type"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:89
+msgid "Create Snapshot…"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:94
+msgid "Delete Selected"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:99
+msgid "Restore Selected"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:104
+msgid "Browse Selected"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:109
+msgid "Export Selected"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:120
+#, python-format
+msgid "Snapshot Detail: %s"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:122
+#, python-format
+msgid "Path: %s"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:123
+#, python-format
+msgid "Date: %s"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:124
+#, python-format
+msgid "Read-only: %s"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:127
+msgid "Update Description"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:132
+msgid "New description"
 msgstr ""

@@ -21,21 +21,44 @@ pytestmark = pytest.mark.skipif(
 
 class TestPoValidity:
     @staticmethod
-    def _normalize(text: str) -> str:
-        """Join adjacent gettext string-literal lines (msgid/msgstr continuations)."""
-        return re.sub(r'"\s*\n\s*"', "", text)
+    def _parse(text: str) -> dict[str, str]:
+        """Parse a .po/.pot into {msgid: msgstr}, multiline-aware."""
+        lines = text.splitlines()
+        entries: dict[str, str] = {}
+        i, n = 0, len(lines)
+        while i < n:
+            if lines[i].startswith("msgid"):
+                mid = [lines[i][6:]] if lines[i].startswith("msgid ") else []
+                i += 1
+                while i < n and lines[i].startswith('"'):
+                    mid.append(lines[i])
+                    i += 1
+                mstr: list[str] = []
+                if i < n and lines[i].startswith("msgstr"):
+                    rest = lines[i][7:]
+                    if rest.strip():
+                        mstr.append(rest)
+                    i += 1
+                    while i < n and lines[i].startswith('"'):
+                        mstr.append(lines[i])
+                        i += 1
+                entries["".join(mid)] = "".join(mstr)
+            else:
+                i += 1
+
+        def unquote(s: str) -> str:
+            return "".join(re.findall(r'"([^"]*)"', s))
+
+        return {unquote(k): unquote(v) for k, v in entries.items()}
 
     def test_po_covers_all_pot_entries(self) -> None:
-        pot = self._normalize((REPO_LOCALE / "manaradix.pot").read_text())
-        po = self._normalize((REPO_LOCALE / "it.po").read_text())
+        pot = self._parse((REPO_LOCALE / "manaradix.pot").read_text())
+        po = self._parse((REPO_LOCALE / "it.po").read_text())
 
-        pot_ids = set(re.findall(r'^msgid "(.*)"$', pot, re.M)) - {""}
-        po_ids = set(re.findall(r'^msgid "(.*)"$', po, re.M))
-        po_strs = set(re.findall(r'^msgstr "(.*)"$', po, re.M)) - {""}
-
-        missing = pot_ids - po_ids
+        missing = set(pot) - set(po)
         assert not missing, f"msgids missing from it.po: {missing}"
-        assert len(po_strs) >= len(pot_ids), "some entries are untranslated"
+        untranslated = [k for k in pot if not po.get(k)]
+        assert not untranslated, f"untranslated entries: {untranslated}"
 
     def test_po_compiles_cleanly(self, tmp_path) -> None:
         mo = tmp_path / "manaradix.mo"

@@ -67,6 +67,9 @@ class TestNeedsElevation:
     def test_snapshot_info_is_readonly(self) -> None:
         assert needs_elevation("snapshot", "info") is False
 
+    def test_setup_status_is_readonly(self) -> None:
+        assert needs_elevation("setup", "status") is False
+
     # -- Privileged subcommands --------------------------------------------
 
     def test_snapshot_create_needs_elevation(self) -> None:
@@ -74,6 +77,9 @@ class TestNeedsElevation:
 
     def test_snapshot_delete_needs_elevation(self) -> None:
         assert needs_elevation("snapshot", "delete") is True
+
+    def test_setup_apply_needs_elevation(self) -> None:
+        assert needs_elevation("setup", "apply") is True
 
     def test_snapshot_prune_needs_elevation(self) -> None:
         assert needs_elevation("snapshot", "prune") is True

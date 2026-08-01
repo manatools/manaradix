@@ -6,13 +6,14 @@ the pages as tabs in the manatools YUI main dialog.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from manaradix.core.setup_wizard import needs_setup
 from manaradix.ui.pages.overview import OverviewPage
 from manaradix.ui.pages.policies import PoliciesPage
 from manaradix.ui.pages.settings import SettingsPage
+from manaradix.ui.pages.setup import SetupWizardPage
 from manaradix.ui.pages.snapshots import SnapshotsPage
-
-# Import AppContext for type hints (avoid circular import at runtime)
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from manaradix.module import AppContext
@@ -21,20 +22,20 @@ if TYPE_CHECKING:
 def build_navigation(app_context: AppContext) -> list:
     """Build the navigation structure for the application.
 
-    Each page reference is lazy-initialized by the aui framework.
-    The *app_context* is passed to every page so they can access
-    shared services.
-
-    Args:
-        app_context: The shared application context.
+    The *app_context* is passed to every page so they can access shared
+    services.  When the system has no snapshots and no snapshot policies
+    (spec.md §15), a first-run Setup Wizard page is prepended.
 
     Returns:
-        A list of ``NavigationItem``-compatible dicts (or Page instances)
-        that the aui ``Application`` renders as a sidebar / tab bar.
+        A list of page instances consumed by ``AuiRenderer``, which hosts
+        them as tabs in the manatools YUI main dialog.
     """
-    return [
+    pages = [
         OverviewPage(app_context),
         SnapshotsPage(app_context),
         PoliciesPage(app_context),
         SettingsPage(app_context),
     ]
+    if needs_setup(app_context):
+        pages.insert(0, SetupWizardPage(app_context))
+    return pages

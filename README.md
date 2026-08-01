@@ -179,6 +179,27 @@ manaradix snapshot prune --subvolume / --schedule daily --dry-run
 This is the command invoked automatically by the systemd timer units — you
 normally don't run it by hand.
 
+### First-run setup wizard
+
+When the system has no snapshots and no snapshot policies (a stock Mageia
+btrfs install), the GUI opens on a **Setup Wizard** tab proposing a
+recommended baseline: daily/weekly/boot snapshots for `/` with default
+retention, and the GRUB boot-from-snapshot recovery menu.  Apply it in one
+click, or configure everything manually from Policies and Settings.
+
+The same baseline is available headless (spec.md §15):
+
+```bash
+# Is setup needed?
+manaradix setup status
+
+# Apply the recommended setup (config, policy, systemd units, GRUB script)
+manaradix setup apply
+
+# Preview what would be applied
+manaradix setup apply --dry-run
+```
+
 ## Automated Snapshots (systemd Timers)
 
 Manaradix can generate and manage systemd timer/service units that take

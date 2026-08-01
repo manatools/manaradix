@@ -9,6 +9,8 @@ from manaradix.core.config_store import ConfigStore
 from manaradix.model.policy import RetentionPolicy, SnapshotPolicy
 from manaradix.module import (
     _build_parser,
+    _cmd_setup_apply,
+    _cmd_setup_status,
     _cmd_snapshot_create,
     _cmd_snapshot_delete,
     _cmd_snapshot_info,
@@ -91,6 +93,19 @@ class TestParser:
         args = parser.parse_args(["snapshot", "info", "--id", "snap1"])
         assert args.snapshot_command == "info"
         assert args.snapshot_id == "snap1"
+
+    def test_setup_status(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args(["setup", "status"])
+        assert args.command == "setup"
+        assert args.setup_command == "status"
+
+    def test_setup_apply(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args(["setup", "apply", "--dry-run"])
+        assert args.command == "setup"
+        assert args.setup_command == "apply"
+        assert args.dry_run is True
 
 
 # ---------------------------------------------------------------------------
@@ -232,4 +247,43 @@ class TestCmdSnapshotInfo:
         ctx = self._ctx()
         args = MagicMock(snapshot_id="nonexistent", mount="/")
         exit_code = _cmd_snapshot_info(ctx, args)
+        assert exit_code == 1
+
+
+class TestCmdSetup:
+    @patch("manaradix.module._init_services")
+    def test_status_reports_needed(self, mock_init) -> None:
+        ctx = MagicMock()
+        ctx.snapshot_manager.list_all.return_value = []
+        ctx.config_store.list_policies.return_value = []
+        exit_code = _cmd_setup_status(ctx, MagicMock())
+        assert exit_code == 0
+
+    @patch("manaradix.module._init_services")
+    def test_status_reports_configured(self, mock_init) -> None:
+        ctx = MagicMock()
+        ctx.snapshot_manager.list_all.return_value = [MagicMock()]
+        exit_code = _cmd_setup_status(ctx, MagicMock())
+        assert exit_code == 0
+
+    def test_apply_dry_run(self) -> None:
+        ctx = MagicMock()
+        with patch(
+            "manaradix.core.setup_wizard.apply_recommended",
+            return_value={
+                "schedules": ["daily"],
+                "retention": {"keep_daily": 7},
+                "grub_installed": False,
+            },
+        ):
+            exit_code = _cmd_setup_apply(ctx, MagicMock(dry_run=True))
+        assert exit_code == 0
+
+    def test_apply_failure(self) -> None:
+        ctx = MagicMock()
+        with patch(
+            "manaradix.core.setup_wizard.apply_recommended",
+            side_effect=RuntimeError("boom"),
+        ):
+            exit_code = _cmd_setup_apply(ctx, MagicMock(dry_run=False))
         assert exit_code == 1

@@ -404,6 +404,31 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Mount point (default: /)",
     )
 
+    # -- setup --------------------------------------------------------------
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="First-run setup wizard",
+        description="Check whether a recommended btrfs snapshot baseline "
+        "is in place, and apply it.",
+    )
+    setup_subs = setup_parser.add_subparsers(
+        title="setup subcommands",
+        dest="setup_command",
+        metavar="ACTION",
+    )
+    setup_status = setup_subs.add_parser(
+        "status",
+        help="Report whether the recommended setup is needed",
+    )
+    setup_apply = setup_subs.add_parser(
+        "apply",
+        help="Apply the recommended setup (config, policy, systemd units, GRUB)",
+    )
+    setup_apply.add_argument(
+        "--dry-run", action="store_true",
+        help="Preview the setup without applying anything",
+    )
+
     return parser
 
 
@@ -544,6 +569,42 @@ def _cmd_snapshot_prune(ctx: AppContext, args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_setup_status(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``setup status``."""
+    from manaradix.core.setup_wizard import needs_setup
+
+    if needs_setup(ctx):
+        print(_("Setup needed: no snapshots and no snapshot policies are configured."))
+        print(_("Run 'manaradix setup apply' to apply the recommended baseline."))
+    else:
+        print(_("Setup not needed: snapshots or policies already exist."))
+    return 0
+
+
+def _cmd_setup_apply(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``setup apply``."""
+    from manaradix.core.setup_wizard import apply_recommended
+
+    try:
+        summary = apply_recommended(ctx, dry_run=args.dry_run)
+    except Exception as exc:
+        logger.error("Setup failed: %s", exc)
+        return 1
+
+    if args.dry_run:
+        print(_("[DRY RUN] Would apply the recommended setup:"))
+    else:
+        print(_("Applied the recommended setup:"))
+    print(_("  Schedules: %s") % ", ".join(summary["schedules"]))
+    print(
+        _("  Retention: %s")
+        % ", ".join(f"{k}={v}" for k, v in summary["retention"].items())
+    )
+    grub = _("installed") if summary.get("grub_installed") else _("not installed")
+    print(_("  GRUB recovery menu: %s") % grub)
+    return 0
+
+
 def _cmd_snapshot_info(ctx: AppContext, args: argparse.Namespace) -> int:
     """Handle ``snapshot info``."""
     snap = ctx.snapshot_manager.get(args.snapshot_id, mount=args.mount)
@@ -569,6 +630,8 @@ _COMMAND_DISPATCH: dict[tuple[str, str], object] = {
     ("snapshot", "delete"): _cmd_snapshot_delete,
     ("snapshot", "prune"): _cmd_snapshot_prune,
     ("snapshot", "info"): _cmd_snapshot_info,
+    ("setup", "status"): _cmd_setup_status,
+    ("setup", "apply"): _cmd_setup_apply,
 }
 
 
@@ -590,7 +653,9 @@ def main() -> None:
     # ---- Privilege escalation ----
     # If the operation needs root and we're not already running as root
     # (and haven't already tried pkexec), re-exec via pkexec.
-    subcmd = getattr(args, "snapshot_command", None)
+    subcmd = getattr(args, "snapshot_command", None) or getattr(
+        args, "setup_command", None
+    )
     if needs_elevation(args.command, subcmd) and not is_root() and not already_reexecuted():
         logger.info(
             "Operation requires elevated privileges; re-executing via pkexec."
@@ -614,7 +679,10 @@ def main() -> None:
         snapshot_dir=args.snapshot_dir,
     )
 
-    dispatch_key = (args.command, getattr(args, "snapshot_command", None))
+    dispatch_key = (
+        args.command,
+        getattr(args, "snapshot_command", None) or getattr(args, "setup_command", None),
+    )
     handler = _COMMAND_DISPATCH.get(dispatch_key)
 
     if handler is None:

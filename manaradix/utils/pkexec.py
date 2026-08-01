@@ -36,6 +36,7 @@ _REEXEC_ENV_VAR = "MANARADIX_PKEXEC"
 _READ_ONLY_COMMANDS: set[tuple[str, str | None]] = {
     ("snapshot", "list"),
     ("snapshot", "info"),
+    ("setup", "status"),
 }
 
 # Operations requiring write access to the btrfs filesystem
@@ -43,6 +44,7 @@ _PRIVILEGED_COMMANDS: set[tuple[str, str | None]] = {
     ("snapshot", "create"),
     ("snapshot", "delete"),
     ("snapshot", "prune"),
+    ("setup", "apply"),
 }
 
 _PKEXEC_BIN = "/usr/bin/pkexec"
