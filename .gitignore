@@ -20,3 +20,6 @@ htmlcov/
 .vscode/
 *.swp
 *.swo
+
+# Compiled translation catalogs
+locale/*/LC_MESSAGES/*.mo

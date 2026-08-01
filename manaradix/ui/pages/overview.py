@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from manaradix.i18n import _
 from manaradix.ui.model import PageModel, Widget
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ class OverviewPage:
     """Dashboard page showing filesystem status and recent activity."""
 
     page_id = "overview"
-    title = "Overview"
+    title = _("Overview")
 
     def __init__(self, app_context: AppContext) -> None:
         self.app = app_context
@@ -59,13 +60,14 @@ class OverviewPage:
         pct = f"{(used / size * 100):.1f}%" if size else "unknown"
 
         return {
-            "title": "Filesystem",
+            "title": _("Filesystem"),
             "fields": [
                 Widget.label(
                     id="fs_summary",
-                    text=f"Total: {self._fmt_bytes(size)}  |  "
-                         f"Used: {self._fmt_bytes(used)} ({pct})  |  "
-                         f"Free: {self._fmt_bytes(free)}",
+                    text=_("Total: %s  |  Used: %s (%s)  |  Free: %s") % (
+                        self._fmt_bytes(size), self._fmt_bytes(used),
+                        pct, self._fmt_bytes(free),
+                    ),
                 ),
             ],
         }
@@ -80,9 +82,9 @@ class OverviewPage:
 
         if not filesystems:
             return {
-                "title": "Btrfs Filesystems",
+                "title": _("Btrfs Filesystems"),
                 "fields": [
-                    Widget.label(id="no_filesystems", text="No btrfs filesystems found."),
+                    Widget.label(id="no_filesystems", text=_("No btrfs filesystems found.")),
                 ],
             }
 
@@ -120,7 +122,7 @@ class OverviewPage:
             })
 
         return {
-            "title": "Btrfs Filesystems",
+            "title": _("Btrfs Filesystems"),
             "fields": [
                 Widget.tree(id="btrfs_filesystems", rows=rows, selectable=False),
             ],
@@ -136,13 +138,13 @@ class OverviewPage:
 
         if not snapshots:
             return {
-                "title": "Recent Snapshots",
-                "fields": [Widget.label(id="no_snapshots", text="No snapshots yet.")],
+                "title": _("Recent Snapshots"),
+                "fields": [Widget.label(id="no_snapshots", text=_("No snapshots yet."))],
             }
 
         recent = sorted(snapshots, key=lambda s: s.date, reverse=True)[:5]
         return {
-            "title": "Recent Snapshots",
+            "title": _("Recent Snapshots"),
             "fields": [
                 Widget.tree(
                     id="recent_snapshots",
@@ -171,12 +173,12 @@ class OverviewPage:
         active = [p for p in policies if p.enabled]
         if not active:
             return {
-                "title": "Active Policies",
-                "fields": [Widget.label(id="no_policies", text="No active policies.")],
+                "title": _("Active Policies"),
+                "fields": [Widget.label(id="no_policies", text=_("No active policies."))],
             }
 
         return {
-            "title": "Active Policies",
+            "title": _("Active Policies"),
             "fields": [
                 Widget.tree(
                     id="active_policies",
@@ -197,21 +199,21 @@ class OverviewPage:
     def _quick_actions_section(self) -> dict:
         """Quick-action buttons."""
         return {
-            "title": "Quick Actions",
+            "title": _("Quick Actions"),
             "fields": [
                 Widget.button(
                     id="btn_create_snapshot",
-                    label="Create Snapshot",
+                    label=_("Create Snapshot"),
                     callback=self.on_create_snapshot,
                 ),
                 Widget.button(
                     id="btn_start_scrub",
-                    label="Start Scrub",
+                    label=_("Start Scrub"),
                     callback=self.on_start_scrub,
                 ),
                 Widget.button(
                     id="btn_refresh",
-                    label="Refresh",
+                    label=_("Refresh"),
                     callback=self.on_refresh,
                 ),
             ],

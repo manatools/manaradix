@@ -1,0 +1,469 @@
+# Italian translation for manaradix.
+# Copyright (C) 2026 Mageia Community
+# This file is distributed under the same license as the manaradix package.
+# Mageia Community <mageia-community@mageia.org>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: manaradix 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-01 19:59+0200\n"
+"PO-Revision-Date: 2026-08-01 19:00+0200\n"
+"Last-Translator: Mageia Community <mageia-community@mageia.org>\n"
+"Language-Team: Italian <https://www.mageia.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: manaradix/module.py:270
+#, python-format
+msgid "Path to config file (default: %(default)s)"
+msgstr "Percorso del file di configurazione (predefinito: %(default)s)"
+
+#: manaradix/module.py:438
+#, python-format
+msgid "Created snapshot: %s"
+msgstr "Snapshot creato: %s"
+
+#: manaradix/module.py:439
+#, python-format
+msgid "  Subvolume:   %s"
+msgstr "  Subvolume:   %s"
+
+#: manaradix/module.py:440
+#, python-format
+msgid "  Path:        %s"
+msgstr "  Percorso:    %s"
+
+#: manaradix/module.py:441
+#, python-format
+msgid "  Type:        %s"
+msgstr "  Tipo:        %s"
+
+#: manaradix/module.py:443
+#, python-format
+msgid "  Schedule:    %s"
+msgstr "  Pianificazione: %s"
+
+#: manaradix/module.py:445
+#, python-format
+msgid "  Description: %s"
+msgstr "  Descrizione: %s"
+
+#: manaradix/module.py:461
+msgid "No snapshots found."
+msgstr "Nessuno snapshot trovato."
+
+#: manaradix/module.py:493
+#, python-format
+msgid "Deleted snapshot: %s"
+msgstr "Snapshot eliminato: %s"
+
+#: manaradix/module.py:533
+#, python-format
+msgid "[DRY RUN] Would delete %d snapshot(s):"
+msgstr "[SOLA SIMULAZIONE] Verrebbero eliminati %d snapshot:"
+
+#: manaradix/module.py:537
+#, python-format
+msgid "[DRY RUN] Nothing to prune (%d kept, 0 excess)."
+msgstr "[SOLA SIMULAZIONE] Nulla da ripulire (%d conservati, 0 in eccesso)."
+
+#: manaradix/module.py:539
+#, python-format
+msgid "Pruned %d snapshot(s):"
+msgstr "Ripuliti %d snapshot:"
+
+#: manaradix/module.py:543
+#, python-format
+msgid "Nothing to prune (%d kept, no excess)."
+msgstr "Nulla da ripulire (%d conservati, nessun eccesso)."
+
+#: manaradix/module.py:554
+#, python-format
+msgid "ID:          %s"
+msgstr "ID:          %s"
+
+#: manaradix/module.py:555
+#, python-format
+msgid "Subvolume:   %s"
+msgstr "Subvolume:   %s"
+
+#: manaradix/module.py:556
+#, python-format
+msgid "Path:        %s"
+msgstr "Percorso:    %s"
+
+#: manaradix/module.py:557
+#, python-format
+msgid "Date:        %s"
+msgstr "Data:        %s"
+
+#: manaradix/module.py:558
+#, python-format
+msgid "Type:        %s"
+msgstr "Tipo:        %s"
+
+#: manaradix/module.py:559
+#, python-format
+msgid "Read-only:   %s"
+msgstr "Sola lettura: %s"
+
+#: manaradix/module.py:560
+#, python-format
+msgid "Schedule:    %s"
+msgstr "Pianificazione: %s"
+
+#: manaradix/module.py:561
+#, python-format
+msgid "Description: %s"
+msgstr "Descrizione: %s"
+
+#: manaradix/utils/pkexec.py:118
+#, python-format
+msgid ""
+"error: %s not found. Install polkit to use privileged manaradix commands."
+msgstr ""
+"errore: %s non trovato. Installare polkit per usare i comandi manaradix "
+"privilegiati."
+
+#: manaradix/utils/pkexec.py:124
+#, python-format
+msgid "error: pkexec failed: %s"
+msgstr "errore: pkexec non riuscito: %s"
+
+#: manaradix/ui/renderer.py:204
+msgid "(no data)"
+msgstr "(nessun dato)"
+
+#: manaradix/ui/pages/overview.py:25
+msgid "Overview"
+msgstr "Panoramica"
+
+#: manaradix/ui/pages/overview.py:63
+msgid "Filesystem"
+msgstr "Filesystem"
+
+#: manaradix/ui/pages/overview.py:67
+#, python-format
+msgid "Total: %s  |  Used: %s (%s)  |  Free: %s"
+msgstr "Totale: %s  |  Usato: %s (%s)  |  Libero: %s"
+
+#: manaradix/ui/pages/overview.py:85 manaradix/ui/pages/overview.py:125
+msgid "Btrfs Filesystems"
+msgstr "Filesystem Btrfs"
+
+#: manaradix/ui/pages/overview.py:87
+msgid "No btrfs filesystems found."
+msgstr "Nessun filesystem btrfs trovato."
+
+#: manaradix/ui/pages/overview.py:141 manaradix/ui/pages/overview.py:147
+msgid "Recent Snapshots"
+msgstr "Snapshot Recenti"
+
+#: manaradix/ui/pages/overview.py:142
+msgid "No snapshots yet."
+msgstr "Nessuno snapshot ancora."
+
+#: manaradix/ui/pages/overview.py:176 manaradix/ui/pages/overview.py:181
+msgid "Active Policies"
+msgstr "Politiche Attive"
+
+#: manaradix/ui/pages/overview.py:177
+msgid "No active policies."
+msgstr "Nessuna politica attiva."
+
+#: manaradix/ui/pages/overview.py:202
+msgid "Quick Actions"
+msgstr "Azioni Rapide"
+
+#: manaradix/ui/pages/overview.py:206
+msgid "Create Snapshot"
+msgstr "Crea Snapshot"
+
+#: manaradix/ui/pages/overview.py:211 manaradix/ui/pages/settings.py:147
+msgid "Start Scrub"
+msgstr "Avvia Scrub"
+
+#: manaradix/ui/pages/overview.py:216
+msgid "Refresh"
+msgstr "Aggiorna"
+
+#: manaradix/ui/pages/snapshots.py:30 manaradix/ui/pages/snapshots.py:45
+msgid "Snapshots"
+msgstr "Snapshot"
+
+#: manaradix/ui/pages/snapshots.py:66
+msgid "Filters"
+msgstr "Filtri"
+
+#: manaradix/ui/pages/snapshots.py:70
+msgid "Subvolume"
+msgstr "Subvolume"
+
+#: manaradix/ui/pages/snapshots.py:77
+msgid "Type"
+msgstr "Tipo"
+
+#: manaradix/ui/pages/snapshots.py:85
+msgid "Actions"
+msgstr "Azioni"
+
+#: manaradix/ui/pages/snapshots.py:89
+msgid "Create Snapshot…"
+msgstr "Crea Snapshot…"
+
+#: manaradix/ui/pages/snapshots.py:94
+msgid "Delete Selected"
+msgstr "Elimina Selezionato"
+
+#: manaradix/ui/pages/snapshots.py:99
+msgid "Restore Selected"
+msgstr "Ripristina Selezionato"
+
+#: manaradix/ui/pages/snapshots.py:104
+msgid "Browse Selected"
+msgstr "Sfoglia Selezionato"
+
+#: manaradix/ui/pages/snapshots.py:109
+msgid "Export Selected"
+msgstr "Esporta Selezionato"
+
+#: manaradix/ui/pages/snapshots.py:120
+#, python-format
+msgid "Snapshot Detail: %s"
+msgstr "Dettaglio Snapshot: %s"
+
+#: manaradix/ui/pages/snapshots.py:122
+#, python-format
+msgid "Path: %s"
+msgstr "Percorso: %s"
+
+#: manaradix/ui/pages/snapshots.py:123
+#, python-format
+msgid "Date: %s"
+msgstr "Data: %s"
+
+#: manaradix/ui/pages/snapshots.py:124
+#, python-format
+msgid "Read-only: %s"
+msgstr "Sola lettura: %s"
+
+#: manaradix/ui/pages/snapshots.py:127
+msgid "Update Description"
+msgstr "Aggiorna Descrizione"
+
+#: manaradix/ui/pages/snapshots.py:132
+msgid "New description"
+msgstr "Nuova descrizione"
+
+#: manaradix/ui/pages/policies.py:24
+msgid "Hourly"
+msgstr "Ogni ora"
+
+#: manaradix/ui/pages/policies.py:25
+msgid "Daily"
+msgstr "Ogni giorno"
+
+#: manaradix/ui/pages/policies.py:26
+msgid "Weekly"
+msgstr "Ogni settimana"
+
+#: manaradix/ui/pages/policies.py:27
+msgid "Monthly"
+msgstr "Ogni mese"
+
+#: manaradix/ui/pages/policies.py:28
+msgid "Boot"
+msgstr "All'avvio"
+
+#: manaradix/ui/pages/policies.py:32
+msgid "Keep hourly"
+msgstr "Conserva orari"
+
+#: manaradix/ui/pages/policies.py:33
+msgid "Keep daily"
+msgstr "Conserva giornalieri"
+
+#: manaradix/ui/pages/policies.py:34
+msgid "Keep weekly"
+msgstr "Conserva settimanali"
+
+#: manaradix/ui/pages/policies.py:35
+msgid "Keep monthly"
+msgstr "Conserva mensili"
+
+#: manaradix/ui/pages/policies.py:36
+msgid "Keep boot"
+msgstr "Conserva all'avvio"
+
+#: manaradix/ui/pages/policies.py:44
+msgid "Policies"
+msgstr "Politiche"
+
+#: manaradix/ui/pages/policies.py:69 manaradix/ui/pages/policies.py:74
+msgid "Configured Policies"
+msgstr "Politiche Configurate"
+
+#: manaradix/ui/pages/policies.py:70
+msgid "No policies configured."
+msgstr "Nessuna politica configurata."
+
+#: manaradix/ui/pages/policies.py:104 manaradix/ui/pages/policies.py:109
+msgid "Add Policy"
+msgstr "Aggiungi Politica"
+
+#: manaradix/ui/pages/policies.py:106
+msgid "Subvolume path"
+msgstr "Percorso subvolume"
+
+#: manaradix/ui/pages/policies.py:122
+#, python-format
+msgid "On %s"
+msgstr "%s"
+
+#: manaradix/ui/pages/policies.py:144
+#, python-format
+msgid "Edit Policy: %s"
+msgstr "Modifica Politica: %s"
+
+#: manaradix/ui/pages/policies.py:148
+msgid "Enabled"
+msgstr "Abilitata"
+
+#: manaradix/ui/pages/policies.py:156
+msgid "Apply Policy"
+msgstr "Applica Politica"
+
+#: manaradix/ui/pages/policies.py:161
+msgid "Dry-Run Preview"
+msgstr "Anteprima Simulazione"
+
+#: manaradix/ui/pages/policies.py:166
+msgid "Remove Policy"
+msgstr "Rimuovi Politica"
+
+#: manaradix/ui/pages/policies.py:182 manaradix/ui/pages/policies.py:187
+msgid "systemd Units"
+msgstr "Unità systemd"
+
+#: manaradix/ui/pages/policies.py:183
+msgid "No units installed."
+msgstr "Nessuna unità installata."
+
+#: manaradix/ui/pages/settings.py:25
+msgid "Settings"
+msgstr "Impostazioni"
+
+#: manaradix/ui/pages/settings.py:47
+msgid "Global Configuration"
+msgstr "Configurazione Globale"
+
+#: manaradix/ui/pages/settings.py:51
+msgid "Default subvolume"
+msgstr "Subvolume predefinito"
+
+#: manaradix/ui/pages/settings.py:56
+msgid "Snapshot directory"
+msgstr "Directory snapshot"
+
+#: manaradix/ui/pages/settings.py:61
+msgid "Boot-from-snapshot (GRUB menu)"
+msgstr "Avvio da snapshot (menu GRUB)"
+
+#: manaradix/ui/pages/settings.py:67
+msgid "Save Settings"
+msgstr "Salva Impostazioni"
+
+#: manaradix/ui/pages/settings.py:84
+msgid "Compression"
+msgstr "Compressione"
+
+#: manaradix/ui/pages/settings.py:88
+#, python-format
+msgid "Compression for %s: %s"
+msgstr "Compressione per %s: %s"
+
+#: manaradix/ui/pages/settings.py:92
+msgid "Algorithm"
+msgstr "Algoritmo"
+
+#: manaradix/ui/pages/settings.py:98
+msgid "Apply Compression"
+msgstr "Applica Compressione"
+
+#: manaradix/ui/pages/settings.py:112
+#, python-format
+msgid "running (%s/%s relocated)"
+msgstr "in esecuzione (%s/%s spostati)"
+
+#: manaradix/ui/pages/settings.py:118
+#, python-format
+msgid "running (%s extents, %s errors)"
+msgstr "in esecuzione (%s extent, %s errori)"
+
+#: manaradix/ui/pages/settings.py:120
+#, python-format
+msgid "errors: %s"
+msgstr "errori: %s"
+
+#: manaradix/ui/pages/settings.py:125
+msgid "Filesystem Maintenance"
+msgstr "Manutenzione Filesystem"
+
+#: manaradix/ui/pages/settings.py:129
+#, python-format
+msgid "Balance: %s"
+msgstr "Bilanciamento: %s"
+
+#: manaradix/ui/pages/settings.py:133
+msgid "Start Balance"
+msgstr "Avvia Bilanciamento"
+
+#: manaradix/ui/pages/settings.py:138
+msgid "Cancel Balance"
+msgstr "Annulla Bilanciamento"
+
+#: manaradix/ui/pages/settings.py:143
+#, python-format
+msgid "Scrub: %s"
+msgstr "Scrub: %s"
+
+#: manaradix/ui/pages/settings.py:152
+msgid "Cancel Scrub"
+msgstr "Annulla Scrub"
+
+#: manaradix/ui/pages/settings.py:157
+msgid "Defragment /"
+msgstr "Deframmenta /"
+
+#: manaradix/ui/pages/settings.py:168
+msgid "GRUB Boot Menu"
+msgstr "Menu di Avvio GRUB"
+
+#: manaradix/ui/pages/settings.py:172
+#, python-format
+msgid "GRUB snapshot script: %s"
+msgstr "Script GRUB snapshot: %s"
+
+#: manaradix/ui/pages/settings.py:172
+msgid "installed"
+msgstr "installato"
+
+#: manaradix/ui/pages/settings.py:172
+msgid "not installed"
+msgstr "non installato"
+
+#: manaradix/ui/pages/settings.py:176
+msgid "Install GRUB Script"
+msgstr "Installa Script GRUB"
+
+#: manaradix/ui/pages/settings.py:181
+msgid "Remove GRUB Script"
+msgstr "Rimuovi Script GRUB"
+
+#: manaradix/ui/pages/settings.py:186
+msgid "Update GRUB Config"
+msgstr "Aggiorna Configurazione GRUB"

@@ -24,6 +24,9 @@ BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-wheel
 
+# Translations (msgfmt for .mo compilation)
+BuildRequires:  gettext
+
 # Runtime Python deps
 BuildRequires:  python3dist(tomlkit) >= 0.12.0
 Requires:       python3dist(tomlkit) >= 0.12.0
@@ -71,10 +74,13 @@ install -D -m 0644 data/polkit/org.mageia.manaradix.policy \
 install -D -m 0644 data/desktop/manaradix.desktop \
     %{buildroot}%{_datadir}/applications/manaradix.desktop
 
-# --- Locale files (translations ship as .mo, built from .po by the RPM) ---
-# When translations are ready, uncomment and replace with %%find_lang:
+# --- Locale files (translations ship as .mo, compiled from .po) ---
+install -d %{buildroot}%{_datadir}/locale/it/LC_MESSAGES
+msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
+    locale/it.po
+%find_lang %{name}
 
-%files
+%files -f %{name}.lang
 %license LICENSE
 %doc README.md spec.md
 %{_bindir}/manaradix
@@ -82,7 +88,6 @@ install -D -m 0644 data/desktop/manaradix.desktop \
 %{python3_sitelib}/manaradix-%{version}*.egg-info/
 %{_datadir}/polkit-1/actions/org.mageia.manaradix.policy
 %{_datadir}/applications/manaradix.desktop
-# Locale files -- uncomment when translations ship:
 
 %post
 # Polkit: reload policy definitions

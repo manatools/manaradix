@@ -9,6 +9,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from manaradix.core.btrfs_ops import SnapshotNotFoundError
+from manaradix.i18n import _
 from manaradix.model.snapshot import SnapshotType
 from manaradix.ui.model import PageModel, Widget
 
@@ -26,7 +27,7 @@ class SnapshotsPage:
     """Snapshot management page."""
 
     page_id = "snapshots"
-    title = "Snapshots"
+    title = _("Snapshots")
 
     def __init__(self, app_context: AppContext) -> None:
         self.app = app_context
@@ -41,7 +42,7 @@ class SnapshotsPage:
 
         sections = [
             {
-                "title": "Snapshots",
+                "title": _("Snapshots"),
                 "fields": [
                     Widget.tree(
                         id="snapshot_tree",
@@ -62,18 +63,18 @@ class SnapshotsPage:
                 ],
             },
             {
-                "title": "Filters",
+                "title": _("Filters"),
                 "fields": [
                     Widget.dropdown(
                         id="filter_subvolume",
-                        label="Subvolume",
+                        label=_("Subvolume"),
                         options=self._subvolume_options(snapshots),
                         selected="",
                         on_change=self.on_filter_change,
                     ),
                     Widget.dropdown(
                         id="filter_type",
-                        label="Type",
+                        label=_("Type"),
                         options=[""] + _TYPE_OPTIONS,
                         selected="",
                         on_change=self.on_filter_change,
@@ -81,31 +82,31 @@ class SnapshotsPage:
                 ],
             },
             {
-                "title": "Actions",
+                "title": _("Actions"),
                 "fields": [
                     Widget.button(
                         id="btn_create",
-                        label="Create Snapshot…",
+                        label=_("Create Snapshot…"),
                         callback=self.on_create_snapshot,
                     ),
                     Widget.button(
                         id="btn_delete",
-                        label="Delete Selected",
+                        label=_("Delete Selected"),
                         callback=self.on_delete_snapshot,
                     ),
                     Widget.button(
                         id="btn_restore",
-                        label="Restore Selected",
+                        label=_("Restore Selected"),
                         callback=self.on_restore_snapshot,
                     ),
                     Widget.button(
                         id="btn_browse",
-                        label="Browse Selected",
+                        label=_("Browse Selected"),
                         callback=self.on_browse_snapshot,
                     ),
                     Widget.button(
                         id="btn_export",
-                        label="Export Selected",
+                        label=_("Export Selected"),
                         callback=self.on_export_snapshot,
                     ),
                 ],
@@ -116,19 +117,19 @@ class SnapshotsPage:
         detail_snap = self._get_selected(snapshots)
         if detail_snap:
             sections.append({
-                "title": f"Snapshot Detail: {detail_snap.id}",
+                "title": _("Snapshot Detail: %s") % detail_snap.id,
                 "fields": [
-                    Widget.label(id="detail_path", text=f"Path: {detail_snap.path}"),
-                    Widget.label(id="detail_date", text=f"Date: {detail_snap.date.isoformat()}"),
-                    Widget.label(id="detail_ro", text=f"Read-only: {detail_snap.is_read_only}"),
+                    Widget.label(id="detail_path", text=_("Path: %s") % detail_snap.path),
+                    Widget.label(id="detail_date", text=_("Date: %s") % detail_snap.date.isoformat()),
+                    Widget.label(id="detail_ro", text=_("Read-only: %s") % detail_snap.is_read_only),
                     Widget.button(
                         id="btn_rename",
-                        label="Update Description",
+                        label=_("Update Description"),
                         callback=self.on_rename_snapshot,
                     ),
                     Widget.text(
                         id="rename_description",
-                        label="New description",
+                        label=_("New description"),
                         value=detail_snap.description,
                     ),
                 ],

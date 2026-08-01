@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from manaradix.i18n import _
 from manaradix.model.policy import RetentionPolicy, SnapshotPolicy
 from manaradix.ui.model import PageModel, Widget
 
@@ -19,12 +20,28 @@ logger = logging.getLogger(__name__)
 _SCHEDULE_KEYS = ["hourly", "daily", "weekly", "monthly", "boot"]
 _RETENTION_KEYS = ["keep_hourly", "keep_daily", "keep_weekly", "keep_monthly", "keep_boot"]
 
+_SCHEDULE_LABELS = {
+    "hourly": _("Hourly"),
+    "daily": _("Daily"),
+    "weekly": _("Weekly"),
+    "monthly": _("Monthly"),
+    "boot": _("Boot"),
+}
+
+_RETENTION_LABELS = {
+    "keep_hourly": _("Keep hourly"),
+    "keep_daily": _("Keep daily"),
+    "keep_weekly": _("Keep weekly"),
+    "keep_monthly": _("Keep monthly"),
+    "keep_boot": _("Keep boot"),
+}
+
 
 class PoliciesPage:
     """Snapshot policy configuration page."""
 
     page_id = "policies"
-    title = "Policies"
+    title = _("Policies")
 
     def __init__(self, app_context: AppContext) -> None:
         self.app = app_context
@@ -49,12 +66,12 @@ class PoliciesPage:
         """Table of configured policies."""
         if not policies:
             return {
-                "title": "Configured Policies",
-                "fields": [Widget.label(id="no_policies", text="No policies configured.")],
+                "title": _("Configured Policies"),
+                "fields": [Widget.label(id="no_policies", text=_("No policies configured."))],
             }
 
         return {
-            "title": "Configured Policies",
+            "title": _("Configured Policies"),
             "fields": [
                 Widget.tree(
                     id="policies_tree",
@@ -84,12 +101,12 @@ class PoliciesPage:
         if policy is None:
             # No policy selected — show "add policy" form
             return {
-                "title": "Add Policy",
+                "title": _("Add Policy"),
                 "fields": [
-                    Widget.text(id="new_subvolume", label="Subvolume path", value="/"),
+                    Widget.text(id="new_subvolume", label=_("Subvolume path"), value="/"),
                     Widget.button(
                         id="btn_add_policy",
-                        label="Add Policy",
+                        label=_("Add Policy"),
                         callback=self.on_add_policy,
                     ),
                 ],
@@ -102,7 +119,7 @@ class PoliciesPage:
             schedule_fields.append(
                 Widget.checkbox(
                     id=f"schedule_{key}",
-                    label=f"On {key}",
+                    label=_("On %s") % _SCHEDULE_LABELS[key],
                     checked=active,
                     on_change=self.on_schedule_toggle,
                 )
@@ -112,11 +129,10 @@ class PoliciesPage:
         retention_fields = []
         for key in _RETENTION_KEYS:
             current = getattr(policy.retention, key, 0)
-            label = key.replace("_", " ").capitalize()
             retention_fields.append(
                 Widget.spinner(
                     id=f"retention_{key}",
-                    label=label,
+                    label=_RETENTION_LABELS[key],
                     value=current,
                     min_val=0,
                     max_val=999,
@@ -125,11 +141,11 @@ class PoliciesPage:
             )
 
         return {
-            "title": f"Edit Policy: {policy.subvolume}",
+            "title": _("Edit Policy: %s") % policy.subvolume,
             "fields": [
                 Widget.checkbox(
                     id="policy_enabled",
-                    label="Enabled",
+                    label=_("Enabled"),
                     checked=policy.enabled,
                     on_change=self.on_enabled_toggle,
                 ),
@@ -137,17 +153,17 @@ class PoliciesPage:
                 *retention_fields,
                 Widget.button(
                     id="btn_apply_policy",
-                    label="Apply Policy",
+                    label=_("Apply Policy"),
                     callback=self.on_apply_policy,
                 ),
                 Widget.button(
                     id="btn_apply_dry_run",
-                    label="Dry-Run Preview",
+                    label=_("Dry-Run Preview"),
                     callback=self.on_dry_run_policy,
                 ),
                 Widget.button(
                     id="btn_remove_policy",
-                    label="Remove Policy",
+                    label=_("Remove Policy"),
                     callback=self.on_remove_policy,
                 ),
             ],
@@ -163,12 +179,12 @@ class PoliciesPage:
 
         if not units:
             return {
-                "title": "systemd Units",
-                "fields": [Widget.label(id="no_units", text="No units installed.")],
+                "title": _("systemd Units"),
+                "fields": [Widget.label(id="no_units", text=_("No units installed."))],
             }
 
         return {
-            "title": "systemd Units",
+            "title": _("systemd Units"),
             "fields": [
                 Widget.tree(
                     id="systemd_units",

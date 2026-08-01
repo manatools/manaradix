@@ -29,6 +29,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
+from manaradix.i18n import _
+
 logger = logging.getLogger(__name__)
 
 _TABS_ID = "main_tabs"
@@ -199,7 +201,7 @@ class AuiRenderer:
 
         rows = field.get("rows", [])
         if not rows:
-            factory.createLabel(parent, "(no data)")
+            factory.createLabel(parent, _("(no data)"))
             return
 
         # Columns: union of row keys, first-appearance order.

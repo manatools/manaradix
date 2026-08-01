@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from manaradix.i18n import _
 from manaradix.ui.model import PageModel, Widget
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ class SettingsPage:
     """Global settings and filesystem maintenance page."""
 
     page_id = "settings"
-    title = "Settings"
+    title = _("Settings")
 
     def __init__(self, app_context: AppContext) -> None:
         self.app = app_context
@@ -43,27 +44,27 @@ class SettingsPage:
     def _global_settings_section(self) -> dict:
         """Global configuration fields."""
         return {
-            "title": "Global Configuration",
+            "title": _("Global Configuration"),
             "fields": [
                 Widget.text(
                     id="setting_default_subvolume",
-                    label="Default subvolume",
+                    label=_("Default subvolume"),
                     value=self.app.config_store.default_subvolume,
                 ),
                 Widget.text(
                     id="setting_snapshot_dir",
-                    label="Snapshot directory",
+                    label=_("Snapshot directory"),
                     value=self.app.config_store.snapshot_dir,
                 ),
                 Widget.checkbox(
                     id="setting_boot_from_snapshot",
-                    label="Boot-from-snapshot (GRUB menu)",
+                    label=_("Boot-from-snapshot (GRUB menu)"),
                     checked=self.app.config_store.boot_from_snapshot,
                     on_change=self.on_boot_from_snapshot_toggle,
                 ),
                 Widget.button(
                     id="btn_save_settings",
-                    label="Save Settings",
+                    label=_("Save Settings"),
                     callback=self.on_save_settings,
                 ),
             ],
@@ -80,21 +81,21 @@ class SettingsPage:
 
         current = algo if algo else "none"
         return {
-            "title": "Compression",
+            "title": _("Compression"),
             "fields": [
                 Widget.label(
                     id="compression_current",
-                    text=f"Compression for {subvol}: {current}",
+                    text=_("Compression for %s: %s") % (subvol, current),
                 ),
                 Widget.dropdown(
                     id="compression_algo",
-                    label="Algorithm",
+                    label=_("Algorithm"),
                     options=["", "zstd", "lzo", "zlib"],
                     selected=algo or "",
                 ),
                 Widget.button(
                     id="btn_set_compression",
-                    label="Apply Compression",
+                    label=_("Apply Compression"),
                     callback=self.on_set_compression,
                 ),
             ],
@@ -108,52 +109,52 @@ class SettingsPage:
         try:
             bs = self.app.btrfs_ops.balance_status()
             if bs.running:
-                balance_status = f"running ({bs.relocated}/{bs.total} relocated)"
+                balance_status = _("running (%s/%s relocated)") % (bs.relocated, bs.total)
         except Exception:
             pass
         try:
             ss = self.app.btrfs_ops.scrub_status()
             if ss.running:
-                scrub_status = f"running ({ss.data_extents_scrubbed} extents, {ss.errors} errors)"
+                scrub_status = _("running (%s extents, %s errors)") % (ss.data_extents_scrubbed, ss.errors)
             elif ss.errors:
-                scrub_status = f"errors: {ss.errors}"
+                scrub_status = _("errors: %s") % ss.errors
         except Exception:
             pass
 
         return {
-            "title": "Filesystem Maintenance",
+            "title": _("Filesystem Maintenance"),
             "fields": [
                 Widget.label(
                     id="balance_status",
-                    text=f"Balance: {balance_status}",
+                    text=_("Balance: %s") % balance_status,
                 ),
                 Widget.button(
                     id="btn_balance_start",
-                    label="Start Balance",
+                    label=_("Start Balance"),
                     callback=self.on_start_balance,
                 ),
                 Widget.button(
                     id="btn_balance_cancel",
-                    label="Cancel Balance",
+                    label=_("Cancel Balance"),
                     callback=self.on_cancel_balance,
                 ),
                 Widget.label(
                     id="scrub_status",
-                    text=f"Scrub: {scrub_status}",
+                    text=_("Scrub: %s") % scrub_status,
                 ),
                 Widget.button(
                     id="btn_scrub_start",
-                    label="Start Scrub",
+                    label=_("Start Scrub"),
                     callback=self.on_start_scrub,
                 ),
                 Widget.button(
                     id="btn_scrub_cancel",
-                    label="Cancel Scrub",
+                    label=_("Cancel Scrub"),
                     callback=self.on_cancel_scrub,
                 ),
                 Widget.button(
                     id="btn_defrag",
-                    label="Defragment /",
+                    label=_("Defragment /"),
                     callback=self.on_defrag_root,
                 ),
             ],
@@ -164,25 +165,25 @@ class SettingsPage:
         installed = self.app.grub_integration.is_installed()
 
         return {
-            "title": "GRUB Boot Menu",
+            "title": _("GRUB Boot Menu"),
             "fields": [
                 Widget.label(
                     id="grub_status",
-                    text=f"GRUB snapshot script: {'installed' if installed else 'not installed'}",
+                    text=_("GRUB snapshot script: %s") % (_("installed") if installed else _("not installed")),
                 ),
                 Widget.button(
                     id="btn_grub_install",
-                    label="Install GRUB Script",
+                    label=_("Install GRUB Script"),
                     callback=self.on_install_grub,
                 ),
                 Widget.button(
                     id="btn_grub_uninstall",
-                    label="Remove GRUB Script",
+                    label=_("Remove GRUB Script"),
                     callback=self.on_uninstall_grub,
                 ),
                 Widget.button(
                     id="btn_update_grub",
-                    label="Update GRUB Config",
+                    label=_("Update GRUB Config"),
                     callback=self.on_update_grub,
                 ),
             ],

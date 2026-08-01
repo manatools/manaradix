@@ -379,22 +379,28 @@ User-visible strings are marked with `_()` for gettext translation.
 xgettext --language=Python --keyword=_ --from-code=UTF-8 \
     --output=locale/manaradix.pot \
     --package-name=manaradix --package-version=0.1.0 \
-    manaradix/module.py manaradix/utils/pkexec.py
+    manaradix/module.py manaradix/utils/pkexec.py manaradix/i18n.py \
+    manaradix/ui/renderer.py manaradix/ui/navigation.py \
+    manaradix/ui/pages/*.py
 
-# Create a new translation (example: Italian)
-msginit --locale=it --input=locale/manaradix.pot \
-    --output-file=locale/it.po
+# Create a new translation (example: Spanish)
+msginit --locale=es --input=locale/manaradix.pot \
+    --output-file=locale/es.po
+
+# Update an existing translation after regenerating the template
+msgmerge --update locale/it.po locale/manaradix.pot
 
 # Compile a translation for testing
 msgfmt locale/it.po -o locale/it/LC_MESSAGES/manaradix.mo
 
 # Test with a specific locale
-LANG=it.UTF-8 MANARADIX_LOCALE_DIR=./locale manaradix snapshot list
+LANG=it_IT.UTF-8 MANARADIX_LOCALE_DIR=./locale manaradix snapshot list
 ```
 
+An Italian translation ships at `locale/it.po`; other languages are welcome.
 The translation template is at `locale/manaradix.pot`.  System-installed
-``.mo`` files go to ``/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo``
-(handled by the RPM ``%find_lang`` macro).
+``.mo`` files go to ``/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo``,
+compiled and installed by the RPM spec (``msgfmt`` + ``%find_lang``).
 
 ## License
 
