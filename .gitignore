@@ -23,3 +23,6 @@ htmlcov/
 
 # Compiled translation catalogs
 locale/*/LC_MESSAGES/*.mo
+
+# Local agent guidance (never committed)
+CLAUDE.md
