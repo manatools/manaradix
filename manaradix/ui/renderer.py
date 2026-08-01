@@ -27,8 +27,10 @@ pure-Python event objects from ``yui_common``.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any, Callable
 
+from manaradix.core.assets import logo_path
 from manaradix.i18n import _
 
 logger = logging.getLogger(__name__)
@@ -78,6 +80,7 @@ class AuiRenderer:
                 YUI.application().setApplicationTitle("Manaradix")
             except Exception as exc:  # cosmetic only
                 logger.debug("Could not set application title: %s", exc)
+            self._set_app_icon()
 
         dialog = factory.createMainDialog()
         self._dialog = dialog
@@ -162,6 +165,9 @@ class AuiRenderer:
             )
             self._wire(widget, field.get("id"), "checkbox", field.get("on_change"))
 
+        elif kind == "image":
+            factory.createImage(parent, field.get("path", ""))
+
         elif kind == "text":
             widget = factory.createInputField(parent, field.get("label", ""))
             if field.get("id"):
@@ -239,6 +245,30 @@ class AuiRenderer:
         if callback is not None:
             widget.setNotify(True)
             self._handlers[widget.id()] = (kind, callback)
+
+    # -- Application icon ---------------------------------------------------
+
+    def _set_app_icon(self) -> None:
+        """Apply the manaradix logo as the application/window icon.
+
+        The logo ships as ``data/images/manaradix.svg`` (installed to
+        ``/usr/share/manaradix/images/``) and is resolved by
+        :func:`manaradix.core.assets.logo_path`.  The absolute path is
+        passed straight to ``setApplicationIcon``: the Qt icon resolver
+        treats bare names as theme icons (its icon base path is not
+        consulted for files), while an absolute path loads directly on
+        every backend.  Failure is cosmetic only.
+        """
+        icon_path = logo_path()
+        if not icon_path:
+            logger.debug("No manaradix logo found; skipping the window icon")
+            return
+        try:
+            from manatools.aui.yui import YUI
+
+            YUI.application().setApplicationIcon(icon_path)
+        except Exception as exc:  # cosmetic only
+            logger.debug("Could not set application icon: %s", exc)
 
     # -- Events -------------------------------------------------------------
 

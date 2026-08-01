@@ -13,6 +13,11 @@ class TestPageModel:
 
 
 class TestWidgetDescriptors:
+    def test_image(self) -> None:
+        desc = Widget.image(id="logo", path="/x/logo.svg")
+        assert desc["widget"] == "image"
+        assert desc["path"] == "/x/logo.svg"
+
     def test_label(self) -> None:
         assert Widget.label(id="l1", text="hi") == {
             "widget": "label", "id": "l1", "text": "hi",

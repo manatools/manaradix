@@ -33,12 +33,21 @@ class TestBuildNavigation:
         ctx = _ctx()
         with patch("manaradix.ui.navigation.needs_setup", return_value=False):
             about = build_navigation(ctx)[-1]
+        model = about.build_model()
         texts = [
             f.get("text", "")
-            for section in about.build_model().sections
+            for section in model.sections
             for f in section["fields"]
         ]
         assert any("Matteo Pasotti" in t for t in texts)
         assert any("me@matteopasotti.it" in t for t in texts)
         assert any("© 2026" in t for t in texts)
         assert any("GPL-2.0-or-later" in t for t in texts)
+        # The logo is shown at the top of the page (PNG raster preferred,
+        # SVG fallback).
+        paths = [
+            f.get("path", "")
+            for section in model.sections
+            for f in section["fields"]
+        ]
+        assert any("manaradix." in p for p in paths)

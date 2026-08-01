@@ -33,6 +33,10 @@ class Widget:
         return {"widget": "label", "id": id, "text": text}
 
     @staticmethod
+    def image(*, id: str | None = None, path: str = "") -> dict[str, Any]:
+        return {"widget": "image", "id": id, "path": path}
+
+    @staticmethod
     def button(
         *,
         id: str | None = None,

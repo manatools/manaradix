@@ -78,6 +78,12 @@ install -D -m 0644 data/desktop/manaradix.desktop \
 install -d %{buildroot}%{_datadir}/manaradix/templates
 cp -a data/templates/*.toml %{buildroot}%{_datadir}/manaradix/templates/
 
+# --- Logo (SVG for the window icon, PNG raster for the About page) ---
+install -D -m 0644 data/images/manaradix.svg \
+    %{buildroot}%{_datadir}/manaradix/images/manaradix.svg
+install -D -m 0644 data/images/manaradix.png \
+    %{buildroot}%{_datadir}/manaradix/images/manaradix.png
+
 # --- Locale files (translations ship as .mo, compiled from .po) ---
 install -d %{buildroot}%{_datadir}/locale/it/LC_MESSAGES
 msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
@@ -93,6 +99,7 @@ msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
 %{_datadir}/polkit-1/actions/org.mageia.manaradix.policy
 %{_datadir}/applications/manaradix.desktop
 %{_datadir}/manaradix/templates/
+%{_datadir}/manaradix/images/
 
 %post
 # Polkit: reload policy definitions

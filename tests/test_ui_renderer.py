@@ -5,6 +5,8 @@ table-item classes from ``manatools.aui.yui_common`` are pure Python, so a
 scripted fake factory can exercise the full widget build + event loop.
 """
 
+from unittest.mock import MagicMock, patch
+
 from manatools.aui.yui_common import YCancelEvent, YEventReason, YItem, YWidgetEvent
 
 from manaradix.module import _build_parser
@@ -192,6 +194,9 @@ class FakeFactory:
     def createFrame(self, parent, label):
         return self._create("frame", parent, label=label)
 
+    def createImage(self, parent, imageFileName, fallBackName=None):
+        return self._create("image", parent, label=imageFileName)
+
 
 def widgets_of(factory, kind):
     return [w for w in factory.widgets if w.kind == kind]
@@ -232,6 +237,7 @@ class PageA:
                     ),
                     Widget.text(id="txt", label="Desc", value="hello"),
                     Widget.label(id="lbl", text="some text"),
+                    Widget.image(id="img", path="/tmp/manaradix.svg"),
                     Widget.tree(
                         id="tbl",
                         rows=[
@@ -342,6 +348,45 @@ class TestBuild:
         renderer.run()
         table = widgets_of(factory, "table")[0]
         assert table.stretch_horiz is True  # fills the section frame width
+
+    def test_image_renders_with_path(self) -> None:
+        page = PageA()
+        renderer, factory = make_renderer([page], [YCancelEvent()])
+        renderer.run()
+        images = widgets_of(factory, "image")
+        assert len(images) == 1
+        assert images[0].label_text == "/tmp/manaradix.svg"
+
+
+# ---------------------------------------------------------------------------
+# Application icon
+# ---------------------------------------------------------------------------
+
+
+class TestAppIcon:
+    def test_sets_icon_from_logo_path(self) -> None:
+        renderer = AuiRenderer([])
+        fake_app = MagicMock()
+        with patch("manaradix.ui.renderer.logo_path", return_value="/x/manaradix.svg"), \
+             patch("manatools.aui.yui.YUI.application", return_value=fake_app):
+            renderer._set_app_icon()
+        # The absolute path is passed straight through: the Qt resolver
+        # treats bare names as theme icons, not files.
+        fake_app.setApplicationIcon.assert_called_once_with("/x/manaradix.svg")
+
+    def test_no_logo_skips_icon(self) -> None:
+        renderer = AuiRenderer([])
+        with patch("manaradix.ui.renderer.logo_path", return_value=None), \
+             patch("manatools.aui.yui.YUI.application") as mock_app:
+            renderer._set_app_icon()
+        mock_app.assert_not_called()
+
+    def test_icon_failure_is_cosmetic(self) -> None:
+        renderer = AuiRenderer([])
+        with patch("manaradix.ui.renderer.logo_path", return_value="/x/manaradix.svg"), \
+             patch("manatools.aui.yui.YUI.application",
+                   side_effect=RuntimeError("no app")):
+            renderer._set_app_icon()  # must not raise
 
 
 # ---------------------------------------------------------------------------
