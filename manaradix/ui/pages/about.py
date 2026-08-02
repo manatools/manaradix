@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 _AUTHOR = "Matteo Pasotti (xquiet)"
 _EMAIL = "me@matteopasotti.it"
 _COPYRIGHT = "© 2026 Matteo Pasotti"
-_LICENSE = "GPL-2.0-or-later"
+_LICENSE = "GPLv2+"
 _WEBSITE = "https://github.com/mageia/manaradix"
 
 _GPL_NOTICE = _(

@@ -42,7 +42,7 @@ class TestBuildNavigation:
         assert any("Matteo Pasotti" in t for t in texts)
         assert any("me@matteopasotti.it" in t for t in texts)
         assert any("© 2026" in t for t in texts)
-        assert any("GPL-2.0-or-later" in t for t in texts)
+        assert any("GPLv2+" in t for t in texts)
         # The logo is shown at the top of the page (PNG raster preferred,
         # SVG fallback).
         paths = [

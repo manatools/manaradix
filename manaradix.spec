@@ -12,7 +12,7 @@ Version:        0.1.0
 Release:        1%{?disttag}
 Summary:        Btrfs snapshot, subvolume, and filesystem management utility
 
-License:        GPL-2.0-or-later
+License:        GPLv2+
 Group:          System/Configuration
 URL:            https://github.com/mageia/manaradix
 Source0:        %{name}-%{version}.tar.gz
@@ -21,6 +21,7 @@ BuildArch:      noarch
 
 # Python build tools
 BuildRequires:  python3-devel
+BuildRequires:  python3-pip
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-wheel
 
@@ -53,7 +54,8 @@ filesystem parameters.
 
 Features:
   - Snapshot management (create, list, delete, restore, browse, export)
-  - Automated snapshot policies via systemd timers (hourly/daily/weekly/monthly)
+  - Automated snapshot policies via systemd timers
+    (hourly/daily/weekly/monthly)
   - Boot-time snapshots
   - GRUB integration for booting from snapshots
   - Policy-based retention and pruning
@@ -65,10 +67,10 @@ Features:
 %autosetup -n %{name}-%{version}
 
 %build
-%py3_build
+%pyproject_wheel
 
 %install
-%py3_install
+%pyproject_install
 
 # --- Polkit policy ---
 install -D -m 0644 data/polkit/org.mageia.manaradix.policy \
@@ -108,14 +110,14 @@ msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
 %doc README.md
 %{_bindir}/manaradix
 %{python3_sitelib}/manaradix/
-%{python3_sitelib}/manaradix-%{version}*.egg-info/
+%{python3_sitelib}/manaradix-%{version}*.dist-info/
 %{_datadir}/polkit-1/actions/org.mageia.manaradix.policy
 %{_datadir}/applications/manaradix.desktop
 %{_datadir}/manaradix/templates/
 %{_datadir}/manaradix/images/
 %{_unitdir}/manaradix-dbus.service
 %{_datadir}/dbus-1/system-services/org.mageia.manaradix.service
-%{_sysconfdir}/dbus-1/system.d/org.mageia.manaradix.conf
+%config(noreplace) %{_sysconfdir}/dbus-1/system.d/org.mageia.manaradix.conf
 
 %post
 # Polkit: reload policy definitions
