@@ -10,6 +10,22 @@ Conceptually similar to openSUSE's `btrfsmaintenance` + `btrfs-assistant` and
 Garuda's `btrfs-assistant`, but tailored to Mageia's infrastructure and
 packaging conventions.
 
+## Screenshots
+
+The Qt frontend. The same pages render in GTK and ncurses.
+
+| Overview | Snapshots |
+|---|---|
+| ![Overview](data/screenshots/overview.png) | ![Snapshots](data/screenshots/snapshots.png) |
+
+| Policies | Settings |
+|---|---|
+| ![Policies](data/screenshots/policies.png) | ![Settings](data/screenshots/settings.png) |
+
+| Setup Wizard | About |
+|---|---|
+| ![Setup Wizard](data/screenshots/setup.png) | ![About](data/screenshots/about.png) |
+
 ## System Requirements
 
 | Dependency | Minimum | Notes |
