@@ -30,14 +30,21 @@ class SettingsPage:
     # -- build_model --------------------------------------------------------
 
     def build_model(self):
-        """Return a ``PageModel`` for global settings."""
+        """Return a ``PageModel`` for global settings.
+
+        Two side-by-side columns (settings | system) so the page does not
+        stretch the window past small screens.
+        """
         sections = [
             self._global_settings_section(),
             self._compression_section(),
             self._maintenance_section(),
             self._grub_section(),
         ]
-        return PageModel(sections=[s for s in sections if s is not None])
+        return PageModel(
+            sections=[s for s in sections if s is not None],
+            columns=2,
+        )
 
     # -- Section builders ---------------------------------------------------
 
@@ -45,6 +52,7 @@ class SettingsPage:
         """Global configuration fields."""
         return {
             "title": _("Global Configuration"),
+            "column": 0,
             "fields": [
                 Widget.text(
                     id="setting_default_subvolume",
@@ -82,6 +90,7 @@ class SettingsPage:
         current = algo if algo else "none"
         return {
             "title": _("Compression"),
+            "column": 0,
             "fields": [
                 Widget.label(
                     id="compression_current",
@@ -123,6 +132,7 @@ class SettingsPage:
 
         return {
             "title": _("Filesystem Maintenance"),
+            "column": 1,
             "fields": [
                 Widget.label(
                     id="balance_status",
@@ -166,6 +176,7 @@ class SettingsPage:
 
         return {
             "title": _("GRUB Boot Menu"),
+            "column": 1,
             "fields": [
                 Widget.label(
                     id="grub_status",

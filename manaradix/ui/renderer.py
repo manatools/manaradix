@@ -138,15 +138,37 @@ class AuiRenderer:
         factory.createHeading(content, page.title)
 
         model = page.build_model()
-        for section in model.sections:
-            frame = factory.createFrame(content, section.get("title", ""))
-            box = factory.createVBox(frame)
-            for field in section.get("fields", []):
-                self._render_field(factory, box, field)
+        columns = getattr(model, "columns", 1)
+        if columns > 1:
+            # Side-by-side sections (HBox of VBoxes) keep dense pages from
+            # stretching the window past small screens.  A section pins
+            # itself with a "column" key; unpinned sections fill the
+            # shortest column so heights stay balanced.
+            row = factory.createHBox(content)
+            column_boxes = [factory.createVBox(row) for _ in range(columns)]
+            heights = [0] * columns
+            for section in model.sections:
+                col = section.get("column")
+                if col is None:
+                    col = min(range(columns), key=heights.__getitem__)
+                else:
+                    col = max(0, min(col, columns - 1))
+                self._render_section(factory, column_boxes[col], section)
+                heights[col] += len(section.get("fields", []))
+        else:
+            for section in model.sections:
+                self._render_section(factory, content, section)
 
         replace_point.showChild()
         self._current_index = index
         self._fit_window()
+
+    def _render_section(self, factory, parent, section: dict[str, Any]) -> None:
+        """Render one titled section (a frame) into *parent*."""
+        frame = factory.createFrame(parent, section.get("title", ""))
+        box = factory.createVBox(frame)
+        for field in section.get("fields", []):
+            self._render_field(factory, box, field)
 
     def _render_field(self, factory, parent, field: dict[str, Any]) -> None:
         """Create the YUI widget for one field descriptor."""

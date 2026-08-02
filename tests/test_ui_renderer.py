@@ -165,6 +165,9 @@ class FakeFactory:
     def createVBox(self, parent):
         return self._create("vbox", parent)
 
+    def createHBox(self, parent):
+        return self._create("hbox", parent)
+
     def createHeading(self, parent, label):
         return self._create("heading", parent, label=label)
 
@@ -367,6 +370,54 @@ class TestBuild:
         renderer.run()
         labels = widgets_of(factory, "label")
         assert labels[0]._auto_wrap is True
+
+
+class TestColumnLayout:
+    def test_pinned_sections_land_in_columns(self) -> None:
+        class Page:
+            title = "P"
+
+            def build_model(self):
+                return PageModel(columns=2, sections=[
+                    {"title": "Left A", "column": 0, "fields": [Widget.label(text="a")]},
+                    {"title": "Right B", "column": 1, "fields": [Widget.label(text="b")]},
+                ])
+
+        renderer, factory = make_renderer([Page()], [YCancelEvent()])
+        renderer.run()
+
+        content = widgets_of(factory, "replacepoint")[0].children[0]
+        row = content.children[1]  # heading, then hbox
+        assert row.kind == "hbox"
+        assert [c.kind for c in row.children] == ["vbox", "vbox"]
+        left, right = row.children
+        assert left.children[0].label_text == "Left A"
+        assert right.children[0].label_text == "Right B"
+
+    def test_unpinned_section_fills_shortest_column(self) -> None:
+        class Page:
+            title = "P"
+
+            def build_model(self):
+                return PageModel(columns=2, sections=[
+                    {"title": "Tall", "column": 0,
+                     "fields": [Widget.label(text="1")] * 4},
+                    {"title": "Free", "fields": [Widget.label(text="x")]},
+                ])
+
+        renderer, factory = make_renderer([Page()], [YCancelEvent()])
+        renderer.run()
+
+        row = widgets_of(factory, "replacepoint")[0].children[0].children[1]
+        # "Free" (1 field) joins column 1 (0 fields), not column 0 (4).
+        assert row.children[1].children[0].label_text == "Free"
+
+    def test_single_column_default_unaffected(self) -> None:
+        page = PageA()
+        renderer, factory = make_renderer([page], [YCancelEvent()])
+        renderer.run()
+        content = widgets_of(factory, "replacepoint")[0].children[0]
+        assert all(c.kind != "hbox" for c in content.children)
 
 
 # ---------------------------------------------------------------------------

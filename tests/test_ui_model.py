@@ -11,6 +11,13 @@ class TestPageModel:
         model = PageModel(sections=[{"title": "A", "fields": []}])
         assert model.sections == [{"title": "A", "fields": []}]
 
+    def test_columns_default_to_single(self) -> None:
+        assert PageModel().columns == 1
+
+    def test_columns_explicit(self) -> None:
+        model = PageModel(columns=2)
+        assert model.columns == 2
+
 
 class TestWidgetDescriptors:
     def test_image(self) -> None:

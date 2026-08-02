@@ -14,10 +14,22 @@ from typing import Any, Callable
 
 
 class PageModel:
-    """A page's declarative content: a list of titled sections."""
+    """A page's declarative content: a list of titled sections.
 
-    def __init__(self, sections: list[dict[str, Any]] | None = None) -> None:
+    ``columns`` > 1 lays the sections out side by side (each column an
+    HBox VBox) instead of stacking vertically — keeps dense pages like
+    Settings from stretching the window past small screens.  Sections may
+    pin themselves to a column with a ``"column"`` key; unpinned sections
+    fill the shortest column.
+    """
+
+    def __init__(
+        self,
+        sections: list[dict[str, Any]] | None = None,
+        columns: int = 1,
+    ) -> None:
         self.sections = list(sections or [])
+        self.columns = columns
 
 
 class Widget:
