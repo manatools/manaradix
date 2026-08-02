@@ -53,6 +53,24 @@ class TestGenerateGrubScript:
         # (e.g. snap_path=".snapshots/${snap_id}/root")
         assert 'snap_path=".snapshots/${snap_id}/root"' in script.replace(" ", "")
 
+    def test_submenu_guarded_by_snapshot_count(self) -> None:
+        """Empty snapshot dir must not emit an empty submenu block.
+
+        GRUB's lexer rejects an empty ``submenu { }`` with "Incorrect
+        command" / syntax error, breaking update-grub entirely.
+        """
+        grub = GrubIntegration()
+        script = grub.generate_grub_script()
+
+        open_guard = 'if [ "$count" -eq 0 ]; then'
+        close_guard = 'if [ "$count" -gt 0 ]; then'
+        assert open_guard in script
+        assert close_guard in script
+        # submenu open comes after its guard; close after the loop
+        assert script.index(open_guard) < script.index('submenu "Manaradix Snapshots"')
+        assert script.index(close_guard) > script.index("done")
+        assert script.index('submenu "Manaradix Snapshots"') < script.index("done")
+
 
 # ---------------------------------------------------------------------------
 # install_script

@@ -37,14 +37,20 @@ SNAPSHOT_DIR="{snapshot_dir}"
 ROOT_UUID=$(findmnt -n -o UUID / 2>/dev/null || true)
 [ -z "$ROOT_UUID" ] && exit 0
 
-cat <<'SUBEOF'
-submenu "Manaradix Snapshots" {{
-SUBEOF
-
+count=0
 for snapshot_dir in "$SNAPSHOT_DIR"/*/; do
     [ -d "${{snapshot_dir}}{subvol_name}" ] || continue
     snap_id=$(basename "$snapshot_dir")
     snap_path="{snapshot_relpath}/${{snap_id}}/{subvol_name}"
+
+    # Emit the submenu only once, and only when at least one snapshot
+    # exists — an empty submenu block is a GRUB lexer syntax error
+    # (lexer.c: "Incorrect command"), which makes update-grub fail.
+    if [ "$count" -eq 0 ]; then
+        cat <<'SUBEOF'
+submenu "Manaradix Snapshots" {{
+SUBEOF
+    fi
 
     cat <<ENTRYEOF
     menuentry "Snapshot: ${{snap_id}}" {{
@@ -53,11 +59,15 @@ for snapshot_dir in "$SNAPSHOT_DIR"/*/; do
         initrd /boot/initrd.img
     }}
 ENTRYEOF
+
+    count=$((count + 1))
 done
 
-cat <<'SUBEOF'
+if [ "$count" -gt 0 ]; then
+    cat <<'SUBEOF'
 }}
 SUBEOF
+fi
 """
 
 
