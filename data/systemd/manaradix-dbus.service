@@ -5,8 +5,7 @@ Requires=dbus.service
 After=dbus.service
 
 [Service]
-Type=dbus
-BusName=org.mageia.manaradix
+Type=simple
 ExecStart=/usr/bin/manaradix dbus serve
 User=root
 NoNewPrivileges=yes
@@ -17,8 +16,10 @@ RestartSec=2
 # Deliberately no [Install] section: the service is never enabled at
 # boot.  It is activated on demand through
 # /usr/share/dbus-1/system-services/org.mageia.manaradix.service, which
-# forwards to systemd via SystemdService=.  Type=dbus + BusName= tells
-# systemd the unit is only "started" once the daemon holds its name.
+# forwards to systemd via SystemdService=; the bus daemon completes
+# the activation itself by watching for the org.mageia.manaradix name,
+# so Type=simple is sufficient (Type=dbus adds no start-ordering value
+# here).
 #
 # Hardening is intentionally minimal for v1: ProtectSystem=full/strict
 # would block the daemon's own writes (/etc/manaradix/config.toml,

@@ -1,5 +1,6 @@
 """Unit tests for BtrfsOps — mocking the btrfs CLI."""
 
+import json
 import subprocess
 from datetime import datetime
 from unittest.mock import MagicMock, mock_open, patch
@@ -12,7 +13,7 @@ from manaradix.core.btrfs_ops import (
     BtrfsPermissionError,
     SnapshotNotFoundError,
 )
-from manaradix.model.snapshot import SnapshotType
+from manaradix.model.snapshot import Snapshot, SnapshotType
 
 
 class TestBtrfsOpsInit:
@@ -111,6 +112,87 @@ class TestCreateSnapshot:
         snap = ops.create_snapshot("/", "/dest", dry_run=True)
         assert snap.type == SnapshotType.READ_ONLY
         assert snap.subvolume == "/"
+
+    @patch("subprocess.run")
+    @patch("os.makedirs")
+    def test_create_mkdirs_destination_parent(
+        self, mock_mkdir: MagicMock, mock_run: MagicMock
+    ) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "subvolume", "snapshot", "-r", "/", "/dest/root"],
+            returncode=0,
+            stdout="",
+            stderr="",
+        )
+        ops = BtrfsOps()
+        ops.create_snapshot("/", "/dest/root")
+        # btrfs requires the destination's parent to exist.
+        mock_mkdir.assert_called_once_with("/dest", exist_ok=True)
+
+    @patch("os.makedirs")
+    def test_create_dry_run_does_not_mkdir(self, mock_mkdir: MagicMock) -> None:
+        ops = BtrfsOps()
+        ops.create_snapshot("/", "/dest/root", dry_run=True)
+        mock_mkdir.assert_not_called()
+
+
+class TestSnapshotInfo:
+    def test_sidecar_lives_next_to_snapshot(self, tmp_path) -> None:
+        ops = BtrfsOps()
+        snap = Snapshot(
+            id="2026-08-02_10-00-00",
+            subvolume="/",
+            path=str(tmp_path / "2026-08-02_10-00-00" / "root"),
+            date=datetime(2026, 8, 2, 10, 0, 0),
+            type=SnapshotType.READ_ONLY,
+        )
+        ops.write_snapshot_info(snap)
+        info = tmp_path / "2026-08-02_10-00-00" / "info.json"
+        # The sidecar sits next to the snapshot subvolume, never
+        # inside it: read-only snapshots reject writes with EROFS.
+        assert info.is_file()
+        assert not (
+            tmp_path / "2026-08-02_10-00-00" / "root" / "info.json"
+        ).exists()
+        assert json.loads(info.read_text())["id"] == "2026-08-02_10-00-00"
+
+    def test_roundtrip_preserves_subvolume_path(self, tmp_path) -> None:
+        """write + list must agree on the snapshot's subvolume path —
+        the timestamp directory is not what btrfs acts on."""
+        ops = BtrfsOps()
+        ts = "2026-08-02_10-00-00"
+        subvol = tmp_path / ".snapshots" / ts / "root"
+        subvol.mkdir(parents=True)
+        snap = Snapshot(
+            id="root",
+            subvolume="/",
+            path=str(subvol),
+            date=datetime(2026, 8, 2, 10, 0, 0),
+            type=SnapshotType.READ_ONLY,
+        )
+        ops.write_snapshot_info(snap)
+        listed = ops.list_snapshots(str(tmp_path))
+        assert len(listed) == 1
+        assert listed[0].path == str(subvol)
+
+    def test_sidecar_read_joins_named_subvolume(self, tmp_path) -> None:
+        ops = BtrfsOps()
+        snap_dir = tmp_path / "2026-08-02_10-00-00"
+        snap_dir.mkdir()
+        info = snap_dir / "info.json"
+        info.write_text(
+            json.dumps(
+                {
+                    "id": "home",
+                    "subvolume": "/home",
+                    "date": "2026-08-02T10:00:00",
+                    "type": "manual",
+                }
+            )
+        )
+        snap = ops._read_snapshot_info(str(info), str(snap_dir))
+        assert snap is not None
+        assert snap.path == str(snap_dir / "home")
 
 
 class TestListSubvolumes:

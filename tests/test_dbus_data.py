@@ -30,10 +30,12 @@ class TestSystemdUnit:
         config.read(_SYSTEMD_UNIT)
         return config
 
-    def test_type_dbus_with_busname(self) -> None:
+    def test_type_simple_without_busname(self) -> None:
+        # Type=simple: the bus daemon completes activation itself by
+        # watching the name, so Type=dbus start-ordering adds nothing.
         service = self._parse()["Service"]
-        assert service["Type"] == "dbus"
-        assert service["BusName"] == DBUS_SERVICE_NAME
+        assert service["Type"] == "simple"
+        assert service.get("BusName") is None
 
     def test_exec_start_runs_serve(self) -> None:
         service = self._parse()["Service"]

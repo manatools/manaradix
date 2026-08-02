@@ -6,7 +6,7 @@ arguments.
 """
 
 import re
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from dbus.exceptions import DBusException
@@ -60,10 +60,13 @@ class TestCallPlumbing:
         )
 
     def test_creates_system_bus_lazily(self) -> None:
-        with pytest.raises(Exception):
-            ManaradixClient().ping()  # no bus in test env; must attempt connect
-        # The above proves the default path builds its own SystemBus;
-        # with an injected bus nothing is auto-created:
+        # The default path builds its own SystemBus on first use; force
+        # that connect to fail to prove it happens (environment-independent
+        # — a live system daemon would otherwise answer the call).
+        with patch("dbus.SystemBus", side_effect=Exception("no bus")), \
+             pytest.raises(Exception):
+            ManaradixClient().ping()
+        # With an injected bus nothing is auto-created:
         client, proxy = make_client()
         proxy.BtrfsMounts.return_value = []
         assert client.btrfs_mounts() == []

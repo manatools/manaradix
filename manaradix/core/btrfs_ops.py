@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import shutil
 import subprocess
@@ -317,6 +318,11 @@ class BtrfsOps:
         if read_only:
             args.append("-r")
         args.extend([source, dest])
+        # btrfs refuses to create a snapshot whose destination parent
+        # directory does not exist yet; create it first (never in
+        # dry-run mode).
+        if not dry_run:
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
         self._run(args, dry_run=dry_run)
 
         ts = dest.rstrip("/").rsplit("/", 1)[-1]
@@ -389,10 +395,15 @@ class BtrfsOps:
         try:
             with open(info_path) as fh:
                 data = json.load(fh)
+            # Reconstruct the snapshot subvolume path (the sidecar sits
+            # next to it in the timestamp directory); the subvolume
+            # itself is what btrfs operations act on.
+            subvol = data.get("subvolume", "")
+            subvol_name = subvol.strip("/").replace("/", "_") or "root"
             return Snapshot(
                 id=data.get("id", ""),
-                subvolume=data.get("subvolume", ""),
-                path=snap_dir,
+                subvolume=subvol,
+                path=os.path.join(snap_dir, subvol_name),
                 date=datetime.fromisoformat(data["date"]),
                 type=SnapshotType(data.get("type", "manual")),
                 description=data.get("description", ""),
@@ -403,10 +414,16 @@ class BtrfsOps:
             return None
 
     def write_snapshot_info(self, snapshot: Snapshot) -> None:
-        """Write the ``info.json`` sidecar for a snapshot."""
+        """Write the ``info.json`` sidecar for a snapshot.
+
+        The sidecar lives in the timestamp directory *next to* the
+        snapshot subvolume: the subvolume itself is read-only, so
+        writing inside it fails with EROFS.  This matches the layout
+        that ``list_snapshots()`` reads.
+        """
         import os
 
-        info_path = os.path.join(snapshot.path, "info.json")
+        info_path = os.path.join(os.path.dirname(snapshot.path), "info.json")
         os.makedirs(os.path.dirname(info_path), exist_ok=True)
         data = {
             "id": snapshot.id,

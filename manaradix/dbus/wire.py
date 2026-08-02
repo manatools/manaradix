@@ -408,27 +408,43 @@ def serve_main(config_path: str, snapshot_dir: str = ".snapshots", *,
 
     bus = dbus.SystemBus()
     try:
-        dbus.service.BusName(DBUS_SERVICE_NAME, bus)
+        # Keep the BusName referenced: dbus-python's BusName.__del__
+        # releases the name, so a temporary object would be garbage
+        # collected right after acquisition and the daemon would run
+        # on without owning its name.
+        bus_name = dbus.service.BusName(DBUS_SERVICE_NAME, bus)
     except dbus.exceptions.NameExistsException:
         print(_("error: the manaradix D-Bus service is already running."),
               file=sys.stderr)
         return 1
+
+    loop = GLib.MainLoop()
+    stopping = False
+
+    def _stop(signum, frame) -> None:
+        nonlocal stopping
+        stopping = True
+        logger.info("Received signal %s; shutting down", signum)
+        loop.quit()
+
+    # Install the handlers before any service initialization so a
+    # SIGTERM landing during startup is not lost: GLib.MainLoop.quit()
+    # on a loop run() has not started is a no-op, so the flag also
+    # gates run() itself.
+    signal.signal(signal.SIGTERM, _stop)
+    signal.signal(signal.SIGINT, _stop)
 
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
     logger.info("manaradix D-Bus service %s ready", DBUS_SERVICE_NAME)
 
     handler = ManaradixHandler(_init_services(config_path, snapshot_dir))
-    ManaradixService(bus, handler=handler)
+    # Same lifetime concern as the BusName: keep the object referenced
+    # so method dispatch cannot be garbage collected out from under
+    # the main loop.
+    service = ManaradixService(bus, handler=handler)
 
-    loop = GLib.MainLoop()
-
-    def _stop(signum, frame) -> None:
-        logger.info("Received signal %s; shutting down", signum)
-        loop.quit()
-
-    signal.signal(signal.SIGTERM, _stop)
-    signal.signal(signal.SIGINT, _stop)
-    loop.run()
+    if not stopping:
+        loop.run()
     logger.info("manaradix D-Bus service stopped")
     return 0
