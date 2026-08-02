@@ -41,8 +41,8 @@ Requires:       polkit >= 0.120
 Requires:       python3-dbus >= 1.2
 Requires:       python3-gobject
 
-# Optional: GUI (multi-frontend via python-manatools aui)
-Suggests:       python3dist(manatools)
+# GUI (multi-frontend via python-manatools aui)
+Requires:       python3dist(python-manatools)
 
 # Optional: boot-from-snapshot
 Suggests:       grub2

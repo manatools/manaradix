@@ -16,7 +16,7 @@ packaging conventions.
 |---|---|---|
 | Python | 3.11+ | Core runtime |
 | `btrfs-progs` | 6.7+ | `/usr/bin/btrfs` for all filesystem operations |
-| `python-manatools` | Mageia 10 official repos | UI abstraction layer (optional — only needed for the GUI; includes the `aui` backend) |
+| `python-manatools` | Mageia 10 official repos | UI abstraction layer (GUI; includes the `aui` backend) |
 | systemd | 255+ | Timers for automated snapshots |
 | polkit | 0.120+ | Privilege escalation for non-root users |
 | grub2 | — | Boot-from-snapshot support |
@@ -81,7 +81,7 @@ in `.venv/pyvenv.cfg` (no recreation needed).
 | `tomlkit` | ≥ 0.12.0 | TOML config file parsing (`/etc/manaradix/config.toml`) |
 | `pytest` | ≥ 8.0 | Test runner (dev only) |
 | `pytest-cov` | ≥ 5.0 | Coverage reporting (dev only) |
-| `python-manatools` | Mageia 10 official repos | UI abstraction layer (optional — only needed for the GUI; `python3-manatools` on Mageia) |
+| `python-manatools` | Mageia 10 official repos | UI abstraction layer (GUI; `python3-manatools` on Mageia) |
 
 The Overview page shows a dashboard with filesystem usage, a table of all
 btrfs filesystems (label, uuid, devices, sizes, mount points), recent
