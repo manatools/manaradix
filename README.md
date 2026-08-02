@@ -495,4 +495,4 @@ compiled and installed by the RPM spec (``msgfmt`` + ``%find_lang``).
 
 ## License
 
-GPL-2.0-or-later — see [LICENSE](LICENSE).
+GPLv2+ — see [LICENSE](LICENSE).
