@@ -1,5 +1,6 @@
 """Unit tests for CLI subcommand dispatch in module.py."""
 
+import os
 import subprocess
 from unittest.mock import MagicMock, patch
 
@@ -18,6 +19,7 @@ from manaradix.module import (
     _cmd_snapshot_list,
     _cmd_snapshot_prune,
     _frontend_available,
+    _frontend_from_env,
     _init_services,
 )
 
@@ -347,3 +349,73 @@ class TestCmdSetup:
             exit_code = _cmd_setup_list_profiles(ctx, MagicMock())
         assert exit_code == 0
         assert "desktop" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# MUI_BACKEND → --frontend folding (pkexec strips the environment)
+# ---------------------------------------------------------------------------
+
+
+class TestFrontendFromEnv:
+    def test_known_backend(self) -> None:
+        with patch.dict(os.environ, {"MUI_BACKEND": "ncurses"}, clear=False):
+            assert _frontend_from_env() == "ncurses"
+
+    def test_unknown_backend_ignored(self) -> None:
+        with patch.dict(os.environ, {"MUI_BACKEND": "web"}, clear=False):
+            assert _frontend_from_env() is None
+
+    def test_unset(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            assert _frontend_from_env() is None
+
+
+class TestMainBackendFolding:
+    """The env-chosen backend must survive the pkexec re-exec via argv."""
+
+    def test_gui_reexec_folds_env_backend_into_argv(self) -> None:
+        argv = ["manaradix"]
+        with patch.dict(os.environ, {"MUI_BACKEND": "ncurses"}, clear=False), \
+             patch("sys.argv", argv), \
+             patch("manaradix.module.needs_elevation", return_value=True), \
+             patch("manaradix.module.is_root", return_value=False), \
+             patch("manaradix.module.already_reexecuted", return_value=False), \
+             patch("manaradix.module.reexec_with_pkexec") as mock_reexec:
+            from manaradix import module
+            module.main()
+        mock_reexec.assert_called_once()
+        assert argv == ["manaradix", "--frontend", "ncurses"]
+
+    def test_explicit_frontend_not_duplicated(self) -> None:
+        argv = ["manaradix", "--frontend", "qt"]
+        with patch.dict(os.environ, {"MUI_BACKEND": "ncurses"}, clear=False), \
+             patch("sys.argv", argv), \
+             patch("manaradix.module.needs_elevation", return_value=True), \
+             patch("manaradix.module.is_root", return_value=False), \
+             patch("manaradix.module.already_reexecuted", return_value=False), \
+             patch("manaradix.module.reexec_with_pkexec"):
+            from manaradix import module
+            module.main()
+        assert argv == ["manaradix", "--frontend", "qt"]
+
+    def test_subcommand_not_folded(self) -> None:
+        argv = ["manaradix", "snapshot", "create"]
+        with patch.dict(os.environ, {"MUI_BACKEND": "ncurses"}, clear=False), \
+             patch("sys.argv", argv), \
+             patch("manaradix.module.needs_elevation", return_value=True), \
+             patch("manaradix.module.is_root", return_value=False), \
+             patch("manaradix.module.already_reexecuted", return_value=False), \
+             patch("manaradix.module.reexec_with_pkexec"):
+            from manaradix import module
+            module.main()
+        assert argv == ["manaradix", "snapshot", "create"]
+
+    def test_env_backend_reaches_run_app_without_reexec(self) -> None:
+        with patch.dict(os.environ, {"MUI_BACKEND": "gtk"}, clear=False), \
+             patch("sys.argv", ["manaradix"]), \
+             patch("manaradix.module.needs_elevation", return_value=False), \
+             patch("manaradix.module.run_app") as mock_run_app:
+            from manaradix import module
+            module.main()
+        mock_run_app.assert_called_once()
+        assert mock_run_app.call_args.kwargs["frontend"] == "gtk"

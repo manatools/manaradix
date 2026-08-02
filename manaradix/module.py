@@ -751,6 +751,20 @@ _COMMAND_DISPATCH: dict[tuple[str, str], object] = {
 # ---------------------------------------------------------------------------
 
 
+_KNOWN_BACKENDS = ("qt", "gtk", "ncurses")
+
+
+def _frontend_from_env() -> str | None:
+    """Return a known backend name from ``MUI_BACKEND``, or None.
+
+    pkexec strips the environment on re-exec (``MUI_BACKEND`` included),
+    so the env choice must be folded into argv before elevation — an
+    elevated child would otherwise auto-detect a different backend.
+    """
+    choice = os.environ.get("MUI_BACKEND", "").strip().lower()
+    return choice if choice in _KNOWN_BACKENDS else None
+
+
 def main() -> None:
     """CLI entry point for manaradix."""
     parser = _build_parser()
@@ -760,6 +774,19 @@ def main() -> None:
         level=logging.DEBUG if args.debug else logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
+
+    # A backend chosen via MUI_BACKEND is lost when pkexec strips the
+    # environment; fold it into argv (which survives) unless --frontend
+    # was already explicit.
+    if (
+        args.command is None
+        and args.frontend is None
+        and not any(a.startswith("--frontend") for a in sys.argv)
+    ):
+        from_env = _frontend_from_env()
+        if from_env:
+            sys.argv += ["--frontend", from_env]
+            args.frontend = from_env
 
     # ---- Privilege escalation ----
     # If the operation needs root and we're not already running as root
