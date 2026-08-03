@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from manaradix.core.setup_wizard import needs_setup
 from manaradix.ui.pages.about import AboutPage
-from manaradix.ui.pages.overview import OverviewPage
+from manaradix.ui.pages.dashboard import DashboardPage
 from manaradix.ui.pages.policies import PoliciesPage
 from manaradix.ui.pages.settings import SettingsPage
 from manaradix.ui.pages.setup import SetupWizardPage
@@ -32,7 +32,7 @@ def build_navigation(app_context: AppContext) -> list:
         them as tabs in the manatools YUI main dialog.
     """
     pages = [
-        OverviewPage(app_context),
+        DashboardPage(app_context),
         SnapshotsPage(app_context),
         PoliciesPage(app_context),
         SettingsPage(app_context),

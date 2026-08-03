@@ -438,6 +438,121 @@ class TestBtrfsMounts:
 
 
 # ---------------------------------------------------------------------------
+# filesystem_usage / filesystem_du tests
+# ---------------------------------------------------------------------------
+
+
+# Real `btrfs filesystem usage -b /` output (btrfs-progs 6.19): raw
+# numbers, blank lines between sections, and a percentage in parentheses
+# trailing the Used value of each profile section.
+_FS_USAGE_SAMPLE = """\
+Overall:
+    Device size:\t\t      211618365440
+    Device allocated:\t      22544384000
+    Device unallocated:\t      189073981440
+    Device missing:\t      0
+    Used:\t\t      19311316992
+    Free (estimated):\t      190525214720\t(min: 96002904064)
+    Free (statfs, best-effort):\t      190525214720
+    Data ratio:\t\t      1.00
+    Metadata ratio:\t      2.00
+    Global reserve:\t      536870912\t(used: 0)
+    Multiple profiles:\t      no
+
+Data,single: Size:20409483264, Used:18928889856 (92.75%)
+
+Metadata,DUP: Size:1073741824, Used:382238720 (35.60%)
+
+System,DUP: Size:8388608, Used:16384 (0.20%)
+"""
+
+
+class TestFilesystemUsage:
+    @patch("subprocess.run")
+    def test_parses_internal_sections(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "filesystem", "usage", "-b", "/"],
+            returncode=0,
+            stdout=_FS_USAGE_SAMPLE,
+            stderr="",
+        )
+        overall = BtrfsOps().filesystem_usage("/")["overall"]
+        assert overall["device_size"] == 211618365440
+        assert overall["free_estimated"] == 190525214720
+        assert overall["data"] == {"size": 20409483264, "used": 18928889856}
+        assert overall["metadata"] == {"size": 1073741824, "used": 382238720}
+        assert overall["system"] == {"size": 8388608, "used": 16384}
+
+    @patch("subprocess.run")
+    def test_internal_sections_absent_when_missing(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "filesystem", "usage", "-b", "/"],
+            returncode=0,
+            stdout="Overall:\n    Device size:\t\t      1000\n",
+            stderr="",
+        )
+        overall = BtrfsOps().filesystem_usage("/")["overall"]
+        assert "data" not in overall
+        assert "metadata" not in overall
+        assert "system" not in overall
+
+    @patch("subprocess.run")
+    def test_error_returns_empty(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=["btrfs"], stderr="not a btrfs fs"
+        )
+        assert BtrfsOps().filesystem_usage("/") == {}
+
+
+class TestFilesystemDu:
+    @patch("subprocess.run")
+    def test_parses_summary_row(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "filesystem", "du", "-s", "--raw", "/.snapshots"],
+            returncode=0,
+            stdout=(
+                "     Total   Exclusive  Set shared  Filename\n"
+                " 12288000    1228800          0  /.snapshots\n"
+            ),
+            stderr="",
+        )
+        assert BtrfsOps().filesystem_du("/.snapshots") == {
+            "total": 12288000,
+            "exclusive": 1228800,
+        }
+
+    @patch("subprocess.run")
+    def test_uses_raw_flag_not_b(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "filesystem", "du", "-s", "--raw", "/.snapshots"],
+            returncode=0,
+            stdout="     Total   Exclusive  Set shared  Filename\n",
+            stderr="",
+        )
+        ops = BtrfsOps()
+        ops.filesystem_du("/.snapshots")
+        args = mock_run.call_args[0][0]
+        assert args[1:] == ["filesystem", "du", "-s", "--raw", "/.snapshots"]
+
+    @patch("subprocess.run")
+    def test_error_returns_empty(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=["btrfs"], stderr="no such file"
+        )
+        assert BtrfsOps().filesystem_du("/nonexistent") == {}
+
+    @patch("subprocess.run")
+    def test_no_data_row_returns_empty(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "filesystem", "du", "-s", "--raw", "/.snapshots"],
+            returncode=0,
+            stdout="     Total   Exclusive  Set shared  Filename\n",
+            stderr="",
+        )
+        assert BtrfsOps().filesystem_du("/.snapshots") == {}
+
+
+# ---------------------------------------------------------------------------
 # mount_subvolume / umount tests
 # ---------------------------------------------------------------------------
 

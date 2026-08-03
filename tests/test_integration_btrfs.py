@@ -75,6 +75,19 @@ class TestRealParsers:
         overall = usage.get("overall", {})
         assert overall.get("device_size", 0) > 0
         assert overall.get("free_estimated", 0) > 0
+        # Internal Data/Metadata/System sections (dashboard stats)
+        for section in ("data", "metadata", "system"):
+            assert section in overall, f"missing {section} in {overall}"
+            assert overall[section]["size"] > 0
+            assert overall[section]["used"] >= 0
+
+    def test_filesystem_du(self, btrfs_fs: str) -> None:
+        ops = BtrfsOps()
+        summary = ops.filesystem_du(btrfs_fs)
+        assert summary["total"] > 0
+        assert summary["exclusive"] >= 0
+        # Nonexistent path → no data row → empty dict
+        assert ops.filesystem_du(f"{btrfs_fs}/nonexistent-dir") == {}
 
     def test_filesystem_show_includes_loop_device(self, btrfs_fs: str) -> None:
         filesystems = BtrfsOps().filesystem_show()

@@ -14,9 +14,9 @@ packaging conventions.
 
 The Qt frontend. The same pages render in GTK and ncurses.
 
-| Overview | Snapshots |
+| Dashboard | Snapshots |
 |---|---|
-| ![Overview](data/screenshots/overview.png) | ![Snapshots](data/screenshots/snapshots.png) |
+| ![Dashboard](data/screenshots/dashboard.png) | ![Snapshots](data/screenshots/snapshots.png) |
 
 | Policies | Settings |
 |---|---|
@@ -99,9 +99,13 @@ in `.venv/pyvenv.cfg` (no recreation needed).
 | `pytest-cov` | ≥ 5.0 | Coverage reporting (dev only) |
 | `python-manatools` | Mageia 10 official repos | UI abstraction layer (GUI; `python3-manatools` on Mageia) |
 
-The Overview page shows a dashboard with filesystem usage, a table of all
-btrfs filesystems (label, uuid, devices, sizes, mount points), recent
-snapshots, and active policies.
+The Dashboard page shows disk usage per physical disk, a table of all
+btrfs filesystems (label, devices, sizes, free space, used percentage),
+internal Data/Metadata/System usage per filesystem, snapshot usage
+(total and exclusive bytes vs device size), recent snapshots, and active
+policies. When many disks or filesystems are present, dropdowns keep the
+view compact. It is the default tab on startup (the Setup Wizard is
+shown first instead when the system is unconfigured).
 
 ## Quick Start
 
@@ -448,7 +452,7 @@ manaradix/
 │   │   ├── model.py                 # PageModel / Widget descriptor factories
 │   │   ├── renderer.py              # Descriptor → manatools YUI widgets
 │   │   └── pages/
-│   │       ├── overview.py          # Dashboard
+│   │       ├── dashboard.py         # Dashboard (disk/fs/snapshot stats)
 │   │       ├── snapshots.py         # Snapshot management
 │   │       ├── policies.py          # Policy editor
 │   │       └── settings.py          # Global settings + maintenance

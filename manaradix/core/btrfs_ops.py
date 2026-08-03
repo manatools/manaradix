@@ -91,6 +91,18 @@ _UUID_RE = re.compile(r"UUID:\s+(?P<uuid>[0-9a-f-]+)")
 # Parses lines like: "Parent UUID: 01234567-89ab-cdef-0123-456789abcdef"
 _PARENT_UUID_RE = re.compile(r"Parent UUID:\s+(?P<uuid>[0-9a-f-]+)")
 
+# Parses lines like: "Data,single: Size:20409483264, Used:18928889856 (92.75%)"
+# Profile names vary (single/DUP/RAID1/RAID1C3/...) and btrfs-progs >= 6.x
+# appends a percentage in parentheses to the Used number — never anchor
+# the end of the match.
+_USAGE_PROFILE_RE = re.compile(
+    r"^(Data|Metadata|System),[^:]+: Size:(\d+), Used:(\d+)"
+)
+
+# Parses "btrfs filesystem du -s --raw" data rows:
+# " 12288000  1228800  0  /.snapshots"  (Total, Exclusive, Set shared, Filename)
+_DU_ROW_RE = re.compile(r"^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s*$")
+
 
 def _parse_subvol_list_line(line: str) -> Optional[dict]:
     """Parse a single line of ``btrfs subvolume list -p`` output."""
@@ -658,11 +670,47 @@ class BtrfsOps:
                 m = re.search(r"(\d+)", line.replace(",", ""))
                 if m:
                     info["overall"]["free_estimated"] = int(m.group(1))
+            elif line.startswith(("Data,", "Metadata,", "System,")):
+                m = _USAGE_PROFILE_RE.match(line)
+                if m:
+                    section, size, used = m.groups()
+                    info["overall"][section.lower()] = {
+                        "size": int(size),
+                        "used": int(used),
+                    }
             elif line.startswith("/dev/"):
                 in_device = True
             elif in_device and not line:
                 in_device = False
         return info
+
+    def filesystem_du(self, path: str) -> dict:
+        """Return a du summary of *path*: ``{"total": int, "exclusive": int}``.
+
+        Runs ``btrfs filesystem du -s --raw <path>`` (``du`` uses
+        ``--raw``, not ``-b``).  ``total`` is the apparent size, counting
+        shared extents once per snapshot that references them;
+        ``exclusive`` is the space unique to this path (btrfs
+        qgroup-style accounting), which is the honest cost of the
+        snapshots.  Returns ``{}`` on error or when no data row parses
+        (e.g. the path does not exist).
+        """
+        try:
+            result = self._run(
+                ["filesystem", "du", "-s", "--raw", path],
+                check=False,
+            )
+        except BtrfsError:
+            return {}
+        # Iterate from the bottom so the summary row wins even if a
+        # header or warning line precedes it; with -s there is exactly
+        # one data row anyway.
+        for line in reversed(result.stdout.splitlines()):
+            m = _DU_ROW_RE.match(line)
+            if m:
+                total, exclusive, _shared = (int(g) for g in m.groups()[:3])
+                return {"total": total, "exclusive": exclusive}
+        return {}
 
     def filesystem_show(self, *, dry_run: bool = False) -> list[dict]:
         """Return all btrfs filesystems with device info.

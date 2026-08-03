@@ -18,7 +18,7 @@ class TestBuildNavigation:
         with patch("manaradix.ui.navigation.needs_setup", return_value=False):
             pages = build_navigation(ctx)
         assert [p.page_id for p in pages] == [
-            "overview", "snapshots", "policies", "settings", "about",
+            "dashboard", "snapshots", "policies", "settings", "about",
         ]
 
     def test_unconfigured_system_prepends_wizard(self) -> None:

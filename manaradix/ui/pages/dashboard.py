@@ -1,0 +1,502 @@
+"""Manaradix — Dashboard page.
+
+Disk and filesystem usage statistics (per physical disk, per btrfs
+filesystem, and per internal Data/Metadata/System section), snapshot
+usage, recent snapshots, active policies, and quick actions.
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+import re
+from typing import TYPE_CHECKING
+
+from manaradix.i18n import _
+from manaradix.ui.model import PageModel, Widget
+
+if TYPE_CHECKING:
+    from manaradix.module import AppContext
+
+logger = logging.getLogger(__name__)
+
+#: With at most this many disks/filesystems every row fits the dialog
+#: directly; beyond it a dropdown selects which one to display, keeping
+#: the view compact.
+_MAX_ROWS_DIRECT = 3
+
+# Maps a btrfs device path to its physical-disk kernel name.  Partition
+# suffixes differ by bus: nvme0n1p3 -> nvme0n1, sda2 -> sda, mmcblk0p1 ->
+# mmcblk0; whole disks (sda) pass through.  /dev/mapper/*, /dev/loop* and
+# other non-disk devices do not match and become their own group keyed by
+# the full path (resolving a dm-crypt parent would need lsblk).
+_DISK_DEVICE_RE = re.compile(
+    r"^/dev/(?P<disk>(?:nvme\d+n\d+|mmcblk\d+|sd[a-z]+|vd[a-z]+|hd[a-z]+))"
+    r"(?:p?\d+)?$"
+)
+
+
+def _disk_key(device_path: str) -> str:
+    """Return the physical-disk kernel name for a device path."""
+    m = _DISK_DEVICE_RE.match(device_path)
+    return m.group("disk") if m else device_path
+
+
+class DashboardPage:
+    """Dashboard page showing filesystem status and recent activity."""
+
+    page_id = "dashboard"
+    title = _("Dashboard")
+
+    def __init__(self, app_context: AppContext) -> None:
+        self.app = app_context
+        # Dropdown selections persist across re-renders (same pattern as
+        # SnapshotsPage._selected_snapshot_id).
+        self._selected_disk: str | None = None
+        self._selected_fs: str | None = None
+        self._selected_internal_fs: str | None = None
+
+    # -- build_model --------------------------------------------------------
+
+    def build_model(self):
+        """Return a ``PageModel`` for the dashboard.
+
+        Two side-by-side columns (usage stats | snapshots/policies) so the
+        page does not stretch the window past small screens, like the
+        Settings page.
+        """
+        # Cache per-mount usage for this build (one subprocess per unique
+        # filesystem) and fetch snapshots/filesystems once — each shared
+        # by several sections.
+        self._usage_cache: dict[str, dict] = {}
+        self._snapshots = self._list_snapshots()
+        self._filesystems = self._list_filesystems()
+        sections = [
+            self._disks_section(),
+            self._filesystems_section(),
+            self._internal_stats_section(),
+            self._snapshot_usage_section(),
+            self._recent_snapshots_section(),
+            self._active_policies_section(),
+            self._quick_actions_section(),
+        ]
+        return PageModel(
+            sections=[s for s in sections if s is not None],
+            columns=2,
+        )
+
+    # -- Section builders ---------------------------------------------------
+
+    def _disks_section(self) -> dict | None:
+        """Physical disks (grouped btrfs devices) with total/free/used."""
+        totals: dict[str, dict] = {}
+        for fs in self._filesystems:
+            for dev in fs["devices"]:
+                entry = totals.setdefault(_disk_key(dev["path"]), {"total": 0, "used": 0})
+                entry["total"] += dev["size"]
+                entry["used"] += dev["used"]
+
+        if not totals:
+            return {
+                "title": _("Physical Disks"),
+                "column": 0,
+                "fields": [Widget.label(id="no_disks", text=_("No physical disks found."))],
+            }
+
+        disks = sorted(totals.items(), key=lambda kv: (-kv[1]["total"], kv[0]))
+
+        def row_for(key: str) -> dict:
+            t = totals[key]
+            free = t["total"] - t["used"] if t["total"] else 0
+            pct = f"{(t['used'] / t['total'] * 100):.1f}%" if t["total"] else "-"
+            return {
+                "Disk": os.path.basename(key),
+                "Total": self._fmt_bytes(t["total"]),
+                "Used": self._fmt_bytes(t["used"]),
+                "Free": self._fmt_bytes(free),
+                "Used %": pct,
+            }
+
+        if len(disks) > _MAX_ROWS_DIRECT:
+            labels = [os.path.basename(key) for key, _ in disks]
+            selected = self._selected_disk if self._selected_disk in totals else disks[0][0]
+            return {
+                "title": _("Physical Disks"),
+                "column": 0,
+                "fields": [
+                    Widget.dropdown(
+                        id="disk_selector",
+                        label=_("Physical Disk"),
+                        options=labels,
+                        selected=os.path.basename(selected),
+                        on_change=self.on_disk_selected,
+                    ),
+                    Widget.tree(id="disks", rows=[row_for(selected)], selectable=False),
+                ],
+            }
+
+        return {
+            "title": _("Physical Disks"),
+            "column": 0,
+            "fields": [
+                Widget.tree(id="disks", rows=[row_for(key) for key, _ in disks], selectable=False),
+            ],
+        }
+
+    def _filesystems_section(self) -> dict | None:
+        """All btrfs filesystems with devices, sizes, and usage percent."""
+        if not self._filesystems:
+            return {
+                "title": _("Btrfs Filesystems"),
+                "column": 1,
+                "fields": [
+                    Widget.label(id="no_filesystems", text=_("No btrfs filesystems found.")),
+                ],
+            }
+
+        # Mount targets by device path and by uuid, so each filesystem row
+        # can show where its devices are mounted.  The uuid index is a
+        # fallback: btrfs may report /dev/mapper/name while findmnt shows
+        # the underlying /dev/dm-N device.
+        mounts_by_source: dict[str, list[str]] = {}
+        mounts_by_uuid: dict[str, list[str]] = {}
+        try:
+            for mount in self.app.btrfs_ops.btrfs_mounts():
+                mounts_by_source.setdefault(mount["source"], []).append(mount["target"])
+                mounts_by_uuid.setdefault(mount["uuid"], []).append(mount["target"])
+        except Exception as exc:
+            logger.warning("Could not read btrfs mount points: %s", exc)
+
+        def fs_label(fs: dict) -> str:
+            return fs["label"] or fs["uuid"][:8]
+
+        def row_for(fs: dict) -> dict:
+            devices = ", ".join(d["path"] for d in fs["devices"]) or "-"
+            total = sum(d["size"] for d in fs["devices"])
+            used = fs["fs_bytes_used"]
+            free = total - used if total else 0
+            pct = f"{(used / total * 100):.1f}%" if total else "-"
+            mount_targets = [
+                target
+                for device in fs["devices"]
+                for target in mounts_by_source.get(device["path"], [])
+            ]
+            if not mount_targets:
+                mount_targets = mounts_by_uuid.get(fs["uuid"], [])
+            return {
+                "Label": fs["label"] or "-",
+                "Devices": devices,
+                "Total": self._fmt_bytes(total) if total else "-",
+                "Used": self._fmt_bytes(used) if used else "-",
+                "Free": self._fmt_bytes(free) if total else "-",
+                "Used %": pct,
+                "Mount": ", ".join(dict.fromkeys(mount_targets)) or "-",
+            }
+
+        if len(self._filesystems) > _MAX_ROWS_DIRECT:
+            options = [fs_label(fs) for fs in self._filesystems]
+            selected_fs = next(
+                (fs for fs in self._filesystems if fs["uuid"] == self._selected_fs),
+                self._filesystems[0],
+            )
+            return {
+                "title": _("Btrfs Filesystems"),
+                "column": 1,
+                "fields": [
+                    Widget.dropdown(
+                        id="fs_selector",
+                        label=_("Filesystem"),
+                        options=options,
+                        selected=fs_label(selected_fs),
+                        on_change=self.on_fs_selected,
+                    ),
+                    Widget.tree(
+                        id="btrfs_filesystems",
+                        rows=[row_for(selected_fs)],
+                        selectable=False,
+                    ),
+                ],
+            }
+
+        return {
+            "title": _("Btrfs Filesystems"),
+            "column": 1,
+            "fields": [
+                Widget.tree(
+                    id="btrfs_filesystems",
+                    rows=[row_for(fs) for fs in self._filesystems],
+                    selectable=False,
+                ),
+            ],
+        }
+
+    def _internal_stats_section(self) -> dict | None:
+        """Data/Metadata/System usage per btrfs filesystem."""
+        try:
+            mounts = self.app.btrfs_ops.btrfs_mounts()
+        except Exception as exc:
+            logger.warning("Could not read btrfs mount points: %s", exc)
+            mounts = []
+        if not mounts:
+            mounts = [{"target": "/", "uuid": ""}]
+
+        # One group per unique filesystem: subvolume mounts of the same fs
+        # share a uuid — keep the shortest target (the most top-level
+        # mount, e.g. / over /var) so rows are not double-counted.
+        by_uuid: dict[str, dict] = {}
+        for m in mounts:
+            uuid = m.get("uuid", "")
+            if uuid not in by_uuid or len(m["target"]) < len(by_uuid[uuid]["target"]):
+                by_uuid[uuid] = m
+        groups = sorted(by_uuid.values(), key=lambda m: m["target"])
+
+        rows: list[dict] = []
+        for mount in groups:
+            overall = self._usage(mount["target"]).get("overall", {})
+            if not overall.get("device_size"):
+                continue
+            for section, label in (
+                ("data", _("Data")),
+                ("metadata", _("Metadata")),
+                ("system", _("System")),
+            ):
+                s = overall.get(section)
+                if not s:
+                    continue
+                pct = f"{(s['used'] / s['size'] * 100):.1f}%" if s["size"] else "-"
+                rows.append({
+                    "Filesystem": mount["target"],
+                    "Section": label,
+                    "Size": self._fmt_bytes(s["size"]),
+                    "Used": self._fmt_bytes(s["used"]),
+                    "Used %": pct,
+                })
+        if not rows:
+            return None
+
+        if len(groups) > _MAX_ROWS_DIRECT:
+            options = [m["target"] for m in groups]
+            selected = self._selected_internal_fs if self._selected_internal_fs in options else options[0]
+            return {
+                "title": _("Internal Filesystem Usage"),
+                "column": 0,
+                "fields": [
+                    Widget.dropdown(
+                        id="internal_fs_selector",
+                        label=_("Filesystem"),
+                        options=options,
+                        selected=selected,
+                        on_change=self.on_internal_fs_selected,
+                    ),
+                    Widget.tree(
+                        id="internal_stats",
+                        rows=[r for r in rows if r["Filesystem"] == selected],
+                        selectable=False,
+                    ),
+                ],
+            }
+
+        return {
+            "title": _("Internal Filesystem Usage"),
+            "column": 0,
+            "fields": [
+                Widget.tree(id="internal_stats", rows=rows, selectable=False),
+            ],
+        }
+
+    def _snapshot_usage_section(self) -> dict:
+        """Snapshot count and disk usage vs device size."""
+        count = len(self._snapshots)
+
+        snap_dir = self.app.btrfs_ops.snapshot_dir
+        snap_base = snap_dir if os.path.isabs(snap_dir) else f"/{snap_dir.lstrip('/')}"
+        try:
+            du = self.app.btrfs_ops.filesystem_du(snap_base)
+        except Exception as exc:
+            logger.warning("Could not measure snapshot usage: %s", exc)
+            du = {}
+
+        device_size = self._usage("/").get("overall", {}).get("device_size", 0)
+        exclusive = du.get("exclusive", 0) if du else 0
+        pct = f"{(exclusive / device_size * 100):.1f}%" if device_size and du else "-"
+
+        return {
+            "title": _("Snapshot Usage"),
+            "column": 1,
+            "fields": [
+                Widget.tree(
+                    id="snapshot_usage",
+                    rows=[{
+                        "Snapshots": count,
+                        "Total": self._fmt_bytes(du["total"]) if du else "-",
+                        "Exclusive": self._fmt_bytes(exclusive) if du else "-",
+                        "% of device": pct,
+                    }],
+                    selectable=False,
+                ),
+            ],
+        }
+
+    def _recent_snapshots_section(self) -> dict | None:
+        """Last 5 snapshots."""
+        if not self._snapshots:
+            return {
+                "title": _("Recent Snapshots"),
+                "column": 1,
+                "fields": [Widget.label(id="no_snapshots", text=_("No snapshots yet."))],
+            }
+
+        recent = sorted(self._snapshots, key=lambda s: s.date, reverse=True)[:5]
+        return {
+            "title": _("Recent Snapshots"),
+            "column": 1,
+            "fields": [
+                Widget.tree(
+                    id="recent_snapshots",
+                    rows=[
+                        {
+                            "ID": s.id,
+                            "Subvolume": s.subvolume,
+                            "Type": s.type.value,
+                            "Schedule": s.schedule or "-",
+                        }
+                        for s in recent
+                    ],
+                    selectable=False,
+                ),
+            ],
+        }
+
+    def _active_policies_section(self) -> dict | None:
+        """Active snapshot policies."""
+        try:
+            policies = self.app.config_store.list_policies()
+        except Exception as exc:
+            logger.warning("Could not list policies: %s", exc)
+            return None
+
+        active = [p for p in policies if p.enabled]
+        if not active:
+            return {
+                "title": _("Active Policies"),
+                "column": 1,
+                "fields": [Widget.label(id="no_policies", text=_("No active policies."))],
+            }
+
+        return {
+            "title": _("Active Policies"),
+            "column": 1,
+            "fields": [
+                Widget.tree(
+                    id="active_policies",
+                    rows=[
+                        {
+                            "Subvolume": p.subvolume,
+                            "Schedules": ", ".join(p.active_schedules),
+                            "Keep hourly": p.retention.keep_hourly,
+                            "Keep daily": p.retention.keep_daily,
+                        }
+                        for p in active
+                    ],
+                    selectable=False,
+                ),
+            ],
+        }
+
+    def _quick_actions_section(self) -> dict:
+        """Quick-action buttons."""
+        return {
+            "title": _("Quick Actions"),
+            "column": 0,
+            "fields": [
+                Widget.button(
+                    id="btn_create_snapshot",
+                    label=_("Create Snapshot"),
+                    callback=self.on_create_snapshot,
+                ),
+                Widget.button(
+                    id="btn_start_scrub",
+                    label=_("Start Scrub"),
+                    callback=self.on_start_scrub,
+                ),
+                Widget.button(
+                    id="btn_refresh",
+                    label=_("Refresh"),
+                    callback=self.on_refresh,
+                ),
+            ],
+        }
+
+    # -- Callbacks ----------------------------------------------------------
+
+    def on_disk_selected(self, value: str) -> None:
+        """Remember the selected physical disk across re-renders."""
+        self._selected_disk = value or None
+
+    def on_fs_selected(self, value: str) -> None:
+        """Remember the selected filesystem (by uuid) across re-renders."""
+        label = value or ""
+        for fs in self._filesystems:
+            if (fs["label"] or fs["uuid"][:8]) == label:
+                self._selected_fs = fs["uuid"]
+                return
+        self._selected_fs = None
+
+    def on_internal_fs_selected(self, value: str) -> None:
+        """Remember the selected filesystem mount across re-renders."""
+        self._selected_internal_fs = value or None
+
+    def on_create_snapshot(self) -> None:
+        """Navigate to the Snapshots page (create tab)."""
+        # The aui framework handles navigation; this is a placeholder
+        # that the framework overrides with its own routing.
+        pass
+
+    def on_start_scrub(self) -> None:
+        """Start a scrub of the default subvolume."""
+        try:
+            self.app.btrfs_ops.scrub_start()
+        except Exception as exc:
+            logger.error("Scrub failed: %s", exc)
+
+    def on_refresh(self) -> None:
+        """Request a UI refresh."""
+        # The aui framework re-calls build_model() on refresh.
+        pass
+
+    # -- Helpers ------------------------------------------------------------
+
+    def _list_snapshots(self) -> list:
+        try:
+            return self.app.snapshot_manager.list_all()
+        except Exception as exc:
+            logger.warning("Could not list snapshots: %s", exc)
+            return []
+
+    def _list_filesystems(self) -> list:
+        try:
+            return self.app.btrfs_ops.filesystem_show()
+        except Exception as exc:
+            logger.warning("Could not list btrfs filesystems: %s", exc)
+            return []
+
+    def _usage(self, mount: str) -> dict:
+        """Memoized ``filesystem_usage()`` per mount (one call per fs)."""
+        if mount not in self._usage_cache:
+            try:
+                self._usage_cache[mount] = self.app.btrfs_ops.filesystem_usage(mount)
+            except Exception as exc:
+                logger.warning("Could not read filesystem usage for %s: %s", mount, exc)
+                self._usage_cache[mount] = {}
+        return self._usage_cache[mount]
+
+    @staticmethod
+    def _fmt_bytes(value: int) -> str:
+        """Format a byte count for human display."""
+        if value <= 0:
+            return "0 B"
+        for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
+            if abs(value) < 1024:
+                return f"{value:.1f} {unit}"
+            value /= 1024
+        return f"{value:.1f} PiB"
