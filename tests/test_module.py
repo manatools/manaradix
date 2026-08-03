@@ -21,6 +21,8 @@ from manaradix.module import (
     _frontend_available,
     _frontend_from_env,
     _init_services,
+    _recover_pkexec_display,
+    run_app,
 )
 
 
@@ -153,6 +155,100 @@ class TestFrontendAvailable:
     def test_probe_oserror(self, mock_run: MagicMock) -> None:
         mock_run.side_effect = OSError("no python")
         assert _frontend_available("gtk") is False
+
+
+# ---------------------------------------------------------------------------
+# Explicit frontend: pkexec display-environment recovery
+# ---------------------------------------------------------------------------
+# A pkexec re-exec strips DISPLAY/WAYLAND_DISPLAY/XDG_RUNTIME_DIR, so the
+# explicit --frontend path must recover them (like YUI's auto-detect) or
+# its graphical probe fails and the app wrongly falls back to ncurses.
+
+
+class TestRecoverPkexecDisplay:
+    pytest.importorskip("manatools.aui.yui")
+
+    @patch("manatools.aui.yui.YUI._detect_backend")
+    def test_recovers_when_pkexec_uid_set(self, mock_detect: MagicMock) -> None:
+        with patch.dict(os.environ, {"PKEXEC_UID": "1000"}, clear=False):
+            _recover_pkexec_display()
+        mock_detect.assert_called_once()
+
+    @patch("manatools.aui.yui.YUI._detect_backend")
+    def test_noop_without_pkexec_uid(self, mock_detect: MagicMock) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            _recover_pkexec_display()
+        mock_detect.assert_not_called()
+
+    @patch(
+        "manatools.aui.yui.YUI._detect_backend",
+        side_effect=RuntimeError("no backend"),
+    )
+    def test_swallows_detection_errors(self, mock_detect: MagicMock) -> None:
+        with patch.dict(os.environ, {"PKEXEC_UID": "1000"}, clear=False):
+            _recover_pkexec_display()  # must not raise
+
+
+class TestRunAppExplicitFrontend:
+    pytest.importorskip("manatools.aui.yui")
+
+    def _run(self, tmp_path, *args, **kwargs):
+        kwargs.setdefault("config_path", str(tmp_path / "config.toml"))
+        return run_app(*args, **kwargs)
+
+    @patch("manaradix.module._recover_pkexec_display")
+    @patch("manaradix.module._frontend_available", side_effect=[False, True])
+    @patch("manaradix.module.build_navigation")
+    @patch("manaradix.ui.renderer.AuiRenderer")
+    def test_recovers_display_and_keeps_frontend(
+        self,
+        mock_renderer: MagicMock,
+        mock_nav: MagicMock,
+        mock_probe: MagicMock,
+        mock_recover: MagicMock,
+        tmp_path,
+    ) -> None:
+        # First probe fails (env stripped by pkexec), recovery runs, then
+        # the re-probe succeeds: the explicit qt choice must survive.
+        with patch.dict(os.environ, {"PKEXEC_UID": "1000"}, clear=False):
+            self._run(tmp_path, frontend="qt")
+            assert os.environ["MUI_BACKEND"] == "qt"
+        mock_recover.assert_called_once()
+        mock_renderer.return_value.run.assert_called_once()
+
+    @patch("manaradix.module._recover_pkexec_display")
+    @patch("manaradix.module._frontend_available", return_value=False)
+    @patch("manaradix.module.build_navigation")
+    @patch("manaradix.ui.renderer.AuiRenderer")
+    def test_falls_back_to_ncurses_when_recovery_fails(
+        self,
+        mock_renderer: MagicMock,
+        mock_nav: MagicMock,
+        mock_probe: MagicMock,
+        mock_recover: MagicMock,
+        tmp_path,
+    ) -> None:
+        with patch.dict(os.environ, {"PKEXEC_UID": "1000"}, clear=False):
+            self._run(tmp_path, frontend="gtk")
+            assert os.environ["MUI_BACKEND"] == "ncurses"
+        mock_recover.assert_called_once()
+
+    @patch("manaradix.module._recover_pkexec_display")
+    @patch("manaradix.module._frontend_available", return_value=True)
+    @patch("manaradix.module.build_navigation")
+    @patch("manaradix.ui.renderer.AuiRenderer")
+    def test_no_recovery_when_probe_succeeds(
+        self,
+        mock_renderer: MagicMock,
+        mock_nav: MagicMock,
+        mock_probe: MagicMock,
+        mock_recover: MagicMock,
+        tmp_path,
+    ) -> None:
+        with patch.dict(os.environ, {"PKEXEC_UID": "1000"}, clear=False):
+            self._run(tmp_path, frontend="qt")
+            assert os.environ["MUI_BACKEND"] == "qt"
+        mock_recover.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

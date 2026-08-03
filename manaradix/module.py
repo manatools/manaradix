@@ -147,6 +147,27 @@ def _frontend_available(frontend: str) -> bool:
     return proc.returncode == 0
 
 
+def _recover_pkexec_display() -> None:
+    """Recover the display environment stripped by a pkexec re-exec.
+
+    pkexec drops DISPLAY/WAYLAND_DISPLAY/XDG_RUNTIME_DIR from the
+    elevated child; manatools' ``YUI._detect_backend()`` rebuilds them
+    from the live sockets under the PKEXEC_UID user's runtime dir (the
+    same recovery the auto-detect path relies on).  We use the call for
+    its environment side effect only, and only when a re-exec actually
+    happened.  Failures are swallowed — the caller re-probes and falls
+    back to ncurses either way.
+    """
+    if os.environ.get("PKEXEC_UID") is None:
+        return
+    try:
+        from manatools.aui.yui import YUI
+
+        YUI._detect_backend()  # noqa: SLF001 -- side effect: env recovery
+    except (ImportError, RuntimeError):
+        pass
+
+
 def run_app(
     frontend: str | None = None,
     *,
@@ -199,12 +220,18 @@ def run_app(
         # actually start here (missing display / plugin libraries would
         # otherwise abort the process hard), then fall back to ncurses.
         if frontend in ("qt", "gtk") and not _frontend_available(frontend):
-            logger.warning(
-                "The %s frontend cannot initialize here; "
-                "falling back to ncurses.",
-                frontend,
-            )
-            frontend = "ncurses"
+            # A pkexec re-exec strips the display environment, which
+            # makes the probe fail even though a display is reachable;
+            # recover it (same logic the auto-detect path relies on)
+            # before declaring the choice unusable.
+            _recover_pkexec_display()
+            if not _frontend_available(frontend):
+                logger.warning(
+                    "The %s frontend cannot initialize here; "
+                    "falling back to ncurses.",
+                    frontend,
+                )
+                frontend = "ncurses"
         os.environ["MUI_BACKEND"] = frontend
     else:
         # Auto-detect: let YUI pick the backend.  Its detection also
