@@ -52,6 +52,30 @@ class TestSystemdUnit:
         service = self._parse()["Service"]
         assert service["NoNewPrivileges"] == "yes"
 
+    def test_protect_system_full_with_carveouts(self) -> None:
+        service = self._parse()["Service"]
+        assert service["ProtectSystem"] == "full"
+        assert service["ProtectHome"] == "yes"
+        # Every daemon write location under the read-only zones must be
+        # carved back in: config, generated units, GRUB script, /boot
+        # output.  Snapshot dirs and /mnt stay writable automatically.
+        for path in (
+            "/etc/manaradix",
+            "/etc/systemd/system",
+            "/etc/grub.d",
+            "/boot",
+        ):
+            assert path in service["ReadWritePaths"], f"missing carve-out {path}"
+
+    def test_no_private_devices(self) -> None:
+        # Browsing encrypted-root snapshots needs /dev/mapper nodes.
+        service = self._parse()["Service"]
+        assert "PrivateDevices" not in service
+
+    def test_strict_protection_not_used(self) -> None:
+        # btrfs restore/balance/scrub/defrag need a writable root mount.
+        assert self._parse()["Service"]["ProtectSystem"] != "strict"
+
 
 class TestSystemServicesFile:
     def _parse(self) -> configparser.ConfigParser:

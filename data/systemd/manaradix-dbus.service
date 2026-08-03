@@ -13,6 +13,26 @@ PrivateTmp=yes
 Restart=on-failure
 RestartSec=2
 
+# /etc, /usr and /boot are read-only; the daemon's own write locations
+# are carved back in explicitly.  ProtectSystem=strict is not usable:
+# btrfs restore/balance/scrub/defrag and mount() need a writable root
+# mount (ioctls fail with EROFS on a read-only bind).  ProtectHome is
+# safe — snapshots are browsed under /mnt, never /home, /root.
+ProtectSystem=full
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictRealtime=yes
+# Writable carve-outs for the read-only locations: config, generated
+# systemd units (incl. systemctl enable symlinks), the GRUB script, and
+# update-grub's output.  Snapshot dirs (/.snapshots or configured
+# elsewhere) and /mnt stay writable under ProtectSystem=full without
+# carve-outs.
+ReadWritePaths=/etc/manaradix /etc/systemd/system /etc/grub.d /boot
+
 # Deliberately no [Install] section: the service is never enabled at
 # boot.  It is activated on demand through
 # /usr/share/dbus-1/system-services/org.mageia.manaradix.service, which
@@ -21,7 +41,5 @@ RestartSec=2
 # so Type=simple is sufficient (Type=dbus adds no start-ordering value
 # here).
 #
-# Hardening is intentionally minimal for v1: ProtectSystem=full/strict
-# would block the daemon's own writes (/etc/manaradix/config.toml,
-# /etc/systemd/system units, update-grub's /boot output).  Revisit with
-# ReadWritePaths= exceptions if a hardened profile is ever required.
+# PrivateDevices is NOT set: browsing/mounting snapshots of an encrypted
+# root needs /dev/mapper device nodes (LUKS).

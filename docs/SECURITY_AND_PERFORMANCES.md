@@ -21,7 +21,7 @@ manaradix. Every entry carries a priority so the queue is always sorted.
 | ID | Pri | Item | Status | Notes |
 |----|-----|------|--------|-------|
 | SEC-01 | P1 | Audit shell quoting in `/etc/grub.d/41_manaradix` generation and systemd unit names | Done | 2026-08-03: `_escape_systemd_arg` (policy_engine) — ExecStart args quoted, `;`/`%`/`"`/`\` escaped, control chars stripped; `_shell_escape_dq` (grub_integration) — `$`/backtick/`"`/`\` escaped on all interpolated values; runtime `snap_id` guard (`*[!0-9-]*` → skip). Fuzz tests in both test files. btrfs_ops/snapshot_manager verified clean (list-args, no `shell=True`). |
-| SEC-02 | P2 | Harden daemon unit: `ProtectSystem=full/strict`, `ProtectHome` | Deferred | Blocked: daemon must write `/etc/manaradix/config.toml`, `/etc/systemd/system` units, `/boot` via update-grub. Needs `ReadWritePaths` carve-outs (spec.md §10). |
+| SEC-02 | P2 | Harden daemon unit: `ProtectSystem=full/strict`, `ProtectHome` | Done | 2026-08-03: `ProtectSystem=full` + `ProtectHome=yes` + `ProtectKernelTunables/Modules/ControlGroups`, `RestrictSUIDSGID`, `LockPersonality`, `RestrictRealtime`, `ReadWritePaths=/etc/manaradix /etc/systemd/system /etc/grub.d /boot`. `strict` and `PrivateDevices` deliberately NOT used (btrfs ioctls need writable root mount; LUKS mapper nodes needed for browsing). Verified: tests + `systemd-analyze verify`. |
 | SEC-03 | P2 | Async polkit `check_authorization` | Deferred | `check_authorization_sync` blocks the mainloop during a challenge dialog (spec.md §10). Async check is a future improvement. |
 | SEC-04 | P2 | Verify polkit action coverage vs. all 41 D-Bus methods | In Progress | `METHOD_ACTIONS` cross-checked against the policy file by tests; re-run on every method addition. |
 | SEC-05 | P3 | Reduce daemon root surface | Open | Daemon runs as root (required today: polkit + system config writes). Revisit if capabilities/`RunAs` ever apply. |
@@ -73,3 +73,6 @@ with reproduction steps in Notes.
   known gaps, and current code state.
 - 2026-08-03 — SEC-01 done: ExecStart + GRUB script escaping hardened, runtime
   snap_id filter, fuzz tests added (full suite 449 passed / 8 skipped).
+- 2026-08-03 — SEC-02 done: daemon unit hardened (ProtectSystem=full +
+  ProtectHome + carve-outs), spec.md §10 note updated, unit tests extended
+  (452 passed / 8 skipped).
