@@ -40,6 +40,25 @@ _SYSTEMD_DIR = "/etc/systemd/system"
 # Valid characters for systemd unit names (alphanumeric, dashes, underscores)
 _UNIT_NAME_RE = re.compile(r"[^a-zA-Z0-9_.:@-]+")
 
+
+def _escape_systemd_arg(value: str) -> str:
+    """Escape a value for a quoted ``ExecStart=`` argument.
+
+    systemd's ExecStart parser (systemd.exec(5)) treats ``;`` as a command
+    separator, ``%`` as a specifier, and ``"``/``\\`` as quoting syntax —
+    an unquoted subvolume name could inject a second command that runs as
+    root on the next timer fire.  Wrap the value in double quotes and
+    escape every special character; control characters (newlines in
+    particular) are stripped — they would split the unit into new lines.
+    """
+    value = "".join(c for c in value if c >= " " and c != "\x7f")
+    return (
+        value.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("%", "%%")
+        .replace(";", "\\;")
+    )
+
 # Suffix order for retention pruning (hourly trimmed first)
 _RETENTION_ORDER = ["hourly", "daily", "weekly", "monthly", "boot"]
 
@@ -87,16 +106,17 @@ class PolicyEngine:
 
     def _generate_service_unit(self, subvolume: str, schedule: str) -> str:
         """Generate a systemd service unit that invokes the CLI."""
+        sub = _escape_systemd_arg(subvolume)
         return (
             f"[Unit]\n"
-            f"Description=Manaradix {schedule} snapshot of {subvolume}\n"
+            f"Description=Manaradix {schedule} snapshot of {sub}\n"
             f"Documentation=man:manaradix(8)\n"
             f"After=local-fs.target\n\n"
             f"[Service]\n"
             f"Type=oneshot\n"
-            f"ExecStart={self._cli_path} snapshot create --subvolume {subvolume}"
+            f'ExecStart={self._cli_path} snapshot create --subvolume "{sub}"'
             f" --type timed --schedule {schedule}\n"
-            f"ExecStartPost={self._cli_path} snapshot prune --subvolume {subvolume}"
+            f'ExecStartPost={self._cli_path} snapshot prune --subvolume "{sub}"'
             f" --schedule {schedule}\n"
             f"Nice=19\n"
             f"IOSchedulingClass=idle\n"
@@ -128,16 +148,17 @@ class PolicyEngine:
         This is NOT paired with a timer — it fires once per boot via
         ``WantedBy=multi-user.target``.
         """
+        sub = _escape_systemd_arg(subvolume)
         return (
             f"[Unit]\n"
-            f"Description=Manaradix boot snapshot of {subvolume}\n"
+            f"Description=Manaradix boot snapshot of {sub}\n"
             f"Documentation=man:manaradix(8)\n"
             f"After=local-fs.target\n\n"
             f"[Service]\n"
             f"Type=oneshot\n"
-            f"ExecStart={self._cli_path} snapshot create --subvolume {subvolume}"
+            f'ExecStart={self._cli_path} snapshot create --subvolume "{sub}"'
             f" --type timed --schedule boot\n"
-            f"ExecStartPost={self._cli_path} snapshot prune --subvolume {subvolume}"
+            f'ExecStartPost={self._cli_path} snapshot prune --subvolume "{sub}"'
             f" --schedule boot\n"
             f"Nice=19\n"
             f"IOSchedulingClass=idle\n\n"

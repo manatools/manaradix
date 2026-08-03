@@ -1,6 +1,7 @@
 """Unit tests for PolicyEngine."""
 
 import os
+import re
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -10,11 +11,27 @@ import pytest
 from manaradix.core.policy_engine import (
     PolicyEngine,
     PolicyEngineError,
+    _escape_systemd_arg,
 )
 from manaradix.model.policy import (
     RetentionPolicy,
     SnapshotPolicy,
 )
+
+# Hostile subvolume names: every shell/systemd metacharacter that could
+# break out of ExecStart=, plus control characters.
+HOSTILE_SUBVOLS = [
+    "/home; touch /tmp/pwned",
+    '/home" ; touch /tmp/pwned',
+    "/home' ; touch /tmp/pwned",
+    "/home\\; touch /tmp/pwned",
+    "/home$(touch /tmp/pwned)",
+    "/home`touch /tmp/pwned`",
+    "/home%n %i %%",
+    "/home with spaces",
+    "/home\ntouch /tmp/pwned",
+    "/home\t; touch /tmp/pwned",
+]
 
 
 class TestSanitizeName:
@@ -209,3 +226,67 @@ class TestRetentionPruning:
         rp = RetentionPolicy(keep_daily=-1)
         with pytest.raises(PolicyEngineError, match="Invalid retention"):
             engine.get_prune_commands("/", rp)
+
+
+class TestExecStartInjection:
+    """SEC-01: hostile subvolume names must never break out of ExecStart=."""
+
+    def test_escape_roundtrip(self) -> None:
+        # Escaping is idempotent-safe and leaves no raw special character.
+        for sv in HOSTILE_SUBVOLS:
+            out = _escape_systemd_arg(sv)
+            assert '"' not in out or '\\"' in out
+            assert "\n" not in out and "\t" not in out
+            # Every ';' must be escaped — an unescaped one is a command
+            # separator in ExecStart.
+            assert ";" not in out.replace("\\;", "")
+
+    def test_service_unit_single_command(self) -> None:
+        engine = PolicyEngine()
+        for sv in HOSTILE_SUBVOLS:
+            unit = engine._generate_service_unit(sv, "daily")
+            # No unescaped ';' or '%' anywhere — a leaked one would be a
+            # second command or a specifier expansion in ExecStart.
+            stripped = unit.replace("\\;", "").replace("%%", "")
+            assert ";" not in stripped, f"command separator leaked for {sv!r}"
+            assert "%" not in stripped, f"specifier leaked for {sv!r}"
+            # The argument is quoted and complete on one line.
+            assert f'--subvolume "' in unit, f"arg not quoted for {sv!r}"
+            for line in unit.splitlines():
+                if "ExecStart" in line:
+                    # Strip escaped quotes first so the first remaining "
+                    # is the structural closer.
+                    tail = line.split('--subvolume "', 1)[1].replace('\\"', "x")
+                    value, rest = tail.split('"', 1)
+                    # ExecStart is `create --type timed ...`; ExecStartPost
+                    # is `prune ...` — both must end the same way.
+                    assert rest in (
+                        " --type timed --schedule daily",
+                        " --schedule daily",
+                    ), f"arg unterminated for {sv!r}"
+
+    def test_boot_unit_single_command(self) -> None:
+        engine = PolicyEngine()
+        for sv in HOSTILE_SUBVOLS:
+            unit = engine._generate_boot_service_unit(sv)
+            assert ";" not in unit.replace("\\;", ""), f"command separator leaked for {sv!r}"
+            assert "%" not in unit.replace("%%", ""), f"specifier leaked for {sv!r}"
+            assert '--subvolume "' in unit
+
+    def test_unit_filename_sanitized(self) -> None:
+        engine = PolicyEngine()
+        for sv in HOSTILE_SUBVOLS:
+            name = engine._service_name(sv, "daily")
+            assert name == f"manaradix-snapshot-{engine._sanitize_name(sv)}-daily.service"
+            # systemd unit filename charset: alnum plus _ . : @ -
+            assert re.fullmatch(r"[a-zA-Z0-9_.:@-]+", name), f"bad unit name {name!r}"
+
+    def test_apply_policy_writes_escaped_unit(self, tmp_path) -> None:
+        engine = PolicyEngine(systemd_dir=str(tmp_path))
+        policy = SnapshotPolicy(subvolume="/home; touch /tmp/pwned", schedule_daily=True)
+        with patch.object(engine, "_systemctl") as sc:
+            engine.apply_policy(policy)
+        (unit,) = [p for p in tmp_path.iterdir() if p.suffix == ".service"]
+        content = unit.read_text()
+        assert ";" not in content.replace("\\;", "")
+        assert '--subvolume "/home\\; touch /tmp/pwned"' in content

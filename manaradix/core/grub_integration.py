@@ -23,6 +23,23 @@ _GRUB_CFG_CANDIDATES = (
     "/boot/grub/grub.cfg",
 )
 
+
+def _shell_escape_dq(value: str) -> str:
+    """Escape a value for a double-quoted POSIX shell string.
+
+    ``$`` and backtick expand, ``"`` terminates the string, ``\\`` escapes
+    — a hostile ``snapshot_dir``/``subvol_name`` could inject a command
+    substitution that runs as root during ``update-grub``.  Control
+    characters (newlines) are stripped — they would split the script line.
+    """
+    value = "".join(c for c in value if c >= " " and c != "\x7f")
+    return (
+        value.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("$", "\\$")
+        .replace("`", "\\`")
+    )
+
 _GRUB_SCRIPT_TEMPLATE = """\
 #!/bin/sh
 # 41_manaradix — GRUB menu entries for btrfs snapshots
@@ -74,6 +91,10 @@ count=0
 for snapshot_dir in "$SNAPSHOT_DIR"/*/; do
     [ -d "${{snapshot_dir}}{subvol_name}" ] || continue
     snap_id=$(basename "$snapshot_dir")
+    # Snapshot dirs are manaradix timestamps (digits/dashes only).  Skip
+    # anything else — a hostile directory name must never reach the
+    # menuentry text or the kernel command line (command substitution).
+    case "$snap_id" in *[!0-9-]*) continue;; esac
     snap_path="{snapshot_relpath}/${{snap_id}}/{subvol_name}"
 
     # Emit the submenu only once, and only when at least one snapshot
@@ -153,9 +174,9 @@ class GrubIntegration:
         """
         relpath = snapshot_dir.lstrip("/")
         return _GRUB_SCRIPT_TEMPLATE.format(
-            snapshot_dir=snapshot_dir,
-            snapshot_relpath=relpath,
-            subvol_name=subvol_name,
+            snapshot_dir=_shell_escape_dq(snapshot_dir),
+            snapshot_relpath=_shell_escape_dq(relpath),
+            subvol_name=_shell_escape_dq(subvol_name),
         )
 
     def install_script(

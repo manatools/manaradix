@@ -342,3 +342,90 @@ class TestListSnapshotEntries:
                 with patch("builtins.open", side_effect=OSError):
                     entries = grub.list_snapshot_entries()
                     assert entries == []
+
+
+class TestShellInjection:
+    """SEC-01: hostile snapshot_dir/subvol_name must never inject shell
+    code into the generated script; snapshot dir names are filtered at
+    runtime."""
+
+    HOSTILE_DIRS = [
+        "/.snapshots$(touch /tmp/pwned)",
+        "/.snapshots`touch /tmp/pwned`",
+        '/.snapshots"; touch /tmp/pwned; #',
+        "/.snapshots\\",
+        "/.snapshots\n; touch /tmp/pwned",
+    ]
+    HOSTILE_SUBVOLS = [
+        "root $(touch /tmp/pwned)",
+        'root" ; touch /tmp/pwned; #',
+        "root`touch /tmp/pwned`",
+        "root\\",
+    ]
+
+    def _assert_neutralized(self, script: str) -> None:
+        # Only the three interpolated lines can carry user-controlled
+        # values; the rest of the template shell legitimately contains
+        # ``$(findmnt ...)`` etc.  Those lines must be free of live
+        # command substitution, backticks, and quote breaks.
+        for line in script.splitlines():
+            # Only lines holding interpolated values: the SNAPSHOT_DIR
+            # assignment, the [ -d "${snapshot_dir}..." ] probe, and the
+            # snap_path assignment.  Other `[`-prefixed template lines
+            # (e.g. `[ -z "$BOOT_SOURCE" ]`) carry no user data.
+            if not (
+                line.startswith(("SNAPSHOT_DIR=", "snap_path="))
+                or '[ -d "${snapshot_dir}' in line
+            ):
+                continue
+            # Strip escaped sequences first — only *unescaped* specials
+            # are a leak.
+            no_cmdsub = line.replace("\\$(", "x")
+            no_backtick = no_cmdsub.replace("\\`", "x")
+            assert "$(" not in no_cmdsub, f"command substitution leaked: {line!r}"
+            assert "`" not in no_backtick, f"backtick leaked: {line!r}"
+            # The value lives between the first and last structural quote;
+            # any remaining " (after removing escaped \") inside it is a
+            # quote break.
+            parts = line.split('"')
+            assert len(parts) >= 2, f"no structural quotes: {line!r}"
+            inner = '"'.join(parts[1:-1])
+            assert '"' not in inner.replace('\\"', "x"), f"quote break leaked: {line!r}"
+        # No stray control characters beyond the structural newlines.
+        assert not any(ord(c) < 32 and c not in "\n\r" for c in script), "control char leaked"
+
+    _ESCAPED = ("\\$(", "\\`", '\\"', "\\\\")
+
+    @staticmethod
+    def _was_neutralized(value: str, script: str) -> bool:
+        # Escapable characters must show up escaped; inputs made of only
+        # stripped characters (newline/control) leave no marker.
+        if any(c in value for c in "$`\"\\"):
+            return any(e in script for e in TestShellInjection._ESCAPED)
+        return True
+
+    def test_hostile_snapshot_dir(self) -> None:
+        grub = GrubIntegration()
+        for d in self.HOSTILE_DIRS:
+            script = grub.generate_grub_script(snapshot_dir=d, subvol_name="root")
+            assert self._was_neutralized(d, script), f"dir not escaped: {d!r}"
+            self._assert_neutralized(script)
+
+    def test_hostile_subvol_name(self) -> None:
+        grub = GrubIntegration()
+        for sv in self.HOSTILE_SUBVOLS:
+            script = grub.generate_grub_script(snapshot_dir="/.snapshots", subvol_name=sv)
+            assert self._was_neutralized(sv, script), f"subvol not escaped: {sv!r}"
+            self._assert_neutralized(script)
+
+    def test_snap_id_runtime_guard(self) -> None:
+        # The script must skip any snapshot dir whose name is not a plain
+        # timestamp (digits/dashes) before it reaches menuentry text.
+        script = GrubIntegration().generate_grub_script()
+        # Default paths must still render unescaped (no regression).
+        assert 'SNAPSHOT_DIR="/.snapshots"' in script
+        assert "case \"$snap_id\" in *[!0-9-]*) continue;; esac" in script
+        # Guard sits between snap_id extraction and its first use.
+        guard = script.index("*[!0-9-]*")
+        assert script.index('snap_id=$(basename') < guard
+        assert script.index("snap_path=") > guard
