@@ -66,6 +66,10 @@ class AuiRenderer:
         self._replace_point = None
         self._dialog = None
         self._current_index = 0
+        # Widgets whose vertical size policy must be pinned once their Qt
+        # backend widgets exist (see _apply_pinned_policies).
+        self._pinned: list = []
+        self._opened = False
 
     # -- Lifecycle ----------------------------------------------------------
 
@@ -85,7 +89,8 @@ class AuiRenderer:
         dialog = factory.createMainDialog()
         self._dialog = dialog
         root = factory.createVBox(dialog)
-        factory.createHeading(root, "Manaradix")
+        heading = factory.createHeading(root, "Manaradix")
+        self._pin_vertical(heading)
 
         tabs = factory.createDumbTab(root)
         tabs._id = _TABS_ID  # noqa: SLF001 -- YWidget has no setId()
@@ -101,8 +106,13 @@ class AuiRenderer:
 
         if self._pages:
             self._show_page(factory, 0)
+        # _show_page resets the pinned list; re-register the persistent
+        # main heading so its policy is applied with the rest after open.
+        self._pin_vertical(heading)
 
         dialog.open()
+        self._opened = True
+        self._apply_pinned_policies()
         try:
             while True:
                 event = dialog.waitForEvent(0)
@@ -133,9 +143,10 @@ class AuiRenderer:
         replace_point.deleteChildren()
         self._handlers.clear()
         self._table_headers.clear()
+        self._pinned.clear()
 
+        # No page heading: the tab bar already carries the page title.
         content = factory.createVBox(replace_point)
-        factory.createHeading(content, page.title)
 
         model = page.build_model()
         columns = getattr(model, "columns", 1)
@@ -161,6 +172,10 @@ class AuiRenderer:
 
         replace_point.showChild()
         self._current_index = index
+        if self._opened:
+            # Backend widgets exist now (showChild walks the tree); apply
+            # the Qt size policies for the fresh page widgets.
+            self._apply_pinned_policies()
         self._fit_window()
 
     def _render_section(self, factory, parent, section: dict[str, Any]) -> None:
@@ -178,6 +193,7 @@ class AuiRenderer:
             widget = factory.createLabel(parent, field.get("text", ""))
             if field.get("wrap") and hasattr(widget, "setAutoWrap"):
                 widget.setAutoWrap(True)
+            self._pin_vertical(widget)
 
         elif kind == "button":
             widget = factory.createPushButton(parent, field.get("label", ""))
@@ -190,7 +206,7 @@ class AuiRenderer:
             self._wire(widget, field.get("id"), "checkbox", field.get("on_change"))
 
         elif kind == "image":
-            factory.createImage(parent, field.get("path", ""))
+            self._pin_vertical(factory.createImage(parent, field.get("path", "")))
 
         elif kind == "text":
             widget = factory.createInputField(parent, field.get("label", ""))
@@ -231,7 +247,7 @@ class AuiRenderer:
 
         rows = field.get("rows", [])
         if not rows:
-            factory.createLabel(parent, _("(no data)"))
+            self._pin_vertical(factory.createLabel(parent, _("(no data)")))
             return
 
         # Columns: union of row keys, first-appearance order.
@@ -261,6 +277,61 @@ class AuiRenderer:
             self._handlers[widget.id()] = ("tree", field["on_select"])
             widget.setNotify(True)
         self._table_headers[widget] = header
+
+    def _pin_vertical(self, widget) -> None:
+        """Keep a static widget at its natural height.
+
+        libyui widgets default to stretchable in both directions, so a
+        maximized window hands the extra height to every child and
+        labels/headings inflate into large blank areas (text centered).
+        Pinning the vertical axis keeps them at content height, aligned
+        at the top of their box, while tables still stretch to fill the
+        page.
+        """
+        from manatools.aui.yui_common import YUIDimension  # lazy: manatools optional
+
+        if hasattr(widget, "setStretchable"):
+            widget.setStretchable(YUIDimension.YD_VERT, False)
+        self._pinned.append(widget)
+
+    def _apply_pinned_policies(self) -> None:
+        """Force a Fixed vertical Qt size policy on pinned widgets.
+
+        The stretchable flag is not enough on the Qt backend: its labels
+        keep a QSizePolicy of Preferred, which *grows* to fill extra space
+        even when the widget is not stretchable (the flag only weights the
+        space distribution), so a maximized window still inflates headings
+        and labels.  Pinning the policy on the real Qt widgets keeps them
+        at content height; backends without a size-policy API (gtk,
+        curses) are a natural no-op.
+        """
+        if not self._pinned:
+            return
+        try:
+            from PySide6 import QtWidgets  # Qt backend only
+        except ImportError:
+            return
+        for widget in self._pinned:
+            try:
+                backend = widget.get_backend_widget()
+                set_policy = getattr(backend, "setSizePolicy", None)
+                if not callable(set_policy):
+                    continue
+                policy = backend.sizePolicy()
+                policy.setVerticalPolicy(QtWidgets.QSizePolicy.Policy.Fixed)
+                set_policy(policy)
+            except Exception as exc:
+                logger.debug("Could not pin widget vertically: %s", exc)
+        # Reflow the layout with the new policies.
+        try:
+            get_backend = getattr(self._dialog, "get_backend_widget", None)
+            backend = get_backend() if callable(get_backend) else None
+            if backend is not None and hasattr(backend, "layout"):
+                layout = backend.layout()
+                if layout is not None and hasattr(layout, "activate"):
+                    layout.activate()
+        except Exception as exc:
+            logger.debug("Could not reflow layout after pinning: %s", exc)
 
     def _wire(self, widget, widget_id, kind: str, callback) -> None:
         """Assign the descriptor id and register the event handler."""

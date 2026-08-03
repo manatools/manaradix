@@ -7,7 +7,13 @@ scripted fake factory can exercise the full widget build + event loop.
 
 from unittest.mock import MagicMock, patch
 
-from manatools.aui.yui_common import YCancelEvent, YEventReason, YItem, YWidgetEvent
+from manatools.aui.yui_common import (
+    YCancelEvent,
+    YEventReason,
+    YItem,
+    YUIDimension,
+    YWidgetEvent,
+)
 
 from manaradix.module import _build_parser
 from manaradix.ui.model import PageModel, Widget
@@ -32,8 +38,10 @@ class FakeWidget:
         self._id = None
         self.notify_enabled = False
         self.stretch_horiz = False
+        self.stretch = {}
         self.label_text = label
         self._auto_wrap = False
+        self._vpolicy = None
 
     def id(self):
         return self._id
@@ -42,10 +50,12 @@ class FakeWidget:
         self.notify_enabled = on
 
     def setStretchable(self, dim, new_stretch):
-        self.stretch_horiz = new_stretch
+        self.stretch[dim] = new_stretch
+        if getattr(dim, "name", None) == "YD_HORIZ":
+            self.stretch_horiz = new_stretch
 
     def stretchable(self, dim):
-        return self.stretch_horiz
+        return self.stretch.get(dim, self.stretch_horiz)
 
     def setValue(self, value):
         self._value = value
@@ -71,6 +81,20 @@ class FakeWidget:
 
     def setAutoWrap(self, on=True):
         self._auto_wrap = bool(on)
+
+    # -- Qt size-policy plumbing (pinned-widget support) -------------------
+
+    def get_backend_widget(self):
+        return self  # the fake acts as its own backend
+
+    def sizePolicy(self):
+        return self
+
+    def setVerticalPolicy(self, policy):
+        self._vpolicy = policy
+
+    def setSizePolicy(self, policy):
+        self._vpolicy = getattr(policy, "_vpolicy", None)
 
     def deleteChildren(self):
         self.children = []
@@ -371,6 +395,46 @@ class TestBuild:
         labels = widgets_of(factory, "label")
         assert labels[0]._auto_wrap is True
 
+    def test_static_widgets_pinned_vertically(self) -> None:
+        """Maximized windows must not inflate labels/headings: vertical
+        stretch is disabled so they keep content height, top-aligned."""
+        page = PageA()
+        renderer, factory = make_renderer([page], [YCancelEvent()])
+        renderer.run()
+
+        for label in widgets_of(factory, "label"):
+            assert label.stretch[YUIDimension.YD_VERT] is False
+        for heading in widgets_of(factory, "heading"):  # app heading only
+            assert heading.stretch[YUIDimension.YD_VERT] is False
+        assert widgets_of(factory, "image")[0].stretch[YUIDimension.YD_VERT] is False
+
+    def test_table_still_stretches_vertically(self) -> None:
+        """Tables keep the default vertical stretch: they fill the page
+        even when labels around them are pinned."""
+        page = PageA()
+        renderer, factory = make_renderer([page], [YCancelEvent()])
+        renderer.run()
+        table = widgets_of(factory, "table")[0]
+        assert table.stretch.get(YUIDimension.YD_VERT) in (None, True)
+
+    def test_pinned_widgets_get_fixed_qt_policy(self) -> None:
+        """Qt labels grow with a Preferred policy even when not stretchable;
+        pinned widgets must get a Fixed vertical policy on their backend."""
+        from PySide6 import QtWidgets
+
+        page = PageA()
+        renderer, factory = make_renderer([page], [YCancelEvent()])
+        renderer.run()
+
+        fixed = QtWidgets.QSizePolicy.Policy.Fixed
+        for label in widgets_of(factory, "label"):
+            assert label._vpolicy == fixed
+        for heading in widgets_of(factory, "heading"):  # app heading only
+            assert heading._vpolicy == fixed
+        assert widgets_of(factory, "image")[0]._vpolicy == fixed
+        # tables are not pinned and keep their own policy
+        assert widgets_of(factory, "table")[0]._vpolicy is None
+
 
 class TestColumnLayout:
     def test_pinned_sections_land_in_columns(self) -> None:
@@ -387,7 +451,7 @@ class TestColumnLayout:
         renderer.run()
 
         content = widgets_of(factory, "replacepoint")[0].children[0]
-        row = content.children[1]  # heading, then hbox
+        row = content.children[0]  # no heading anymore: hbox first
         assert row.kind == "hbox"
         assert [c.kind for c in row.children] == ["vbox", "vbox"]
         left, right = row.children
@@ -408,7 +472,7 @@ class TestColumnLayout:
         renderer, factory = make_renderer([Page()], [YCancelEvent()])
         renderer.run()
 
-        row = widgets_of(factory, "replacepoint")[0].children[0].children[1]
+        row = widgets_of(factory, "replacepoint")[0].children[0].children[0]
         # "Free" (1 field) joins column 1 (0 fields), not column 0 (4).
         assert row.children[1].children[0].label_text == "Free"
 
@@ -523,8 +587,10 @@ class TestDispatch:
             [PageA(), PageB()], [tab_switched, YCancelEvent()]
         )
         renderer.run()
+        # Only the persistent app heading exists: per-page headings are
+        # dropped (the tab bar carries the page title).
         headings = widgets_of(factory, "heading")
-        assert headings[-1].label_text == "Page B"
+        assert [h.label_text for h in headings] == ["Manaradix"]
 
     def test_cancel_closes_dialog(self) -> None:
         renderer, factory = make_renderer([PageA()], [YCancelEvent()])
