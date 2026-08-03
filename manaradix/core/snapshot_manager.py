@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 from datetime import datetime
 from typing import Optional
 
@@ -39,6 +40,11 @@ class SnapshotManager:
     def __init__(self, btrfs_ops: BtrfsOps) -> None:
         self.ops = btrfs_ops
         self._journal: list[dict] = []
+        # List cache: (snapshot-dir stat key, expiry, result) per mount.
+        # The stat key catches external directory changes; every mutating
+        # op invalidates explicitly; the TTL covers sidecar edits.
+        self._list_cache: dict[str, tuple] = {}
+        self._list_cache_ttl = 2.0
 
     # ------------------------------------------------------------------
     # Journal / undo log
@@ -88,6 +94,7 @@ class SnapshotManager:
         Returns:
             The newly created ``Snapshot``.
         """
+        self._invalidate_list_cache()
         ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         dest = self.ops._snapshot_path(mount, subvolume, ts)
 
@@ -116,13 +123,41 @@ class SnapshotManager:
 
         return snapshot
 
+    def _list_cache_key(self, mount: str) -> Optional[tuple]:
+        """Return a stat key for the snapshot directory, or None."""
+        base = f"{mount.rstrip('/')}/{self.ops.snapshot_dir}"
+        try:
+            st = os.stat(base)
+        except OSError:
+            return None
+        return (st.st_mtime_ns, st.st_ctime_ns)
+
+    def _invalidate_list_cache(self) -> None:
+        self._list_cache.clear()
+
     def list_all(
         self,
         mount: str = "/",
         *,
         dry_run: bool = False,
     ) -> list[Snapshot]:
-        """List all snapshots on *mount*."""
+        """List all snapshots on *mount*, cached when the set is unchanged.
+
+        The cache is invalidated by every mutating operation and by any
+        change to the snapshot directory; a short TTL additionally covers
+        sidecar metadata edits made outside the manager.
+        """
+        if not dry_run:
+            now = time.monotonic()
+            cached = self._list_cache.get(mount)
+            key = self._list_cache_key(mount)
+            if cached is not None:
+                ckey, expiry, result = cached
+                if ckey == key and now < expiry:
+                    return result
+            result = self.ops.list_snapshots(mount, dry_run=dry_run)
+            self._list_cache[mount] = (key, now + self._list_cache_ttl, result)
+            return result
         return self.ops.list_snapshots(mount, dry_run=dry_run)
 
     def get(
@@ -151,6 +186,7 @@ class SnapshotManager:
         Raises:
             SnapshotNotFoundError: If the snapshot path does not exist.
         """
+        self._invalidate_list_cache()
         import shutil
 
         if not dry_run and not os.path.isdir(snapshot.path):
@@ -203,6 +239,7 @@ class SnapshotManager:
         Returns:
             List of deleted snapshot IDs.
         """
+        self._invalidate_list_cache()
         if keep_count < 0:
             raise ValueError(f"keep_count must be non-negative, got {keep_count}")
 
@@ -240,6 +277,7 @@ class SnapshotManager:
 
         The snapshot ID/path is unchanged; only metadata is updated.
         """
+        self._invalidate_list_cache()
         snapshot.description = new_description
         self.ops.write_snapshot_info(snapshot)
         self._journal_op(
@@ -264,6 +302,7 @@ class SnapshotManager:
            The target subvolume must not be in use (e.g. currently
            mounted root).  Boot from a rescue environment first.
         """
+        self._invalidate_list_cache()
         target = snapshot.subvolume
         pre_restore = self.ops.restore_snapshot(
             snapshot.path,
@@ -397,6 +436,7 @@ class SnapshotManager:
             dest_path: Directory to receive the snapshot into.
             dry_run: Preview only.
         """
+        self._invalidate_list_cache()
         import subprocess
 
         if dry_run:

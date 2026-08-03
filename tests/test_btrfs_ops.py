@@ -648,3 +648,65 @@ class TestUmount:
 
     def test_dry_run_skips_execution(self) -> None:
         BtrfsOps().umount("/mnt/x", dry_run=True)
+
+
+class TestFilesystemUsageCache:
+    """PERF-01: filesystem_usage — the heaviest dashboard subprocess —
+    is cached per mount within a TTL."""
+
+    def _usage_ops(self) -> BtrfsOps:
+        ops = BtrfsOps()
+        ops._usage_cache_ttl = 5.0
+        return ops
+
+    @patch("subprocess.run")
+    def test_cached_within_ttl(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "filesystem", "usage", "-b", "/"],
+            returncode=0,
+            stdout="Overall:\n    Device size:\t\t      1000\n",
+            stderr="",
+        )
+        ops = self._usage_ops()
+        first = ops.filesystem_usage("/")
+        second = ops.filesystem_usage("/")
+        assert first is second
+        mock_run.assert_called_once()
+
+    @patch("subprocess.run")
+    def test_ttl_expiry_refetches(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "filesystem", "usage", "-b", "/"],
+            returncode=0,
+            stdout="Overall:\n    Device size:\t\t      1000\n",
+            stderr="",
+        )
+        ops = self._usage_ops()
+        with patch("manaradix.core.btrfs_ops.time.monotonic",
+                   side_effect=[100.0, 104.0, 106.0]):
+            ops.filesystem_usage("/")
+            ops.filesystem_usage("/")  # hit (104.0 < 105.0 expiry)
+            ops.filesystem_usage("/")  # miss (106.0 >= 105.0)
+        assert mock_run.call_count == 2
+
+    @patch("subprocess.run")
+    def test_errors_not_cached(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(1, "btrfs", stderr="boom")
+        ops = self._usage_ops()
+        assert ops.filesystem_usage("/") == {}
+        assert ops.filesystem_usage("/") == {}
+        assert mock_run.call_count == 2
+
+    @patch("subprocess.run")
+    def test_cache_keyed_per_mount(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "filesystem", "usage", "-b", "/mnt/data"],
+            returncode=0,
+            stdout="Overall:\n    Device size:\t\t      1000\n",
+            stderr="",
+        )
+        ops = self._usage_ops()
+        ops.filesystem_usage("/")
+        ops.filesystem_usage("/mnt/data")
+        ops.filesystem_usage("/")
+        assert mock_run.call_count == 2

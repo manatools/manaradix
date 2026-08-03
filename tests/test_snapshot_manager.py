@@ -1,5 +1,6 @@
 """Unit tests for SnapshotManager."""
 
+import os
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -380,3 +381,74 @@ class TestSnapshotManagerPrune:
         mgr = SnapshotManager(ops)
         with pytest.raises(ValueError, match="non-negative"):
             mgr.prune("/", "daily", keep_count=-1)
+
+
+class TestSnapshotListCache:
+    """PERF-01: list_all caches the subvolume list + sidecar reads when
+    the snapshot set is unchanged."""
+
+    def _manager(self, snapshot_dir: str = ".snapshots") -> SnapshotManager:
+        return SnapshotManager(BtrfsOps(snapshot_dir=snapshot_dir))
+
+    @patch.object(BtrfsOps, "list_snapshots")
+    def test_cached_within_ttl(self, mock_list: MagicMock) -> None:
+        mock_list.return_value = [_make_snapshot()]
+        mgr = self._manager()
+        first = mgr.list_all()
+        second = mgr.list_all()
+        assert first is second
+        mock_list.assert_called_once()
+
+    @patch.object(BtrfsOps, "list_snapshots")
+    def test_mutation_invalidates(self, mock_list: MagicMock) -> None:
+        mock_list.return_value = []
+        mgr = self._manager()
+        mgr.list_all()
+        # An unrelated mutation must force a refetch on the next call.
+        mgr._invalidate_list_cache()
+        mgr.list_all()
+        assert mock_list.call_count == 2
+
+    @patch.object(BtrfsOps, "list_snapshots")
+    def test_create_invalidates(self, mock_list: MagicMock, tmp_path) -> None:
+        mock_list.return_value = []
+        ops = BtrfsOps(snapshot_dir=str(tmp_path / "snaps"))
+        mgr = SnapshotManager(ops)
+        mgr.list_all()
+        with patch.object(BtrfsOps, "create_snapshot") as mock_create, \
+                patch("os.makedirs"), patch("builtins.open", new_callable=MagicMock):
+            mock_create.return_value = _make_snapshot()
+            mgr.create("/", description="x")
+        mgr.list_all()
+        assert mock_list.call_count == 2
+
+    @patch.object(BtrfsOps, "list_snapshots")
+    def test_dir_mtime_invalidates(self, mock_list: MagicMock, tmp_path) -> None:
+        mock_list.return_value = []
+        snap_dir = tmp_path / "snaps"
+        snap_dir.mkdir()
+        mgr = SnapshotManager(BtrfsOps(snapshot_dir=str(snap_dir)))
+        mgr.list_all()
+        os.utime(snap_dir)  # external directory change
+        mgr.list_all()
+        assert mock_list.call_count == 2
+
+    @patch.object(BtrfsOps, "list_snapshots")
+    def test_ttl_expiry_refetches(self, mock_list: MagicMock) -> None:
+        mock_list.return_value = []
+        mgr = self._manager()
+        # TTL is 2 s: hits at 100.0 and 101.0, expires before 103.0.
+        with patch("manaradix.core.snapshot_manager.time.monotonic",
+                   side_effect=[100.0, 101.0, 103.0]):
+            mgr.list_all()
+            mgr.list_all()
+            mgr.list_all()
+        assert mock_list.call_count == 2
+
+    @patch.object(BtrfsOps, "list_snapshots")
+    def test_dry_run_not_cached(self, mock_list: MagicMock) -> None:
+        mock_list.return_value = []
+        mgr = self._manager()
+        mgr.list_all(dry_run=True)
+        mgr.list_all(dry_run=True)
+        assert mock_list.call_count == 2

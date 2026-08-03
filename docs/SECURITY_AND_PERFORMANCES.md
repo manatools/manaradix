@@ -34,7 +34,7 @@ gates methods by polkit tier; pkexec re-exec guarded by `MANARADIX_PKEXEC`
 
 | ID | Pri | Item | Status | Notes |
 |----|-----|------|--------|-------|
-| PERF-01 | P2 | Dashboard render spawns 3+ btrfs CLI subprocesses | Open | `btrfs subvolume list` + `filesystem usage` + snapshot sidecar reads per refresh. Cache when snapshot set is unchanged. |
+| PERF-01 | P2 | Dashboard render spawns 3+ btrfs CLI subprocesses | Done | 2026-08-03: `SnapshotManager.list_all` cached (stat-key on snapshot dir + explicit invalidation in all 6 mutators + 2 s TTL — kills the N+1 sidecar reads too); `BtrfsOps.filesystem_usage` cached 5 s per mount. Dashboard render now hits ~1-2 subprocesses at most when nothing changed. Tests: cache hit/invalidation/mtime/TTL. |
 | PERF-02 | P2 | N+1 JSON sidecar reads in `SnapshotManager.list_all()` | Open | One `info.json` read per snapshot. Fine at small scale; batch or memoize above ~100 snapshots. |
 | PERF-03 | P3 | Full page re-render after every UI event (`build_model()`) | Open | Correct + simple; revisit only if a page grows heavy. |
 
@@ -76,3 +76,5 @@ with reproduction steps in Notes.
 - 2026-08-03 — SEC-02 done: daemon unit hardened (ProtectSystem=full +
   ProtectHome + carve-outs), spec.md §10 note updated, unit tests extended
   (452 passed / 8 skipped).
+- 2026-08-03 — PERF-01 done: snapshot list cache (stat-key + mutation
+  invalidation + TTL) and per-mount usage cache; 462 passed / 8 skipped.

@@ -14,6 +14,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
@@ -154,6 +155,11 @@ class BtrfsOps:
 
     def __init__(self, snapshot_dir: str = ".snapshots") -> None:
         self.snapshot_dir = snapshot_dir.rstrip("/")
+        # TTL cache for filesystem_usage — the heaviest per-render
+        # subprocess on the dashboard.  Balance/scrub change the numbers
+        # slowly; 5 s staleness is invisible in the UI.
+        self._usage_cache: dict[str, tuple[float, dict]] = {}
+        self._usage_cache_ttl = 5.0
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -648,7 +654,12 @@ class BtrfsOps:
         """Return filesystem usage info as a dict.
 
         Runs ``btrfs filesystem usage -b <mount>`` and parses key sections.
+        Cached for ``_usage_cache_ttl`` seconds per mount.
         """
+        now = time.monotonic()
+        cached = self._usage_cache.get(mount)
+        if cached is not None and now < cached[0]:
+            return cached[1]
         try:
             result = self._run(
                 ["filesystem", "usage", "-b", mount],
@@ -682,6 +693,7 @@ class BtrfsOps:
                 in_device = True
             elif in_device and not line:
                 in_device = False
+        self._usage_cache[mount] = (now + self._usage_cache_ttl, info)
         return info
 
     def filesystem_du(self, path: str) -> dict:
