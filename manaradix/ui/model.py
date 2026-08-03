@@ -16,20 +16,30 @@ from typing import Any, Callable
 class PageModel:
     """A page's declarative content: a list of titled sections.
 
-    ``columns`` > 1 lays the sections out side by side (each column an
-    HBox VBox) instead of stacking vertically — keeps dense pages like
-    Settings from stretching the window past small screens.  Sections may
-    pin themselves to a column with a ``"column"`` key; unpinned sections
-    fill the shortest column.
+    Two layout modes:
+
+    - ``columns`` > 1 (default mode): sections side by side, each column
+      an HBox VBox — keeps dense pages from stretching the window past
+      small screens.  Sections may pin themselves to a column with a
+      ``"column"`` key; unpinned sections fill the shortest column.
+    - ``rows`` (grid mode): explicit row/column placement.  Each row is a
+      list of cells; a cell is a section id (string) or a list of section
+      ids stacked vertically in that cell.  A one-cell row spans the full
+      width; equal-width cells split 50/50 (all cells are horizontally
+      stretchable).  Sections are addressed by their ``"id"`` key.
+
+    ``rows`` takes precedence over ``columns`` when both are set.
     """
 
     def __init__(
         self,
         sections: list[dict[str, Any]] | None = None,
         columns: int = 1,
+        rows: list[list] | None = None,
     ) -> None:
         self.sections = list(sections or [])
         self.columns = columns
+        self.rows = rows
 
 
 class Widget:

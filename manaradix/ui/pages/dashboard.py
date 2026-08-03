@@ -61,9 +61,9 @@ class DashboardPage:
     def build_model(self):
         """Return a ``PageModel`` for the dashboard.
 
-        Two side-by-side columns (usage stats | snapshots/policies) so the
-        page does not stretch the window past small screens, like the
-        Settings page.
+        Row/column grid: disks and filesystems span the full width, then
+        a 50/50 row (internal usage | snapshot usage + recent snapshots),
+        then a 50/50 row (active policies | quick actions).
         """
         # Cache per-mount usage for this build (one subprocess per unique
         # filesystem) and fetch snapshots/filesystems once — each shared
@@ -83,6 +83,12 @@ class DashboardPage:
         return PageModel(
             sections=[s for s in sections if s is not None],
             columns=2,
+            rows=[
+                ["disks"],
+                ["filesystems"],
+                ["internal", ["snapshot_usage", "recent"]],
+                ["policies", "quick"],
+            ],
         )
 
     # -- Section builders ---------------------------------------------------
@@ -99,6 +105,7 @@ class DashboardPage:
         if not totals:
             return {
                 "title": _("Physical Disks"),
+                "id": "disks",
                 "column": 0,
                 "fields": [Widget.label(id="no_disks", text=_("No physical disks found."))],
             }
@@ -122,6 +129,7 @@ class DashboardPage:
             selected = self._selected_disk if self._selected_disk in totals else disks[0][0]
             return {
                 "title": _("Physical Disks"),
+                "id": "disks",
                 "column": 0,
                 "fields": [
                     Widget.dropdown(
@@ -137,6 +145,7 @@ class DashboardPage:
 
         return {
             "title": _("Physical Disks"),
+            "id": "disks",
             "column": 0,
             "fields": [
                 Widget.tree(id="disks", rows=[row_for(key) for key, _ in disks], selectable=False),
@@ -148,6 +157,7 @@ class DashboardPage:
         if not self._filesystems:
             return {
                 "title": _("Btrfs Filesystems"),
+                "id": "filesystems",
                 "column": 1,
                 "fields": [
                     Widget.label(id="no_filesystems", text=_("No btrfs filesystems found.")),
@@ -201,6 +211,7 @@ class DashboardPage:
             )
             return {
                 "title": _("Btrfs Filesystems"),
+                "id": "filesystems",
                 "column": 1,
                 "fields": [
                     Widget.dropdown(
@@ -220,6 +231,7 @@ class DashboardPage:
 
         return {
             "title": _("Btrfs Filesystems"),
+            "id": "filesystems",
             "column": 1,
             "fields": [
                 Widget.tree(
@@ -279,6 +291,7 @@ class DashboardPage:
             selected = self._selected_internal_fs if self._selected_internal_fs in options else options[0]
             return {
                 "title": _("Internal Filesystem Usage"),
+                "id": "internal",
                 "column": 0,
                 "fields": [
                     Widget.dropdown(
@@ -298,6 +311,7 @@ class DashboardPage:
 
         return {
             "title": _("Internal Filesystem Usage"),
+            "id": "internal",
             "column": 0,
             "fields": [
                 Widget.tree(id="internal_stats", rows=rows, selectable=False),
@@ -322,6 +336,7 @@ class DashboardPage:
 
         return {
             "title": _("Snapshot Usage"),
+            "id": "snapshot_usage",
             "column": 1,
             "fields": [
                 Widget.tree(
@@ -342,6 +357,7 @@ class DashboardPage:
         if not self._snapshots:
             return {
                 "title": _("Recent Snapshots"),
+                "id": "recent",
                 "column": 1,
                 "fields": [Widget.label(id="no_snapshots", text=_("No snapshots yet."))],
             }
@@ -349,6 +365,7 @@ class DashboardPage:
         recent = sorted(self._snapshots, key=lambda s: s.date, reverse=True)[:5]
         return {
             "title": _("Recent Snapshots"),
+            "id": "recent",
             "column": 1,
             "fields": [
                 Widget.tree(
@@ -379,12 +396,14 @@ class DashboardPage:
         if not active:
             return {
                 "title": _("Active Policies"),
+                "id": "policies",
                 "column": 1,
                 "fields": [Widget.label(id="no_policies", text=_("No active policies."))],
             }
 
         return {
             "title": _("Active Policies"),
+            "id": "policies",
             "column": 1,
             "fields": [
                 Widget.tree(
@@ -407,6 +426,7 @@ class DashboardPage:
         """Quick-action buttons."""
         return {
             "title": _("Quick Actions"),
+            "id": "quick",
             "column": 0,
             "fields": [
                 Widget.button(

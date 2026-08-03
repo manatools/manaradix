@@ -62,7 +62,7 @@ with reproduction steps in Notes.
 
 | ID | Pri | Item | Status | Notes |
 |----|-----|------|--------|-------|
-| UX-01 | P2 | Qt window fit grows but never shrinks | Open | `_fit_window()`: dialog grows to largest content, never shrinks back. Leaf of `renderer.py`; needs Qt backend support. |
+| UX-01 | P2 | Qt window fit grows but never shrinks | Done | 2026-08-03: startup warm-up pass (`_startup_fit_to_largest`) renders every page once and sizes the window to the largest tab — opens at a constant size, tab switches never resize. Residual grow-only (a page outgrowing the window later never shrinks back) is accepted Qt behavior; window is user-resizable. |
 | UX-02 | P3 | Tree column headers untranslated | Won't Fix | Row dict keys are data keys by design — translation would break dispatch. |
 
 ---
@@ -78,3 +78,5 @@ with reproduction steps in Notes.
   (452 passed / 8 skipped).
 - 2026-08-03 — PERF-01 done: snapshot list cache (stat-key + mutation
   invalidation + TTL) and per-mount usage cache; 462 passed / 8 skipped.
+- 2026-08-03 — UX-01 done: window opens at largest-tab size via startup
+  warm-up pass (cheap because of PERF-01 caches); 464 passed / 8 skipped.

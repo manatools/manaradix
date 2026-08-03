@@ -39,6 +39,7 @@ class FakeWidget:
         self.notify_enabled = False
         self.stretch_horiz = False
         self.stretch = {}
+        self.weights = {}
         self.label_text = label
         self._auto_wrap = False
         self._vpolicy = None
@@ -53,6 +54,9 @@ class FakeWidget:
         self.stretch[dim] = new_stretch
         if getattr(dim, "name", None) == "YD_HORIZ":
             self.stretch_horiz = new_stretch
+
+    def setWeight(self, dim, weight):
+        self.weights[dim] = weight
 
     def stretchable(self, dim):
         return self.stretch.get(dim, self.stretch_horiz)
@@ -636,6 +640,67 @@ class TestFrontendChoices:
 # ---------------------------------------------------------------------------
 
 
+class TestGridLayout:
+    """PageModel.rows: explicit row/column placement with 50/50 cells."""
+
+    def _grid_model(self):
+        return PageModel(
+            sections=[
+                {"id": "full_a", "title": "Full A", "fields": [Widget.label(id="a", text="a")]},
+                {"id": "full_b", "title": "Full B", "fields": [Widget.label(id="b", text="b")]},
+                {"id": "left", "title": "Left", "fields": [Widget.label(id="l", text="l")]},
+                {"id": "right1", "title": "Right 1", "fields": [Widget.label(id="r1", text="r1")]},
+                {"id": "right2", "title": "Right 2", "fields": [Widget.label(id="r2", text="r2")]},
+            ],
+            columns=2,
+            rows=[
+                ["full_a"],
+                ["full_b"],
+                ["left", ["right1", "right2"]],
+            ],
+        )
+
+    class GridPage:
+        title = "Grid"
+
+        def __init__(self, model):
+            self._model = model
+
+        def build_model(self):
+            return self._model
+
+    def test_rows_become_hbox_rows(self) -> None:
+        factory = FakeFactory([YCancelEvent()])
+        page = self.GridPage(self._grid_model())
+        renderer = AuiRenderer([page], factory=factory)
+        renderer.run()
+        content = renderer._replace_point.children[0]  # page VBox
+        rows = [w for w in content.children if w.kind == "hbox"]
+        assert len(rows) == 3
+        # row 1: one cell spanning full width
+        assert [c.kind for c in rows[0].children] == ["vbox"]
+        # row 3: two cells; second stacks two sections
+        row3 = rows[2]
+        assert [c.kind for c in row3.children] == ["vbox", "vbox"]
+        stacked = row3.children[1].children
+        assert [f.label_text for f in stacked] == ["Right 1", "Right 2"]
+        # every cell is horizontally stretchable AND weight 1 -> exact
+        # 50/50 split (weights map to QBoxLayout stretch factors)
+        for row in rows:
+            for cell in row.children:
+                assert cell.stretch.get(YUIDimension.YD_HORIZ) is True
+                assert cell.weights.get(YUIDimension.YD_HORIZ) == 1
+
+    def test_unknown_section_id_skipped(self) -> None:
+        factory = FakeFactory([YCancelEvent()])
+        model = PageModel(
+            sections=[{"id": "known", "title": "K", "fields": []}],
+            rows=[["known", "missing"], ["missing"]],
+        )
+        renderer = AuiRenderer([self.GridPage(model)], factory=factory)
+        renderer.run()  # must not raise
+
+
 class TestWindowFit:
     def test_fits_after_initial_render(self) -> None:
         renderer, factory = make_renderer([PageA()], [YCancelEvent()])
@@ -654,8 +719,27 @@ class TestWindowFit:
             [PageA(), PageB()], [tab_switched, YCancelEvent()]
         )
         renderer.run()
+        # first paint still fits the dashboard's own hint
+        assert factory.dialog.backend.resizes[0] == (300, 100)
+        # the startup pass sized the window to the largest page's hint
+        assert (300, 700) in factory.dialog.backend.resizes
+        largest_fit = factory.dialog.backend.resizes.index((300, 700))
         # the swap re-fits the window to the target page's hint
-        assert factory.dialog.backend.resizes[-1] == (300, 200)
+        assert factory.dialog.backend.resizes[-1] == (300, 800)
+        assert largest_fit < factory.dialog.backend.resizes.index((300, 800))
+
+    def test_startup_fits_largest_page(self) -> None:
+        """UX: the window opens at the largest tab's size, not the
+        dashboard's — switching tabs then never resizes it."""
+        renderer, factory = make_renderer([PageA(), PageB()], [YCancelEvent()])
+        renderer.run()
+        assert factory.dialog.backend.resizes[-1] == (300, 700)
+
+    def test_single_page_skips_startup_pass(self) -> None:
+        renderer, factory = make_renderer([PageA()], [YCancelEvent()])
+        renderer.run()
+        # no extra warm-up renders or resizes for a one-page app
+        assert factory.dialog.backend.resizes == [(300, 100)]
 
     def test_backend_without_fit_api_is_noop(self) -> None:
         class PlainDialog(FakeDialog):

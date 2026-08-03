@@ -113,6 +113,10 @@ class AuiRenderer:
         dialog.open()
         self._opened = True
         self._apply_pinned_policies()
+        # Open at a size that fits the largest tab, so switching tabs
+        # never resizes the window (the Qt backend starts at the first
+        # page's minimum and only grows).
+        self._startup_fit_to_largest(factory)
         try:
             while True:
                 event = dialog.waitForEvent(0)
@@ -149,26 +153,31 @@ class AuiRenderer:
         content = factory.createVBox(replace_point)
 
         model = page.build_model()
-        columns = getattr(model, "columns", 1)
-        if columns > 1:
-            # Side-by-side sections (HBox of VBoxes) keep dense pages from
-            # stretching the window past small screens.  A section pins
-            # itself with a "column" key; unpinned sections fill the
-            # shortest column so heights stay balanced.
-            row = factory.createHBox(content)
-            column_boxes = [factory.createVBox(row) for _ in range(columns)]
-            heights = [0] * columns
-            for section in model.sections:
-                col = section.get("column")
-                if col is None:
-                    col = min(range(columns), key=heights.__getitem__)
-                else:
-                    col = max(0, min(col, columns - 1))
-                self._render_section(factory, column_boxes[col], section)
-                heights[col] += len(section.get("fields", []))
+        rows = getattr(model, "rows", None)
+        if rows is not None:
+            self._render_grid(factory, content, model)
         else:
-            for section in model.sections:
-                self._render_section(factory, content, section)
+            columns = getattr(model, "columns", 1)
+            if columns > 1:
+                # Side-by-side sections (HBox of VBoxes) keep dense pages
+                # from stretching the window past small screens.  A
+                # section pins itself with a "column" key; unpinned
+                # sections fill the shortest column so heights stay
+                # balanced.
+                row = factory.createHBox(content)
+                column_boxes = [factory.createVBox(row) for _ in range(columns)]
+                heights = [0] * columns
+                for section in model.sections:
+                    col = section.get("column")
+                    if col is None:
+                        col = min(range(columns), key=heights.__getitem__)
+                    else:
+                        col = max(0, min(col, columns - 1))
+                    self._render_section(factory, column_boxes[col], section)
+                    heights[col] += len(section.get("fields", []))
+            else:
+                for section in model.sections:
+                    self._render_section(factory, content, section)
 
         replace_point.showChild()
         self._current_index = index
@@ -177,6 +186,37 @@ class AuiRenderer:
             # the Qt size policies for the fresh page widgets.
             self._apply_pinned_policies()
         self._fit_window()
+
+    def _render_grid(self, factory, parent, model) -> None:
+        """Render a row/column grid (``PageModel.rows``).
+
+        Each row is an HBox of cells; a cell is a section id or a list of
+        section ids stacked in that cell.  One-cell rows span the full
+        width.  Every cell is horizontally stretchable, so two-cell rows
+        split 50/50 and full-width rows fill the window.  Sections are
+        looked up by their ``"id"`` key; unknown ids are skipped.
+        """
+        from manatools.aui.yui_common import YUIDimension
+
+        by_id = {s.get("id"): s for s in model.sections}
+        for row in model.rows:
+            row_box = factory.createHBox(parent)
+            for cell in row:
+                cell_box = factory.createVBox(row_box)
+                stretch = getattr(cell_box, "setStretchable", None)
+                if callable(stretch):
+                    stretch(YUIDimension.YD_HORIZ, True)
+                # Equal weights split the row exactly 50/50 (the Qt
+                # backend maps YBox weights to QBoxLayout stretch
+                # factors); stretchable alone would split by sizeHint.
+                weight = getattr(cell_box, "setWeight", None)
+                if callable(weight):
+                    weight(YUIDimension.YD_HORIZ, 1)
+                section_ids = cell if isinstance(cell, list) else [cell]
+                for section_id in section_ids:
+                    section = by_id.get(section_id)
+                    if section is not None:
+                        self._render_section(factory, cell_box, section)
 
     def _render_section(self, factory, parent, section: dict[str, Any]) -> None:
         """Render one titled section (a frame) into *parent*."""
@@ -367,6 +407,35 @@ class AuiRenderer:
 
     # -- Events -------------------------------------------------------------
 
+    def _backend(self):
+        """Return (size_hint, resize) for the dialog's backend widget.
+
+        Backends without the sizing API (curses) yield None.
+        """
+        dialog = self._dialog
+        if dialog is None:
+            return None
+        try:
+            get_backend = getattr(dialog, "get_backend_widget", None)
+            backend = get_backend() if callable(get_backend) else None
+            if backend is None:
+                return None
+            size_hint = getattr(backend, "sizeHint", None)
+            resize = getattr(backend, "resize", None)
+            if not callable(size_hint) or not callable(resize):
+                return None
+            return (size_hint, resize)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _size_of(hint) -> tuple[int, int]:
+        """Normalize a backend size hint (QSize or (w, h)) to ints."""
+        width = getattr(hint, "width", None)
+        if callable(width):
+            return (int(width()), int(hint.height()))
+        return (int(hint[0]), int(hint[1]))
+
     def _fit_window(self) -> None:
         """Fit the window to the current page content.
 
@@ -378,18 +447,12 @@ class AuiRenderer:
         layout and resize to the exact ``sizeHint()``.  Backends without
         this API (curses) are a natural no-op.
         """
-        dialog = self._dialog
-        if dialog is None:
+        sizing = self._backend()
+        if sizing is None:
             return
+        size_hint, resize = sizing
         try:
-            get_backend = getattr(dialog, "get_backend_widget", None)
-            backend = get_backend() if callable(get_backend) else None
-            if backend is None:
-                return
-            size_hint = getattr(backend, "sizeHint", None)
-            resize = getattr(backend, "resize", None)
-            if not callable(size_hint) or not callable(resize):
-                return
+            backend = self._dialog.get_backend_widget()
             # adjustSize is documented to do nothing useful on maximized
             # or fullscreen windows; leave those alone.
             if getattr(backend, "isMaximized", lambda: False)() or getattr(
@@ -403,6 +466,47 @@ class AuiRenderer:
             resize(size_hint())
         except Exception as exc:
             logger.debug("Could not fit window to content: %s", exc)
+
+    def _startup_fit_to_largest(self, factory) -> None:
+        """Size the window to the largest page at startup.
+
+        The Qt backend opens the main dialog at the layout minimum of the
+        first page — the dashboard — leaving a window that is too small
+        until a wider tab is visited.  Rendering every page once up front
+        (core data is cached, so this is cheap) and resizing to the
+        largest hint opens a window that already fits every tab.
+        """
+        if len(self._pages) <= 1:
+            return
+        sizing = self._backend()
+        if sizing is None:
+            return
+        size_hint, resize = sizing
+        first = self._current_index
+        sizes: list[tuple[int, int]] = []
+        for index in list(range(len(self._pages))) + [first]:
+            self._show_page(factory, index)
+            try:
+                hint = size_hint()
+            except Exception:
+                hint = None
+            if hint is not None:
+                sizes.append(self._size_of(hint))
+        if not sizes:
+            return
+        width = max(w for w, _ in sizes)
+        height = max(h for _, h in sizes)
+        # resize signatures vary: Qt accepts (w, h) ints, fake backends a
+        # single (w, h) tuple — try both.
+        try:
+            resize((width, height))
+        except TypeError:
+            try:
+                resize(width, height)
+            except Exception as exc:
+                logger.debug("Could not resize window to largest page: %s", exc)
+        except Exception as exc:
+            logger.debug("Could not resize window to largest page: %s", exc)
 
     def _switch_tab(self, factory) -> None:
         """Render the page belonging to the newly selected tab."""
