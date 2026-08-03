@@ -46,6 +46,27 @@ class TestGenerateGrubScript:
         assert "rootflags=subvol=" in script
         assert "findmnt" in script
 
+    def test_carries_luks_params_to_snapshot_entries(self) -> None:
+        """rd.luks.* params of the current boot are appended to every
+        snapshot kernel line so the initramfs can unlock an encrypted
+        root; cryptomount lines unlock the container in GRUB itself when
+        the kernel lives on the encrypted filesystem."""
+        grub = GrubIntegration()
+        script = grub.generate_grub_script()
+
+        # initramfs unlock params collected at grub-mkconfig time
+        assert "grep '^rd\\.luks'" in script
+        assert "${CRYPT_PARAMS} ro" in script  # appended to the kernel line
+        # GRUB-side unlock, emitted only inside the submenu
+        assert "cryptomount -u $luks_uuid" in script
+        # crypt detection: dm name + lsblk type
+        assert "/dev/mapper/luks-*" in script
+        assert "lsblk -no TYPE" in script
+        # unresolvable encrypted root: skip with a warning instead of
+        # emitting dead entries
+        assert "skipping snapshot boot entries" in script
+        assert "exit 0" in script
+
     def test_strips_leading_slash_for_relpath(self) -> None:
         grub = GrubIntegration()
         script = grub.generate_grub_script(snapshot_dir="/.snapshots")

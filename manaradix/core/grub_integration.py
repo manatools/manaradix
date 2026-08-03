@@ -37,6 +37,39 @@ SNAPSHOT_DIR="{snapshot_dir}"
 ROOT_UUID=$(findmnt -n -o UUID / 2>/dev/null || true)
 [ -z "$ROOT_UUID" ] && exit 0
 
+# LUKS-encrypted root support: the initramfs unlock parameters of the
+# current boot (rd.luks.*) are carried over to every snapshot entry, and
+# GRUB unlocks the container itself when the kernel lives on the
+# encrypted filesystem (no separate /boot).  Without a usable unlock
+# path the entries would be dead — skip them with a warning instead.
+CRYPT_PARAMS=$(tr ' ' '\\n' < /proc/cmdline | grep '^rd\\.luks' | tr '\\n' ' ')
+ROOT_SOURCE=$(findmnt -n -o SOURCE / 2>/dev/null || true)
+BOOT_SOURCE=$(findmnt -n -o SOURCE /boot 2>/dev/null || true)
+[ -z "$BOOT_SOURCE" ] && BOOT_SOURCE="$ROOT_SOURCE"
+
+IS_CRYPT="no"
+[ -n "$CRYPT_PARAMS" ] && IS_CRYPT="yes"
+case "$ROOT_SOURCE" in /dev/mapper/luks-*) IS_CRYPT="yes";; esac
+# lsblk reports dm-crypt devices as type "crypt" regardless of the mapper
+# name, catching custom crypttab names the luks-* pattern cannot.
+ROOT_TYPE=$(lsblk -no TYPE "$ROOT_SOURCE" 2>/dev/null || true)
+case "$ROOT_TYPE" in crypt) IS_CRYPT="yes";; esac
+
+CRYPT_LUKS_UUIDS=""
+if [ "$IS_CRYPT" = "yes" ] && [ "$BOOT_SOURCE" = "$ROOT_SOURCE" ]; then
+    CRYPT_LUKS_UUIDS=$(echo "$CRYPT_PARAMS" | tr ' ' '\\n' | sed -n 's/^rd\\.luks\\.uuid=//p')
+    if [ -z "$CRYPT_LUKS_UUIDS" ]; then
+        # No rd.luks params on the command line: derive the container
+        # uuid from the device-mapper name (dracut names it
+        # luks-<container-uuid>); initramfs unlock then follows crypttab.
+        CRYPT_LUKS_UUIDS=$(basename "$ROOT_SOURCE" 2>/dev/null | sed -n 's/^luks-//p')
+    fi
+    if [ -z "$CRYPT_LUKS_UUIDS" ]; then
+        echo "manaradix: skipping snapshot boot entries: encrypted root but GRUB unlock parameters unknown" >&2
+        exit 0
+    fi
+fi
+
 count=0
 for snapshot_dir in "$SNAPSHOT_DIR"/*/; do
     [ -d "${{snapshot_dir}}{subvol_name}" ] || continue
@@ -50,12 +83,19 @@ for snapshot_dir in "$SNAPSHOT_DIR"/*/; do
         cat <<'SUBEOF'
 submenu "Manaradix Snapshots" {{
 SUBEOF
+        # Kernel on the encrypted root: unlock before the entries search
+        # for it.  The prompt appears when the submenu is opened.
+        for luks_uuid in ${{CRYPT_LUKS_UUIDS}}; do
+            cat <<CRYPTEOF
+    cryptomount -u $luks_uuid
+CRYPTEOF
+        done
     fi
 
     cat <<ENTRYEOF
     menuentry "Snapshot: ${{snap_id}}" {{
         search --no-floppy --fs-uuid --set=root ${{ROOT_UUID}}
-        linux /boot/vmlinuz root=UUID=${{ROOT_UUID}} rootflags=subvol=${{snap_path}} ro
+        linux /boot/vmlinuz root=UUID=${{ROOT_UUID}} rootflags=subvol=${{snap_path}} ${{CRYPT_PARAMS}} ro
         initrd /boot/initrd.img
     }}
 ENTRYEOF
