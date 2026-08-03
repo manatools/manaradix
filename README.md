@@ -489,7 +489,7 @@ User-visible strings are marked with `_()` for gettext translation.
 # Generate / update the template
 xgettext --language=Python --keyword=_ --from-code=UTF-8 \
     --output=locale/manaradix.pot \
-    --package-name=manaradix --package-version=0.1.0 \
+    --package-name=manaradix --package-version=0.1.1 \
     manaradix/module.py manaradix/utils/pkexec.py manaradix/i18n.py \
     manaradix/core/*.py manaradix/dbus/*.py manaradix/ui/renderer.py \
     manaradix/ui/navigation.py manaradix/ui/pages/*.py

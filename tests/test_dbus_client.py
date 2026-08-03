@@ -53,8 +53,8 @@ class TestMethodSymmetry:
 class TestCallPlumbing:
     def test_uses_system_bus_and_interface(self) -> None:
         client, proxy = make_client()
-        proxy.Ping.return_value = "0.1.0"
-        assert client.ping() == "0.1.0"
+        proxy.Ping.return_value = "0.1.1"
+        assert client.ping() == "0.1.1"
         proxy.Ping.assert_called_once_with(
             dbus_interface=DBUS_INTERFACE, timeout=30.0
         )
@@ -113,8 +113,8 @@ class TestArgForwarding:
 
     def test_ping_returns_version(self) -> None:
         client, proxy = make_client()
-        proxy.Ping.return_value = "0.1.0"
-        assert client.ping() == "0.1.0"
+        proxy.Ping.return_value = "0.1.1"
+        assert client.ping() == "0.1.1"
 
 
 class TestErrorMapping:
