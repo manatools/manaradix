@@ -310,6 +310,42 @@ class PageB:
         return PageModel(sections=[{"title": "Info", "fields": []}])
 
 
+class NavPage:
+    """Page whose button navigates to the target page."""
+
+    page_id = "nav"
+    title = "Nav"
+
+    def __init__(self):
+        self.build_count = 0
+
+    def build_model(self):
+        self.build_count += 1
+        return PageModel(sections=[
+            {
+                "title": "Actions",
+                "fields": [
+                    Widget.button(id="btn_go", label="Go", callback=self.on_go),
+                ],
+            },
+        ])
+
+    def on_go(self):
+        self.renderer.navigate(TargetPage.page_id)
+
+
+class TargetPage:
+    page_id = "target"
+    title = "Target"
+
+    def __init__(self):
+        self.build_count = 0
+
+    def build_model(self):
+        self.build_count += 1
+        return PageModel(sections=[{"title": "Info", "fields": []}])
+
+
 def make_renderer(pages, script):
     factory = FakeFactory(script)
     return AuiRenderer(pages, factory=factory), factory
@@ -620,6 +656,39 @@ class TestDispatch:
         renderer.run()
         tabs = widgets_of(factory, "dumbtab")[0]
         assert len(tabs._items) == 2
+
+
+class TestNavigate:
+    def test_navigate_renders_target_page(self) -> None:
+        nav, target = NavPage(), TargetPage()
+        renderer, factory = make_renderer([nav, target], [YCancelEvent()])
+        renderer.run()
+        assert renderer.navigate("target")
+        assert renderer._current_index == 1
+        tabs = widgets_of(factory, "dumbtab")[0]
+        assert tabs.selectedItem().label() == "Target"
+
+    def test_button_callback_can_navigate(self) -> None:
+        nav, target = NavPage(), TargetPage()
+        renderer, factory = make_renderer([nav, target], [btn_activated, YCancelEvent()])
+        renderer.run()
+        # The click navigated to the target page; the post-dispatch
+        # rebuild then re-rendered the (new) current page.
+        assert renderer._current_index == 1
+        assert target.build_count == 3  # startup fit + navigate + rebuild
+        tabs = widgets_of(factory, "dumbtab")[0]
+        assert tabs.selectedItem().label() == "Target"
+
+    def test_navigate_unknown_id_returns_false(self) -> None:
+        nav, target = NavPage(), TargetPage()
+        renderer, factory = make_renderer([nav, target], [YCancelEvent()])
+        renderer.run()
+        assert renderer.navigate("nope") is False
+        assert renderer._current_index == 0
+
+    def test_navigate_before_run_is_noop(self) -> None:
+        renderer = AuiRenderer([NavPage(), TargetPage()])
+        assert renderer.navigate("target") is False
 
 
 # ---------------------------------------------------------------------------

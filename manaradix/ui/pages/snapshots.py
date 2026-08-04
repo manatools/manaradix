@@ -33,6 +33,9 @@ class SnapshotsPage:
         self.app = app_context
         # Selected snapshot ID (set by the tree selection callback)
         self._selected_snapshot_id: str | None = None
+        # Last action error, shown as a banner section until the next
+        # action succeeds (mirrors the setup wizard's error summary).
+        self._last_error: str | None = None
 
     # -- build_model --------------------------------------------------------
 
@@ -40,7 +43,18 @@ class SnapshotsPage:
         """Return a ``PageModel`` for snapshot management."""
         snapshots = self._list_snapshots()
 
-        sections = [
+        sections = []
+        if self._last_error:
+            sections.append({
+                "title": _("Error"),
+                "fields": [
+                    Widget.label(
+                        id="error_label",
+                        text=_("Error: %s") % self._last_error,
+                    ),
+                ],
+            })
+        sections += [
             {
                 "title": _("Snapshots"),
                 "fields": [
@@ -146,6 +160,7 @@ class SnapshotsPage:
         for subvolume, type, schedule, description, and read-only toggle.
         For now, creates a manual read-only snapshot of / as a safe default.
         """
+        self._last_error = None
         try:
             snap = self.app.snapshot_manager.create(
                 subvolume="/",
@@ -156,6 +171,7 @@ class SnapshotsPage:
             logger.info("Created snapshot: %s", snap.id)
         except Exception as exc:
             logger.error("Failed to create snapshot: %s", exc)
+            self._last_error = str(exc)
 
     def on_delete_snapshot(self) -> None:
         """Delete the selected snapshot after confirmation."""
@@ -164,14 +180,17 @@ class SnapshotsPage:
         snap = self.app.snapshot_manager.get(self._selected_snapshot_id)
         if snap is None:
             return
+        self._last_error = None
         try:
             self.app.snapshot_manager.delete(snap)
             self._selected_snapshot_id = None
             logger.info("Deleted snapshot: %s", snap.id)
         except SnapshotNotFoundError:
             logger.error("Snapshot not found on disk: %s", snap.path)
+            self._last_error = _("Snapshot not found on disk: %s") % snap.path
         except Exception as exc:
             logger.error("Failed to delete snapshot: %s", exc)
+            self._last_error = str(exc)
 
     def on_restore_snapshot(self) -> None:
         """Restore the selected snapshot (swap method).
@@ -185,6 +204,7 @@ class SnapshotsPage:
         snap = self.app.snapshot_manager.get(self._selected_snapshot_id)
         if snap is None:
             return
+        self._last_error = None
         try:
             pre_restore = self.app.snapshot_manager.restore(snap)
             logger.info(
@@ -193,6 +213,7 @@ class SnapshotsPage:
             )
         except Exception as exc:
             logger.error("Failed to restore snapshot: %s", exc)
+            self._last_error = str(exc)
 
     def on_browse_snapshot(self) -> None:
         """Mount the selected snapshot for browsing."""
@@ -201,11 +222,13 @@ class SnapshotsPage:
         snap = self.app.snapshot_manager.get(self._selected_snapshot_id)
         if snap is None:
             return
+        self._last_error = None
         try:
             self.app.snapshot_manager.browse(snap)
             logger.info("Mounted snapshot %s for browsing", snap.id)
         except Exception as exc:
             logger.error("Failed to browse snapshot: %s", exc)
+            self._last_error = str(exc)
 
     def on_export_snapshot(self) -> None:
         """Export the selected snapshot via btrfs send.
@@ -217,14 +240,17 @@ class SnapshotsPage:
         snap = self.app.snapshot_manager.get(self._selected_snapshot_id)
         if snap is None:
             return
+        self._last_error = None
         output = f"/tmp/{snap.id}.btrfs"
         try:
             self.app.snapshot_manager.export_snapshot(snap, output)
             logger.info("Exported snapshot %s to %s", snap.id, output)
         except ValueError as exc:
             logger.error("Cannot export: %s", exc)
+            self._last_error = str(exc)
         except Exception as exc:
             logger.error("Export failed: %s", exc)
+            self._last_error = str(exc)
 
     def on_rename_snapshot(self) -> None:
         """Update the description of the selected snapshot."""
@@ -235,10 +261,12 @@ class SnapshotsPage:
             return
         # In a full UI the new description would come from the text widget.
         # For now this is triggered by the text field's value.
+        self._last_error = None
         try:
             self.app.snapshot_manager.rename(snap, snap.description)
         except Exception as exc:
             logger.error("Failed to rename snapshot: %s", exc)
+            self._last_error = str(exc)
 
     # -- Callbacks: selection & filtering -----------------------------------
 

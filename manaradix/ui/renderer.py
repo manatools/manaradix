@@ -58,8 +58,16 @@ class AuiRenderer:
 
     def __init__(self, pages, *, factory=None) -> None:
         self._pages = list(pages)
+        # Every page gets a renderer reference so its callbacks can
+        # navigate (e.g. the dashboard's Create Snapshot quick action
+        # jumps to the Snapshots page).
+        for page in self._pages:
+            page.renderer = self
         # Injectable factory for tests; defaults to the real YUI factory.
         self._factory = factory
+        # The factory actually in use while the dialog runs (set in
+        # run()); None until then, so navigate() before run() is a no-op.
+        self._active_factory = None
         self._handlers: dict[str, tuple[str, Callable]] = {}
         self._table_headers: dict[Any, Any] = {}
         self._tabs = None
@@ -78,6 +86,7 @@ class AuiRenderer:
         from manatools.aui.yui import YUI  # lazy: keep CLI importable without manatools
 
         factory = self._factory or YUI.widgetFactory()
+        self._active_factory = factory
 
         if self._factory is None:
             try:
@@ -518,6 +527,50 @@ class AuiRenderer:
             if page.title == label:
                 self._show_page(factory, index)
                 return
+
+    # -- Navigation ---------------------------------------------------------
+
+    def navigate(self, page_id: str) -> bool:
+        """Switch to the page with *page_id*, rendering it immediately.
+
+        Pages reach this through their injected ``renderer`` reference
+        (e.g. the dashboard's Create Snapshot quick action jumps to the
+        Snapshots page).  The tab selection is moved too, so the tab bar
+        stays in sync with the visible content.  Returns False when no
+        page has that id, or before the dialog is running.
+        """
+        factory = self._active_factory
+        if factory is None or self._tabs is None:
+            return False
+        for index, page in enumerate(self._pages):
+            if getattr(page, "page_id", None) != page_id:
+                continue
+            self._select_tab(page.title)
+            self._show_page(factory, index)
+            return True
+        logger.warning("No page with id %r to navigate to", page_id)
+        return False
+
+    def _select_tab(self, label: str) -> None:
+        """Mark the tab item with *label* as the current selection.
+
+        Real backends expose ``selectItem`` (which also moves the tab
+        bar); the test fake only has ``select``.
+        """
+        items = getattr(self._tabs, "_items", None)  # noqa: SLF001 -- YSelectionWidget stores its items in _items
+        if items is None:
+            return
+        for item in items:
+            if item.label() != label:
+                continue
+            select_item = getattr(self._tabs, "selectItem", None)
+            if callable(select_item):
+                select_item(item, True)
+            else:
+                select = getattr(self._tabs, "select", None)
+                if callable(select):
+                    select(item)
+            return
 
     def _dispatch(self, factory, event) -> None:
         """Dispatch a widget event to the descriptor's callback."""

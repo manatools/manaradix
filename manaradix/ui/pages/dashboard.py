@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 from manaradix.i18n import _
 from manaradix.ui.model import PageModel, Widget
+from manaradix.ui.pages.snapshots import SnapshotsPage
 
 if TYPE_CHECKING:
     from manaradix.module import AppContext
@@ -468,9 +469,11 @@ class DashboardPage:
 
     def on_create_snapshot(self) -> None:
         """Navigate to the Snapshots page (create tab)."""
-        # The aui framework handles navigation; this is a placeholder
-        # that the framework overrides with its own routing.
-        pass
+        # The renderer hands itself to every page at startup, so the
+        # quick action can jump straight to the snapshot manager.
+        renderer = getattr(self, "renderer", None)
+        if renderer is not None:
+            renderer.navigate(SnapshotsPage.page_id)
 
     def on_start_scrub(self) -> None:
         """Start a scrub of the default subvolume."""

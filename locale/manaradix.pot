@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: manaradix 0.1.0\n"
+"Project-Id-Version: manaradix 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 23:42+0200\n"
+"POT-Creation-Date: 2026-08-04 12:10+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,189 +17,189 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: manaradix/module.py:270
+#: manaradix/module.py:297
 #, python-format
 msgid "Path to config file (default: %(default)s)"
 msgstr ""
 
-#: manaradix/module.py:493
+#: manaradix/module.py:520
 #, python-format
 msgid "Created snapshot: %s"
 msgstr ""
 
-#: manaradix/module.py:494
+#: manaradix/module.py:521
 #, python-format
 msgid "  Subvolume:   %s"
 msgstr ""
 
-#: manaradix/module.py:495
+#: manaradix/module.py:522
 #, python-format
 msgid "  Path:        %s"
 msgstr ""
 
-#: manaradix/module.py:496
+#: manaradix/module.py:523
 #, python-format
 msgid "  Type:        %s"
 msgstr ""
 
-#: manaradix/module.py:498
+#: manaradix/module.py:525
 #, python-format
 msgid "  Schedule:    %s"
 msgstr ""
 
-#: manaradix/module.py:500
+#: manaradix/module.py:527
 #, python-format
 msgid "  Description: %s"
 msgstr ""
 
-#: manaradix/module.py:516
+#: manaradix/module.py:543
 msgid "No snapshots found."
 msgstr ""
 
-#: manaradix/module.py:548
+#: manaradix/module.py:575
 #, python-format
 msgid "Deleted snapshot: %s"
 msgstr ""
 
-#: manaradix/module.py:588
+#: manaradix/module.py:615
 #, python-format
 msgid "[DRY RUN] Would delete %d snapshot(s):"
 msgstr ""
 
-#: manaradix/module.py:592
+#: manaradix/module.py:619
 #, python-format
 msgid "[DRY RUN] Nothing to prune (%d kept, 0 excess)."
 msgstr ""
 
-#: manaradix/module.py:594
+#: manaradix/module.py:621
 #, python-format
 msgid "Pruned %d snapshot(s):"
 msgstr ""
 
-#: manaradix/module.py:598
+#: manaradix/module.py:625
 #, python-format
 msgid "Nothing to prune (%d kept, no excess)."
 msgstr ""
 
-#: manaradix/module.py:613
+#: manaradix/module.py:640
 msgid "Setup not needed: snapshots or policies already exist."
 msgstr ""
 
-#: manaradix/module.py:618
+#: manaradix/module.py:645
 msgid "Setup needed, but no btrfs filesystem was found on this system."
 msgstr ""
 
-#: manaradix/module.py:623
+#: manaradix/module.py:650
 msgid "Setup needed: no snapshots and no snapshot policies are configured."
-msgstr ""
-
-#: manaradix/module.py:624
-#, python-format
-msgid "Detected role: %s"
-msgstr ""
-
-#: manaradix/module.py:626 manaradix/module.py:674
-#: manaradix/core/setup_wizard.py:253 manaradix/ui/pages/setup.py:90
-msgid "No setup profiles are available on this system."
-msgstr ""
-
-#: manaradix/module.py:628
-#, python-format
-msgid "Default profile: %s"
-msgstr ""
-
-#: manaradix/module.py:629
-msgid "Run 'manaradix setup apply' to apply it."
-msgstr ""
-
-#: manaradix/module.py:644
-#, python-format
-msgid "[DRY RUN] Would apply the setup profile %s:"
-msgstr ""
-
-#: manaradix/module.py:646
-#, python-format
-msgid "Applied the setup profile %s:"
 msgstr ""
 
 #: manaradix/module.py:651
 #, python-format
+msgid "Detected role: %s"
+msgstr ""
+
+#: manaradix/module.py:653 manaradix/module.py:701
+#: manaradix/core/setup_wizard.py:253 manaradix/ui/pages/setup.py:90
+msgid "No setup profiles are available on this system."
+msgstr ""
+
+#: manaradix/module.py:655
+#, python-format
+msgid "Default profile: %s"
+msgstr ""
+
+#: manaradix/module.py:656
+msgid "Run 'manaradix setup apply' to apply it."
+msgstr ""
+
+#: manaradix/module.py:671
+#, python-format
+msgid "[DRY RUN] Would apply the setup profile %s:"
+msgstr ""
+
+#: manaradix/module.py:673
+#, python-format
+msgid "Applied the setup profile %s:"
+msgstr ""
+
+#: manaradix/module.py:678
+#, python-format
 msgid "  %s: %s (retention: %s)"
 msgstr ""
 
-#: manaradix/module.py:658
+#: manaradix/module.py:685
 msgid "would be installed"
 msgstr ""
 
-#: manaradix/module.py:660
+#: manaradix/module.py:687
 msgid "not available"
 msgstr ""
 
-#: manaradix/module.py:663 manaradix/ui/pages/settings.py:183
+#: manaradix/module.py:690 manaradix/ui/pages/settings.py:183
 #: manaradix/ui/pages/setup.py:271
 msgid "installed"
 msgstr ""
 
-#: manaradix/module.py:663 manaradix/ui/pages/settings.py:183
+#: manaradix/module.py:690 manaradix/ui/pages/settings.py:183
 #: manaradix/ui/pages/setup.py:271
 msgid "not installed"
 msgstr ""
 
-#: manaradix/module.py:664
+#: manaradix/module.py:691
 #, python-format
 msgid "  GRUB recovery menu: %s"
 msgstr ""
 
-#: manaradix/module.py:677
+#: manaradix/module.py:704
 msgid "Available setup profiles:"
 msgstr ""
 
-#: manaradix/module.py:705
+#: manaradix/module.py:732
 msgid "The manaradix D-Bus service is running."
 msgstr ""
 
-#: manaradix/module.py:709
+#: manaradix/module.py:736
 msgid ""
 "The manaradix D-Bus service is not running; it starts automatically on first "
 "use."
 msgstr ""
 
-#: manaradix/module.py:723
+#: manaradix/module.py:750
 #, python-format
 msgid "ID:          %s"
 msgstr ""
 
-#: manaradix/module.py:724
+#: manaradix/module.py:751
 #, python-format
 msgid "Subvolume:   %s"
 msgstr ""
 
-#: manaradix/module.py:725
+#: manaradix/module.py:752
 #, python-format
 msgid "Path:        %s"
 msgstr ""
 
-#: manaradix/module.py:726
+#: manaradix/module.py:753
 #, python-format
 msgid "Date:        %s"
 msgstr ""
 
-#: manaradix/module.py:727
+#: manaradix/module.py:754
 #, python-format
 msgid "Type:        %s"
 msgstr ""
 
-#: manaradix/module.py:728
+#: manaradix/module.py:755
 #, python-format
 msgid "Read-only:   %s"
 msgstr ""
 
-#: manaradix/module.py:729
+#: manaradix/module.py:756
 #, python-format
 msgid "Schedule:    %s"
 msgstr ""
 
-#: manaradix/module.py:730
+#: manaradix/module.py:757
 #, python-format
 msgid "Description: %s"
 msgstr ""
@@ -300,7 +300,7 @@ msgstr ""
 msgid "error: the manaradix D-Bus service is already running."
 msgstr ""
 
-#: manaradix/ui/renderer.py:234
+#: manaradix/ui/renderer.py:299
 msgid "(no data)"
 msgstr ""
 
@@ -354,85 +354,85 @@ msgstr ""
 msgid "License"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:49
+#: manaradix/ui/pages/dashboard.py:50
 msgid "Dashboard"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:93 manaradix/ui/pages/dashboard.py:115
-#: manaradix/ui/pages/dashboard.py:129
+#: manaradix/ui/pages/dashboard.py:108 manaradix/ui/pages/dashboard.py:132
+#: manaradix/ui/pages/dashboard.py:148
 msgid "Physical Disks"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:94
+#: manaradix/ui/pages/dashboard.py:111
 msgid "No physical disks found."
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:119
+#: manaradix/ui/pages/dashboard.py:138
 msgid "Physical Disk"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:139 manaradix/ui/pages/dashboard.py:191
-#: manaradix/ui/pages/dashboard.py:209
+#: manaradix/ui/pages/dashboard.py:160 manaradix/ui/pages/dashboard.py:214
+#: manaradix/ui/pages/dashboard.py:234
 msgid "Btrfs Filesystems"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:141
+#: manaradix/ui/pages/dashboard.py:164
 msgid "No btrfs filesystems found."
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:195 manaradix/ui/pages/dashboard.py:271
+#: manaradix/ui/pages/dashboard.py:220 manaradix/ui/pages/dashboard.py:300
 msgid "Filesystem"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:245
+#: manaradix/ui/pages/dashboard.py:272
 msgid "Data"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:246
+#: manaradix/ui/pages/dashboard.py:273
 msgid "Metadata"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:247
+#: manaradix/ui/pages/dashboard.py:274
 msgid "System"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:267 manaradix/ui/pages/dashboard.py:285
+#: manaradix/ui/pages/dashboard.py:294 manaradix/ui/pages/dashboard.py:314
 msgid "Internal Filesystem Usage"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:308
+#: manaradix/ui/pages/dashboard.py:339
 msgid "Snapshot Usage"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:327 manaradix/ui/pages/dashboard.py:333
+#: manaradix/ui/pages/dashboard.py:360 manaradix/ui/pages/dashboard.py:368
 msgid "Recent Snapshots"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:328
+#: manaradix/ui/pages/dashboard.py:363
 msgid "No snapshots yet."
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:362 manaradix/ui/pages/dashboard.py:367
+#: manaradix/ui/pages/dashboard.py:399 manaradix/ui/pages/dashboard.py:406
 msgid "Active Policies"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:363
+#: manaradix/ui/pages/dashboard.py:402
 msgid "No active policies."
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:388
+#: manaradix/ui/pages/dashboard.py:429
 msgid "Quick Actions"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:392
+#: manaradix/ui/pages/dashboard.py:435
 msgid "Create Snapshot"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:397 manaradix/ui/pages/settings.py:157
+#: manaradix/ui/pages/dashboard.py:440 manaradix/ui/pages/settings.py:157
 msgid "Start Scrub"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:402
+#: manaradix/ui/pages/dashboard.py:445
 msgid "Refresh"
 msgstr ""
 
@@ -680,7 +680,7 @@ msgstr ""
 msgid "Skip"
 msgstr ""
 
-#: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:85
+#: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:99
 msgid "Actions"
 msgstr ""
 
@@ -720,66 +720,80 @@ msgstr ""
 msgid "Setup Applied"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:30 manaradix/ui/pages/snapshots.py:45
+#: manaradix/ui/pages/snapshots.py:30 manaradix/ui/pages/snapshots.py:59
 msgid "Snapshots"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:66
+#: manaradix/ui/pages/snapshots.py:49
+msgid "Error"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:53
+#, python-format
+msgid "Error: %s"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:80
 msgid "Filters"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:70
+#: manaradix/ui/pages/snapshots.py:84
 msgid "Subvolume"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:77
+#: manaradix/ui/pages/snapshots.py:91
 msgid "Type"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:89
+#: manaradix/ui/pages/snapshots.py:103
 msgid "Create Snapshot…"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:94
+#: manaradix/ui/pages/snapshots.py:108
 msgid "Delete Selected"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:99
+#: manaradix/ui/pages/snapshots.py:113
 msgid "Restore Selected"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:104
+#: manaradix/ui/pages/snapshots.py:118
 msgid "Browse Selected"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:109
+#: manaradix/ui/pages/snapshots.py:123
 msgid "Export Selected"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:120
+#: manaradix/ui/pages/snapshots.py:134
 #, python-format
 msgid "Snapshot Detail: %s"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:122
+#: manaradix/ui/pages/snapshots.py:136
 #, python-format
 msgid "Path: %s"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:123
+#: manaradix/ui/pages/snapshots.py:137
 #, python-format
 msgid "Date: %s"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:124
+#: manaradix/ui/pages/snapshots.py:138
 #, python-format
 msgid "Read-only: %s"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:127
+#: manaradix/ui/pages/snapshots.py:141
 msgid "Update Description"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:132
+#: manaradix/ui/pages/snapshots.py:146
 msgid "New description"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:190
+#, python-format
+msgid "Snapshot not found on disk: %s"
 msgstr ""
