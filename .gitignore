@@ -29,3 +29,6 @@ CLAUDE.md
 
 # Local technical specification (never committed)
 spec.md
+
+*.src.rpm
+*.tar.gz
