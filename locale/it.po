@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-04 12:10+0200\n"
+"POT-Creation-Date: 2026-08-04 14:39+0200\n"
 "PO-Revision-Date: 2026-08-01 19:00+0200\n"
 "Last-Translator: Mageia Community <mageia-community@mageia.org>\n"
 "Language-Team: Italian <https://www.mageia.org>\n"
@@ -327,7 +327,7 @@ msgstr ""
 msgid "error: the manaradix D-Bus service is already running."
 msgstr "errore: il servizio D-Bus di manaradix è già in esecuzione."
 
-#: manaradix/ui/renderer.py:299
+#: manaradix/ui/renderer.py:340
 msgid "(no data)"
 msgstr "(nessun dato)"
 
@@ -343,48 +343,48 @@ msgstr ""
 "Foundation, versione 2 della Licenza, o (a tua scelta) qualsiasi versione "
 "successiva."
 
-#: manaradix/ui/pages/about.py:38
+#: manaradix/ui/pages/about.py:38 manaradix/ui/pages/about.py:63
 msgid "About"
 msgstr "Informazioni"
 
-#: manaradix/ui/pages/about.py:55
+#: manaradix/ui/pages/about.py:69
 msgid "Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
 msgstr ""
 "Utilità di gestione di snapshot, subvolumi e filesystem btrfs per "
 "MageiaUtilità di gestione di snapshot, subvolume e filesystem Btrfs per "
 "Mageia"
 
-#: manaradix/ui/pages/about.py:61
+#: manaradix/ui/pages/about.py:75
 #, python-format
 msgid "Version: %s"
 msgstr "Versione: %s"
 
-#: manaradix/ui/pages/about.py:65
+#: manaradix/ui/pages/about.py:79
 #, python-format
 msgid "Author: %s"
 msgstr "Autore: %s"
 
-#: manaradix/ui/pages/about.py:69
+#: manaradix/ui/pages/about.py:83
 #, python-format
 msgid "Email: %s"
 msgstr "Email: %s"
 
-#: manaradix/ui/pages/about.py:73
+#: manaradix/ui/pages/about.py:87
 #, python-format
 msgid "Copyright: %s"
 msgstr "Copyright: %s"
 
-#: manaradix/ui/pages/about.py:77
+#: manaradix/ui/pages/about.py:91
 #, python-format
 msgid "License: %s"
 msgstr "Licenza: %s"
 
-#: manaradix/ui/pages/about.py:81
+#: manaradix/ui/pages/about.py:95
 #, python-format
 msgid "Website: %s"
 msgstr "Sito web: %s"
 
-#: manaradix/ui/pages/about.py:90
+#: manaradix/ui/pages/about.py:100
 msgid "License"
 msgstr "Licenza"
 
@@ -724,7 +724,7 @@ msgstr "Applica Configurazione"
 msgid "Skip"
 msgstr "Salta"
 
-#: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:99
+#: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:63
 msgid "Actions"
 msgstr "Azioni"
 
@@ -764,80 +764,84 @@ msgstr "Menu di ripristino GRUB: %s"
 msgid "Setup Applied"
 msgstr "Configurazione Applicata"
 
-#: manaradix/ui/pages/snapshots.py:30 manaradix/ui/pages/snapshots.py:59
+#: manaradix/ui/pages/snapshots.py:30 manaradix/ui/pages/snapshots.py:102
 msgid "Snapshots"
 msgstr "Snapshot"
 
-#: manaradix/ui/pages/snapshots.py:49
+#: manaradix/ui/pages/snapshots.py:53
 msgid "Error"
 msgstr "Errore"
 
-#: manaradix/ui/pages/snapshots.py:53
+#: manaradix/ui/pages/snapshots.py:57
 #, python-format
 msgid "Error: %s"
 msgstr "Errore: %s"
 
-#: manaradix/ui/pages/snapshots.py:80
-msgid "Filters"
-msgstr "Filtri"
+#: manaradix/ui/pages/snapshots.py:69
+msgid "Target"
+msgstr "Destinazione"
 
-#: manaradix/ui/pages/snapshots.py:84
-msgid "Subvolume"
-msgstr "Subvolume"
-
-#: manaradix/ui/pages/snapshots.py:91
-msgid "Type"
-msgstr "Tipo"
-
-#: manaradix/ui/pages/snapshots.py:103
+#: manaradix/ui/pages/snapshots.py:76
 msgid "Create Snapshot…"
 msgstr "Crea Snapshot…"
 
-#: manaradix/ui/pages/snapshots.py:108
+#: manaradix/ui/pages/snapshots.py:81
 msgid "Delete Selected"
 msgstr "Elimina Selezionato"
 
-#: manaradix/ui/pages/snapshots.py:113
+#: manaradix/ui/pages/snapshots.py:86
 msgid "Restore Selected"
 msgstr "Ripristina Selezionato"
 
-#: manaradix/ui/pages/snapshots.py:118
+#: manaradix/ui/pages/snapshots.py:91
 msgid "Browse Selected"
 msgstr "Sfoglia Selezionato"
 
-#: manaradix/ui/pages/snapshots.py:123
+#: manaradix/ui/pages/snapshots.py:96
 msgid "Export Selected"
 msgstr "Esporta Selezionato"
 
+#: manaradix/ui/pages/snapshots.py:123
+msgid "Filters"
+msgstr "Filtri"
+
+#: manaradix/ui/pages/snapshots.py:127
+msgid "Subvolume"
+msgstr "Subvolume"
+
 #: manaradix/ui/pages/snapshots.py:134
+msgid "Type"
+msgstr "Tipo"
+
+#: manaradix/ui/pages/snapshots.py:147
 #, python-format
 msgid "Snapshot Detail: %s"
 msgstr "Dettaglio Snapshot: %s"
 
-#: manaradix/ui/pages/snapshots.py:136
+#: manaradix/ui/pages/snapshots.py:149
 #, python-format
 msgid "Path: %s"
 msgstr "Percorso: %s"
 
-#: manaradix/ui/pages/snapshots.py:137
+#: manaradix/ui/pages/snapshots.py:150
 #, python-format
 msgid "Date: %s"
 msgstr "Data: %s"
 
-#: manaradix/ui/pages/snapshots.py:138
+#: manaradix/ui/pages/snapshots.py:151
 #, python-format
 msgid "Read-only: %s"
 msgstr "Sola lettura: %s"
 
-#: manaradix/ui/pages/snapshots.py:141
+#: manaradix/ui/pages/snapshots.py:154
 msgid "Update Description"
 msgstr "Aggiorna Descrizione"
 
-#: manaradix/ui/pages/snapshots.py:146
+#: manaradix/ui/pages/snapshots.py:159
 msgid "New description"
 msgstr "Nuova descrizione"
 
-#: manaradix/ui/pages/snapshots.py:190
+#: manaradix/ui/pages/snapshots.py:204
 #, python-format
 msgid "Snapshot not found on disk: %s"
 msgstr "Snapshot non trovato su disco: %s"

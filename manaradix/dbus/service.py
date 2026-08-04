@@ -22,6 +22,7 @@ from manaradix.core.btrfs_ops import (
 from manaradix.core.config_store import ConfigError
 from manaradix.core.grub_integration import GrubIntegrationError
 from manaradix.core.policy_engine import PolicyEngineError
+from manaradix.core.snapshot_manager import BROWSE_MOUNT_POINT
 from manaradix.core.setup_wizard import (
     detect_role,
     needs_setup,
@@ -262,14 +263,14 @@ class ManaradixHandler:
     def handle_BrowseSnapshot(self, kwargs) -> bool:
         self._ctx.snapshot_manager.browse(
             self._get_snapshot(kwargs),
-            _s(kwargs.get("mount_point", "/mnt/manaradix-snapshot")),
+            _s(kwargs.get("mount_point", BROWSE_MOUNT_POINT)),
             dry_run=_b(kwargs.get("dry_run", False)),
         )
         return True
 
     def handle_Unbrowse(self, kwargs) -> bool:
         self._ctx.snapshot_manager.unbrowse(
-            _s(kwargs.get("mount_point", "/mnt/manaradix-snapshot")),
+            _s(kwargs.get("mount_point", BROWSE_MOUNT_POINT)),
             dry_run=_b(kwargs.get("dry_run", False)),
         )
         return True

@@ -7,6 +7,7 @@ display) — the renderer itself is covered by ``test_ui_renderer``.
 
 from unittest.mock import MagicMock
 
+from manaradix.model.snapshot import SnapshotType
 from manaradix.ui.pages.about import AboutPage
 from manaradix.ui.pages.dashboard import DashboardPage
 from manaradix.ui.pages.snapshots import SnapshotsPage
@@ -74,6 +75,29 @@ def _app(snapshot_manager=None) -> MagicMock:
     return app
 
 
+def _mounts_app() -> MagicMock:
+    """An app whose system exposes two btrfs mounts (/ and /home)."""
+    app = _app()
+    app.btrfs_ops.btrfs_mounts.return_value = [
+        {"target": "/", "source": "/dev/nvme0n1p3", "uuid": "u1"},
+        {"target": "/home", "source": "/dev/mapper/crypt", "uuid": "u2"},
+    ]
+    return app
+
+
+def _mounts_with_browse_app() -> MagicMock:
+    """The same, plus a stale browse mount of a snapshot."""
+    app = _mounts_app()
+    app.btrfs_ops.btrfs_mounts.return_value.append(
+        {
+            "target": "/mnt/manaradix-snapshot",
+            "source": "/.snapshots/2026-08-04_12-31-46/root",
+            "uuid": "u1",
+        },
+    )
+    return app
+
+
 class TestSnapshotsPageLayout:
     def test_actions_are_first_row_and_horizontal(self) -> None:
         page = SnapshotsPage(app_context=_app())
@@ -96,6 +120,64 @@ class TestSnapshotsPageLayout:
         assert model.sections[0]["title"] == "Error"
         assert model.sections[1]["title"] == "Actions"
         assert model.sections[1]["horizontal"] is True
+
+
+class TestSnapshotsPageTarget:
+    """The page works on a chosen btrfs mount (default /)."""
+
+    def test_target_dropdown_lists_mounts(self) -> None:
+        page = SnapshotsPage(app_context=_mounts_app())
+        model = page.build_model()
+        actions = model.sections[0]
+        target = next(
+            f for f in actions["fields"] if f["id"] == "create_target"
+        )
+        assert target["widget"] == "dropdown"
+        assert target["options"] == ["/", "/home"]
+        assert target["selected"] == "/"
+
+    def test_create_defaults_to_root(self) -> None:
+        app = _mounts_app()
+        page = SnapshotsPage(app_context=app)
+        page.on_create_snapshot()
+        app.snapshot_manager.create.assert_called_once_with(
+            subvolume="/",
+            mount="/",
+            description="Manual snapshot",
+            read_only=True,
+            snapshot_type=SnapshotType.MANUAL,
+        )
+
+    def test_create_uses_selected_target(self) -> None:
+        app = _mounts_app()
+        page = SnapshotsPage(app_context=app)
+        page.on_create_target_change("/home")
+        page.on_create_snapshot()
+        app.snapshot_manager.create.assert_called_once_with(
+            subvolume="/home",
+            mount="/home",
+            description="Manual snapshot",
+            read_only=True,
+            snapshot_type=SnapshotType.MANUAL,
+        )
+
+    def test_list_follows_selected_target(self) -> None:
+        app = _mounts_app()
+        page = SnapshotsPage(app_context=app)
+        page.on_create_target_change("/home")
+        page.build_model()
+        app.snapshot_manager.list_all.assert_called_with(mount="/home")
+
+    def test_targets_fallback_to_root_when_mounts_unreadable(self) -> None:
+        # _app() leaves btrfs_mounts returning a non-iterable MagicMock
+        page = SnapshotsPage(app_context=_app())
+        assert page._create_targets() == ["/"]
+
+    def test_browse_mount_is_not_a_target(self) -> None:
+        """A snapshot mounted for browsing must not appear in the target
+        list: it is a temporary view, not a place to create snapshots."""
+        page = SnapshotsPage(app_context=_mounts_with_browse_app())
+        assert page._create_targets() == ["/", "/home"]
 
 
 class TestSnapshotsPageErrors:

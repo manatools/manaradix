@@ -9,6 +9,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from manaradix.core.btrfs_ops import SnapshotNotFoundError
+from manaradix.core.snapshot_manager import BROWSE_MOUNT_POINT
 from manaradix.i18n import _
 from manaradix.model.snapshot import SnapshotType
 from manaradix.ui.model import PageModel, Widget
@@ -36,6 +37,10 @@ class SnapshotsPage:
         # Last action error, shown as a banner section until the next
         # action succeeds (mirrors the setup wizard's error summary).
         self._last_error: str | None = None
+        # Btrfs mount the page works on: the snapshot list and the
+        # create action both follow it.  Defaults to "/".
+        self._target: str | None = None
+        self._targets: list[str] | None = None
 
     # -- build_model --------------------------------------------------------
 
@@ -60,6 +65,13 @@ class SnapshotsPage:
                 # Action buttons flow side by side in the first row.
                 "horizontal": True,
                 "fields": [
+                    Widget.dropdown(
+                        id="create_target",
+                        label=_("Target"),
+                        options=self._create_targets(),
+                        selected=self._target or "/",
+                        on_change=self.on_create_target_change,
+                    ),
                     Widget.button(
                         id="btn_create",
                         label=_("Create Snapshot…"),
@@ -156,16 +168,17 @@ class SnapshotsPage:
     # -- Callbacks: actions -------------------------------------------------
 
     def on_create_snapshot(self) -> None:
-        """Open the create-snapshot dialog or inline form.
+        """Create a manual read-only snapshot of the selected target.
 
-        In a full implementation this would show a modal form with fields
-        for subvolume, type, schedule, description, and read-only toggle.
-        For now, creates a manual read-only snapshot of / as a safe default.
+        The target (a btrfs mount) comes from the Target dropdown in the
+        Actions row; it defaults to "/" and also drives the snapshot list.
         """
+        target = self._target or "/"
         self._last_error = None
         try:
             snap = self.app.snapshot_manager.create(
-                subvolume="/",
+                subvolume=target,
+                mount=target,
                 description="Manual snapshot",
                 read_only=True,
                 snapshot_type=SnapshotType.MANUAL,
@@ -280,15 +293,45 @@ class SnapshotsPage:
         """Called when a filter dropdown changes.  Triggers UI refresh."""
         pass
 
+    def on_create_target_change(self, value=None) -> None:
+        """Remember the chosen snapshot target across re-renders.
+
+        The list and the create action both follow the target, so
+        switching it refreshes the page with that mount's snapshots.
+        """
+        self._target = value or None
+
     # -- Helpers ------------------------------------------------------------
 
     def _list_snapshots(self) -> list[Snapshot]:
-        """Return all snapshots, swallowing errors."""
+        """Return the snapshots of the selected target, swallowing errors."""
         try:
-            return self.app.snapshot_manager.list_all()
+            return self.app.snapshot_manager.list_all(mount=self._target or "/")
         except Exception as exc:
             logger.warning("Could not list snapshots: %s", exc)
             return []
+
+    def _create_targets(self) -> list[str]:
+        """Btrfs mount points that can host snapshots.
+
+        Computed once per page lifetime; falls back to "/" when the
+        mounts cannot be read (e.g. running outside a btrfs system).
+        The browse mount point is excluded: it is a temporary read-only
+        view of a snapshot, not a target for new ones.
+        """
+        if self._targets is None:
+            try:
+                mounts = self.app.btrfs_ops.btrfs_mounts()
+                self._targets = sorted(
+                    m["target"] for m in mounts
+                    if m["target"] != BROWSE_MOUNT_POINT
+                )
+            except Exception as exc:
+                logger.warning("Could not list btrfs mounts: %s", exc)
+                self._targets = []
+            if not self._targets:
+                self._targets = ["/"]
+        return self._targets
 
     def _get_selected(self, snapshots: list[Snapshot]) -> Snapshot | None:
         """Return the currently selected snapshot, or None."""

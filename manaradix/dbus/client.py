@@ -11,6 +11,7 @@ read-only tooling import the module without a bus.
 
 from __future__ import annotations
 
+from manaradix.core.snapshot_manager import BROWSE_MOUNT_POINT
 from manaradix.dbus.constants import (
     DBUS_INTERFACE,
     DBUS_OBJECT_PATH,
@@ -166,13 +167,13 @@ class ManaradixClient:
 
     def browse_snapshot(
         self, snapshot_id: str, mount: str = "/",
-        mount_point: str = "/mnt/manaradix-snapshot", *, dry_run: bool = False,
+        mount_point: str = BROWSE_MOUNT_POINT, *, dry_run: bool = False,
     ) -> bool:
         return self._call(
             "BrowseSnapshot", snapshot_id, mount, mount_point, dry_run
         )
 
-    def unbrowse(self, mount_point: str = "/mnt/manaradix-snapshot", *,
+    def unbrowse(self, mount_point: str = BROWSE_MOUNT_POINT, *,
                  dry_run: bool = False) -> bool:
         return self._call("Unbrowse", mount_point, dry_run)
 

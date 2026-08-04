@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-04 12:10+0200\n"
+"POT-Creation-Date: 2026-08-04 14:39+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -300,7 +300,7 @@ msgstr ""
 msgid "error: the manaradix D-Bus service is already running."
 msgstr ""
 
-#: manaradix/ui/renderer.py:299
+#: manaradix/ui/renderer.py:340
 msgid "(no data)"
 msgstr ""
 
@@ -312,45 +312,45 @@ msgid ""
 "any later version."
 msgstr ""
 
-#: manaradix/ui/pages/about.py:38
+#: manaradix/ui/pages/about.py:38 manaradix/ui/pages/about.py:63
 msgid "About"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:55
+#: manaradix/ui/pages/about.py:69
 msgid "Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:61
+#: manaradix/ui/pages/about.py:75
 #, python-format
 msgid "Version: %s"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:65
+#: manaradix/ui/pages/about.py:79
 #, python-format
 msgid "Author: %s"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:69
+#: manaradix/ui/pages/about.py:83
 #, python-format
 msgid "Email: %s"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:73
+#: manaradix/ui/pages/about.py:87
 #, python-format
 msgid "Copyright: %s"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:77
+#: manaradix/ui/pages/about.py:91
 #, python-format
 msgid "License: %s"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:81
+#: manaradix/ui/pages/about.py:95
 #, python-format
 msgid "Website: %s"
 msgstr ""
 
-#: manaradix/ui/pages/about.py:90
+#: manaradix/ui/pages/about.py:100
 msgid "License"
 msgstr ""
 
@@ -680,7 +680,7 @@ msgstr ""
 msgid "Skip"
 msgstr ""
 
-#: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:99
+#: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:63
 msgid "Actions"
 msgstr ""
 
@@ -720,80 +720,84 @@ msgstr ""
 msgid "Setup Applied"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:30 manaradix/ui/pages/snapshots.py:59
+#: manaradix/ui/pages/snapshots.py:30 manaradix/ui/pages/snapshots.py:102
 msgid "Snapshots"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:49
+#: manaradix/ui/pages/snapshots.py:53
 msgid "Error"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:53
+#: manaradix/ui/pages/snapshots.py:57
 #, python-format
 msgid "Error: %s"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:80
-msgid "Filters"
+#: manaradix/ui/pages/snapshots.py:69
+msgid "Target"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:84
-msgid "Subvolume"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:91
-msgid "Type"
-msgstr ""
-
-#: manaradix/ui/pages/snapshots.py:103
+#: manaradix/ui/pages/snapshots.py:76
 msgid "Create Snapshot…"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:108
+#: manaradix/ui/pages/snapshots.py:81
 msgid "Delete Selected"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:113
+#: manaradix/ui/pages/snapshots.py:86
 msgid "Restore Selected"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:118
+#: manaradix/ui/pages/snapshots.py:91
 msgid "Browse Selected"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:123
+#: manaradix/ui/pages/snapshots.py:96
 msgid "Export Selected"
 msgstr ""
 
+#: manaradix/ui/pages/snapshots.py:123
+msgid "Filters"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:127
+msgid "Subvolume"
+msgstr ""
+
 #: manaradix/ui/pages/snapshots.py:134
+msgid "Type"
+msgstr ""
+
+#: manaradix/ui/pages/snapshots.py:147
 #, python-format
 msgid "Snapshot Detail: %s"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:136
+#: manaradix/ui/pages/snapshots.py:149
 #, python-format
 msgid "Path: %s"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:137
+#: manaradix/ui/pages/snapshots.py:150
 #, python-format
 msgid "Date: %s"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:138
+#: manaradix/ui/pages/snapshots.py:151
 #, python-format
 msgid "Read-only: %s"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:141
+#: manaradix/ui/pages/snapshots.py:154
 msgid "Update Description"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:146
+#: manaradix/ui/pages/snapshots.py:159
 msgid "New description"
 msgstr ""
 
-#: manaradix/ui/pages/snapshots.py:190
+#: manaradix/ui/pages/snapshots.py:204
 #, python-format
 msgid "Snapshot not found on disk: %s"
 msgstr ""

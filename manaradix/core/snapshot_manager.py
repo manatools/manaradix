@@ -21,6 +21,11 @@ from manaradix.model.snapshot import Snapshot, SnapshotType
 
 logger = logging.getLogger(__name__)
 
+#: Where "Browse Selected" mounts a snapshot for read-only browsing.
+#: This is a temporary view of a snapshot, not a snapshot target, so
+#: target selectors must exclude it.
+BROWSE_MOUNT_POINT = "/mnt/manaradix-snapshot"
+
 
 class SnapshotManager:
     """Manages btrfs snapshot lifecycle.
@@ -325,7 +330,7 @@ class SnapshotManager:
     def browse(
         self,
         snapshot: Snapshot,
-        mount_point: str = "/mnt/manaradix-snapshot",
+        mount_point: str = BROWSE_MOUNT_POINT,
         *,
         dry_run: bool = False,
     ) -> None:
@@ -356,7 +361,7 @@ class SnapshotManager:
 
     def unbrowse(
         self,
-        mount_point: str = "/mnt/manaradix-snapshot",
+        mount_point: str = BROWSE_MOUNT_POINT,
         *,
         dry_run: bool = False,
     ) -> None:
