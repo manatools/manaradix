@@ -41,56 +41,68 @@ class AboutPage:
         self.app = app_context
 
     def build_model(self):
-        """Return a ``PageModel`` with the application information."""
-        fields = []
+        """Return a ``PageModel`` with the application information.
+
+        Two columns: the logo (small, at its raster size) on the left,
+        and everything else — description, version, author, copyright,
+        license, website, and the full GPL notice — on the right.
+        """
         # The PNG raster renders at its real size in the YUI image widget
         # (vector SVG icons fall back to 32x32); the SVG is a fallback.
         icon = logo_png_path() or logo_path()
+
+        sections = []
         if icon:
-            fields.append(Widget.image(id="about_logo", path=icon))
-        fields.extend([
-            Widget.label(
-                id="about_description",
-                text=_(
-                    "Btrfs snapshot, subvolume, and filesystem "
-                    "management utility for Mageia"
-                ),
-            ),
-            Widget.label(
-                id="about_version",
-                text=_("Version: %s") % __version__,
-            ),
-            Widget.label(
-                id="about_author",
-                text=_("Author: %s") % _AUTHOR,
-            ),
-            Widget.label(
-                id="about_email",
-                text=_("Email: %s") % _EMAIL,
-            ),
-            Widget.label(
-                id="about_copyright",
-                text=_("Copyright: %s") % _COPYRIGHT,
-            ),
-            Widget.label(
-                id="about_license",
-                text=_("License: %s") % _LICENSE,
-            ),
-            Widget.label(
-                id="about_website",
-                text=_("Website: %s") % _WEBSITE,
-            ),
-        ])
-        return PageModel(sections=[
-            {
+            sections.append({
                 "title": "Manaradix",
-                "fields": fields,
+                "column": 0,
+                "fields": [Widget.image(id="about_logo", path=icon)],
+            })
+        sections += [
+            {
+                "title": _("About"),
+                "column": 1,
+                "fields": [
+                    Widget.label(
+                        id="about_description",
+                        text=_(
+                            "Btrfs snapshot, subvolume, and filesystem "
+                            "management utility for Mageia"
+                        ),
+                    ),
+                    Widget.label(
+                        id="about_version",
+                        text=_("Version: %s") % __version__,
+                    ),
+                    Widget.label(
+                        id="about_author",
+                        text=_("Author: %s") % _AUTHOR,
+                    ),
+                    Widget.label(
+                        id="about_email",
+                        text=_("Email: %s") % _EMAIL,
+                    ),
+                    Widget.label(
+                        id="about_copyright",
+                        text=_("Copyright: %s") % _COPYRIGHT,
+                    ),
+                    Widget.label(
+                        id="about_license",
+                        text=_("License: %s") % _LICENSE,
+                    ),
+                    Widget.label(
+                        id="about_website",
+                        text=_("Website: %s") % _WEBSITE,
+                    ),
+                ],
             },
             {
                 "title": _("License"),
+                "column": 1,
                 "fields": [
                     # Wrapped: the notice must not stretch the window width.
                     Widget.label(id="about_gpl", text=_GPL_NOTICE, wrap=True),
                 ],
             },
-        ])
+        ]
+        return PageModel(columns=2 if icon else 1, sections=sections)

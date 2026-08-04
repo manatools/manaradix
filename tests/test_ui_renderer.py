@@ -232,6 +232,12 @@ class FakeFactory:
     def createImage(self, parent, imageFileName, fallBackName=None):
         return self._create("image", parent, label=imageFileName)
 
+    def createSpacing(self, parent, dim, stretchable=False, size_px=0):
+        widget = self._create("spacing", parent)
+        if stretchable:
+            widget.setStretchable(dim, True)
+        return widget
+
 
 def widgets_of(factory, kind):
     return [w for w in factory.widgets if w.kind == kind]
@@ -435,27 +441,63 @@ class TestBuild:
         labels = widgets_of(factory, "label")
         assert labels[0]._auto_wrap is True
 
-    def test_static_widgets_pinned_vertically(self) -> None:
-        """Maximized windows must not inflate labels/headings: vertical
-        stretch is disabled so they keep content height, top-aligned."""
+    def test_all_fields_pinned_vertically(self) -> None:
+        """A grown window must not inflate the inner controls: every
+        field kind keeps content height, top-aligned, so the page does
+        not reflow its controls into the middle."""
         page = PageA()
         renderer, factory = make_renderer([page], [YCancelEvent()])
         renderer.run()
 
-        for label in widgets_of(factory, "label"):
-            assert label.stretch[YUIDimension.YD_VERT] is False
-        for heading in widgets_of(factory, "heading"):  # app heading only
-            assert heading.stretch[YUIDimension.YD_VERT] is False
-        assert widgets_of(factory, "image")[0].stretch[YUIDimension.YD_VERT] is False
+        kinds = ("label", "heading", "image", "pushbutton", "checkbox",
+                 "combobox", "inputfield", "intfield", "table")
+        for kind in kinds:
+            for widget in widgets_of(factory, kind):
+                assert widget.stretch[YUIDimension.YD_VERT] is False, (
+                    f"{kind} not pinned vertically"
+                )
 
-    def test_table_still_stretches_vertically(self) -> None:
-        """Tables keep the default vertical stretch: they fill the page
-        even when labels around them are pinned."""
+    def test_table_still_stretches_horizontally(self) -> None:
+        """Tables keep the horizontal stretch (they fill the section
+        width) while their vertical axis is pinned."""
         page = PageA()
         renderer, factory = make_renderer([page], [YCancelEvent()])
         renderer.run()
         table = widgets_of(factory, "table")[0]
-        assert table.stretch.get(YUIDimension.YD_VERT) in (None, True)
+        assert table.stretch_horiz is True
+        assert table.stretch[YUIDimension.YD_VERT] is False
+
+    def test_horizontal_section_renders_hbox(self) -> None:
+        """A section with ``"horizontal": True`` lays its fields out side
+        by side instead of stacking them."""
+        page = PageA()
+        page.build_model = lambda: PageModel(sections=[
+            {
+                "title": "Row",
+                "horizontal": True,
+                "fields": [
+                    Widget.button(id="b1", label="One", callback=lambda: None),
+                    Widget.button(id="b2", label="Two", callback=lambda: None),
+                ],
+            },
+        ])
+        renderer, factory = make_renderer([page], [YCancelEvent()])
+        renderer.run()
+        frame = widgets_of(factory, "frame")[0]
+        assert frame.children[0].kind == "hbox"
+        buttons = widgets_of(factory, "pushbutton")
+        assert [b._id for b in buttons] == ["b1", "b2"]
+
+    def test_page_content_ends_with_stretch_spacer(self) -> None:
+        """A stretchable spacer is appended to the page content so extra
+        vertical space collects below it instead of inflating sections."""
+        page = PageA()
+        renderer, factory = make_renderer([page], [YCancelEvent()])
+        renderer.run()
+        content = widgets_of(factory, "replacepoint")[0].children[0]
+        spacer = content.children[-1]
+        assert spacer.kind == "spacing"
+        assert spacer.stretch[YUIDimension.YD_VERT] is True
 
     def test_pinned_widgets_get_fixed_qt_policy(self) -> None:
         """Qt labels grow with a Preferred policy even when not stretchable;
@@ -472,8 +514,11 @@ class TestBuild:
         for heading in widgets_of(factory, "heading"):  # app heading only
             assert heading._vpolicy == fixed
         assert widgets_of(factory, "image")[0]._vpolicy == fixed
-        # tables are not pinned and keep their own policy
-        assert widgets_of(factory, "table")[0]._vpolicy is None
+        # tables keep the backend's own (Preferred) policy: they stay at
+        # natural height but compress with scrollbars when the window is
+        # smaller than the content, so nothing overflows the monitor
+        for table in widgets_of(factory, "table"):
+            assert table._vpolicy is None
 
 
 class TestColumnLayout:
@@ -497,6 +542,30 @@ class TestColumnLayout:
         left, right = row.children
         assert left.children[0].label_text == "Left A"
         assert right.children[0].label_text == "Right B"
+
+    def test_columns_end_with_stretch_spacer(self) -> None:
+        """The row stretches the columns to its full height; each column
+        ends with a stretchable spacer so its content stays top-aligned
+        instead of inflating the frames (centering their controls)."""
+        class Page:
+            title = "P"
+
+            def build_model(self):
+                return PageModel(columns=2, sections=[
+                    {"title": "Left A", "column": 0,
+                     "fields": [Widget.label(text="a")]},
+                    {"title": "Right B", "column": 1,
+                     "fields": [Widget.label(text="b")]},
+                ])
+
+        renderer, factory = make_renderer([Page()], [YCancelEvent()])
+        renderer.run()
+        row = widgets_of(factory, "replacepoint")[0].children[0].children[0]
+        assert row.kind == "hbox"
+        for column in row.children:
+            spacer = column.children[-1]
+            assert spacer.kind == "spacing"
+            assert spacer.stretch.get(YUIDimension.YD_VERT) is True
 
     def test_unpinned_section_fills_shortest_column(self) -> None:
         class Page:
@@ -748,17 +817,57 @@ class TestGridLayout:
         assert len(rows) == 3
         # row 1: one cell spanning full width
         assert [c.kind for c in rows[0].children] == ["vbox"]
-        # row 3: two cells; second stacks two sections
+        # row 3: two cells; second stacks two sections then a spacer
         row3 = rows[2]
         assert [c.kind for c in row3.children] == ["vbox", "vbox"]
         stacked = row3.children[1].children
-        assert [f.label_text for f in stacked] == ["Right 1", "Right 2"]
+        assert [f.label_text for f in stacked[:2]] == ["Right 1", "Right 2"]
         # every cell is horizontally stretchable AND weight 1 -> exact
         # 50/50 split (weights map to QBoxLayout stretch factors)
         for row in rows:
             for cell in row.children:
                 assert cell.stretch.get(YUIDimension.YD_HORIZ) is True
                 assert cell.weights.get(YUIDimension.YD_HORIZ) == 1
+
+    def test_rows_share_vertical_height_equally(self) -> None:
+        """Grid rows carry equal vertical weights: with 4 rows each is
+        capped at 25% of the window height, so a maximized window never
+        overflows the monitor."""
+        factory = FakeFactory([YCancelEvent()])
+        page = self.GridPage(self._grid_model())
+        renderer = AuiRenderer([page], factory=factory)
+        renderer.run()
+        content = renderer._replace_point.children[0]  # page VBox
+        rows = [w for w in content.children if w.kind == "hbox"]
+        assert len(rows) == 3
+        for row in rows:
+            assert row.weights.get(YUIDimension.YD_VERT) == 1
+
+    def test_cells_top_align_with_spacer(self) -> None:
+        """Every grid cell ends with a stretchable spacer so its content
+        stays top-aligned and the row's leftover height collects below
+        it instead of inflating the frames."""
+        factory = FakeFactory([YCancelEvent()])
+        page = self.GridPage(self._grid_model())
+        renderer = AuiRenderer([page], factory=factory)
+        renderer.run()
+        content = renderer._replace_point.children[0]  # page VBox
+        rows = [w for w in content.children if w.kind == "hbox"]
+        for row in rows:
+            for cell in row.children:
+                spacer = cell.children[-1]
+                assert spacer.kind == "spacing"
+                assert spacer.stretch.get(YUIDimension.YD_VERT) is True
+
+    def test_grid_page_has_no_bottom_spacer(self) -> None:
+        """Grid pages skip the page-level bottom spacer: their rows fill
+        the window (each sharing the height equally)."""
+        factory = FakeFactory([YCancelEvent()])
+        page = self.GridPage(self._grid_model())
+        renderer = AuiRenderer([page], factory=factory)
+        renderer.run()
+        content = renderer._replace_point.children[0]  # page VBox
+        assert not any(c.kind == "spacing" for c in content.children)
 
     def test_unknown_section_id_skipped(self) -> None:
         factory = FakeFactory([YCancelEvent()])
@@ -809,6 +918,46 @@ class TestWindowFit:
         renderer.run()
         # no extra warm-up renders or resizes for a one-page app
         assert factory.dialog.backend.resizes == [(300, 100)]
+
+    def test_fit_clamps_to_screen(self) -> None:
+        """A window never opens larger than the monitor: the fit resize
+        is clamped to the screen's available geometry."""
+        class ScreenBackend(ScriptedBackend):
+            def screen(self):
+                class FakeScreen:
+                    def availableGeometry(self):
+                        class Geo:
+                            def width(self):
+                                return 200
+
+                            def height(self):
+                                return 150
+
+                        return Geo()
+
+                return FakeScreen()
+
+        class ScreenDialog(FakeDialog):
+            def __init__(self, factory, script):
+                super().__init__(factory, script)
+                self.backend = ScreenBackend()
+
+        class ScreenFactory(FakeFactory):
+            def _create(self, kind, parent=None, **kw):
+                if kind == "dialog":
+                    widget = ScreenDialog(self, self.script)
+                    self.dialog = widget
+                else:
+                    widget = FakeWidget(kind, parent, kw.get("label", ""))
+                    if parent is not None:
+                        parent.children.append(widget)
+                self.widgets.append(widget)
+                return widget
+
+        factory = ScreenFactory([YCancelEvent()])
+        AuiRenderer([PageA()], factory=factory).run()
+        # (300, 100) hint clamped to the 200px-wide screen
+        assert factory.dialog.backend.resizes == [(200, 100)]
 
     def test_backend_without_fit_api_is_noop(self) -> None:
         class PlainDialog(FakeDialog):

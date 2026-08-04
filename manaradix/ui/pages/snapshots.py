@@ -56,6 +56,38 @@ class SnapshotsPage:
             })
         sections += [
             {
+                "title": _("Actions"),
+                # Action buttons flow side by side in the first row.
+                "horizontal": True,
+                "fields": [
+                    Widget.button(
+                        id="btn_create",
+                        label=_("Create Snapshot…"),
+                        callback=self.on_create_snapshot,
+                    ),
+                    Widget.button(
+                        id="btn_delete",
+                        label=_("Delete Selected"),
+                        callback=self.on_delete_snapshot,
+                    ),
+                    Widget.button(
+                        id="btn_restore",
+                        label=_("Restore Selected"),
+                        callback=self.on_restore_snapshot,
+                    ),
+                    Widget.button(
+                        id="btn_browse",
+                        label=_("Browse Selected"),
+                        callback=self.on_browse_snapshot,
+                    ),
+                    Widget.button(
+                        id="btn_export",
+                        label=_("Export Selected"),
+                        callback=self.on_export_snapshot,
+                    ),
+                ],
+            },
+            {
                 "title": _("Snapshots"),
                 "fields": [
                     Widget.tree(
@@ -92,36 +124,6 @@ class SnapshotsPage:
                         options=[""] + _TYPE_OPTIONS,
                         selected="",
                         on_change=self.on_filter_change,
-                    ),
-                ],
-            },
-            {
-                "title": _("Actions"),
-                "fields": [
-                    Widget.button(
-                        id="btn_create",
-                        label=_("Create Snapshot…"),
-                        callback=self.on_create_snapshot,
-                    ),
-                    Widget.button(
-                        id="btn_delete",
-                        label=_("Delete Selected"),
-                        callback=self.on_delete_snapshot,
-                    ),
-                    Widget.button(
-                        id="btn_restore",
-                        label=_("Restore Selected"),
-                        callback=self.on_restore_snapshot,
-                    ),
-                    Widget.button(
-                        id="btn_browse",
-                        label=_("Browse Selected"),
-                        callback=self.on_browse_snapshot,
-                    ),
-                    Widget.button(
-                        id="btn_export",
-                        label=_("Export Selected"),
-                        callback=self.on_export_snapshot,
                     ),
                 ],
             },

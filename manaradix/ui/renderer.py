@@ -74,8 +74,8 @@ class AuiRenderer:
         self._replace_point = None
         self._dialog = None
         self._current_index = 0
-        # Widgets whose vertical size policy must be pinned once their Qt
-        # backend widgets exist (see _apply_pinned_policies).
+        # Widgets whose vertical size policy must be pinned to Fixed once
+        # their Qt backend widgets exist (see _apply_pinned_policies).
         self._pinned: list = []
         self._opened = False
 
@@ -158,6 +158,9 @@ class AuiRenderer:
         self._table_headers.clear()
         self._pinned.clear()
 
+        # Lazy: keep manatools optional for CLI-only imports.
+        from manatools.aui.yui_common import YUIDimension
+
         # No page heading: the tab bar already carries the page title.
         content = factory.createVBox(replace_point)
 
@@ -184,9 +187,24 @@ class AuiRenderer:
                         col = max(0, min(col, columns - 1))
                     self._render_section(factory, column_boxes[col], section)
                     heights[col] += len(section.get("fields", []))
+                # Top-align each column's content: the row stretches the
+                # columns to its full height, so a stretchable spacer in
+                # every column absorbs the leftover instead of inflating
+                # the frames (and centering their controls).
+                for column_box in column_boxes:
+                    factory.createSpacing(
+                        column_box, YUIDimension.YD_VERT, stretchable=True
+                    )
             else:
                 for section in model.sections:
                     self._render_section(factory, content, section)
+
+            # Extra vertical space from a grown window collects below
+            # the page content instead of inflating the containers in
+            # place: the stretchable spacer is the only child that
+            # absorbs it.  Grid pages skip this — their rows share the
+            # height equally instead (each capped at 25% with 4 rows).
+            factory.createSpacing(content, YUIDimension.YD_VERT, stretchable=True)
 
         replace_point.showChild()
         self._current_index = index
@@ -210,6 +228,13 @@ class AuiRenderer:
         by_id = {s.get("id"): s for s in model.sections}
         for row in model.rows:
             row_box = factory.createHBox(parent)
+            # Equal vertical weights make every row share the window
+            # height equally — with the dashboard's 4 rows that caps
+            # each at 25%, so a maximized window never overflows the
+            # monitor (rows compress instead; the tables scroll).
+            weight = getattr(row_box, "setWeight", None)
+            if callable(weight):
+                weight(YUIDimension.YD_VERT, 1)
             for cell in row:
                 cell_box = factory.createVBox(row_box)
                 stretch = getattr(cell_box, "setStretchable", None)
@@ -226,11 +251,22 @@ class AuiRenderer:
                     section = by_id.get(section_id)
                     if section is not None:
                         self._render_section(factory, cell_box, section)
+                # Top-align the cell content: the stretchable spacer
+                # absorbs the row's leftover height instead of letting
+                # the frames inflate (and the controls spread out).
+                factory.createSpacing(cell_box, YUIDimension.YD_VERT, stretchable=True)
 
     def _render_section(self, factory, parent, section: dict[str, Any]) -> None:
-        """Render one titled section (a frame) into *parent*."""
+        """Render one titled section (a frame) into *parent*.
+
+        Fields stack in a VBox, or flow side by side when the section
+        carries ``"horizontal": True`` (e.g. the snapshots Actions row).
+        """
         frame = factory.createFrame(parent, section.get("title", ""))
-        box = factory.createVBox(frame)
+        if section.get("horizontal"):
+            box = factory.createHBox(frame)
+        else:
+            box = factory.createVBox(frame)
         for field in section.get("fields", []):
             self._render_field(factory, box, field)
 
@@ -247,12 +283,14 @@ class AuiRenderer:
         elif kind == "button":
             widget = factory.createPushButton(parent, field.get("label", ""))
             self._wire(widget, field.get("id"), "button", field.get("callback"))
+            self._pin_vertical(widget)
 
         elif kind == "checkbox":
             widget = factory.createCheckBox(
                 parent, field.get("label", ""), field.get("checked", False)
             )
             self._wire(widget, field.get("id"), "checkbox", field.get("on_change"))
+            self._pin_vertical(widget)
 
         elif kind == "image":
             self._pin_vertical(factory.createImage(parent, field.get("path", "")))
@@ -262,6 +300,7 @@ class AuiRenderer:
             if field.get("id"):
                 widget._id = field["id"]  # noqa: SLF001 -- YWidget has no setId()
             widget.setValue(str(field.get("value", "")))
+            self._pin_vertical(widget)
 
         elif kind == "dropdown":
             widget = factory.createComboBox(parent, field.get("label", ""), editable=False)
@@ -269,6 +308,7 @@ class AuiRenderer:
                 widget.addItem(option)
             widget.setValue(str(field.get("selected", "")))
             self._wire(widget, field.get("id"), "dropdown", field.get("on_change"))
+            self._pin_vertical(widget)
 
         elif kind == "spinner":
             widget = factory.createIntField(
@@ -279,6 +319,7 @@ class AuiRenderer:
                 field.get("value", 0),
             )
             self._wire(widget, field.get("id"), "spinner", field.get("on_change"))
+            self._pin_vertical(widget)
 
         elif kind == "tree":
             self._render_tree(factory, parent, field)
@@ -312,8 +353,11 @@ class AuiRenderer:
 
         widget = factory.createTable(parent, header)
         # Stretch horizontally so the table fills its section frame
-        # instead of rendering at its natural (content) width.
+        # instead of rendering at its natural (content) width; the
+        # vertical axis stays at natural height but can compress
+        # (scrollbars) when the window is smaller than the content.
         widget.setStretchable(YUIDimension.YD_HORIZ, True)
+        self._shrink_vertical(widget)
         for row in rows:
             item = YTableItem()
             for column in columns:
@@ -328,20 +372,34 @@ class AuiRenderer:
         self._table_headers[widget] = header
 
     def _pin_vertical(self, widget) -> None:
-        """Keep a static widget at its natural height.
+        """Keep a static widget at its natural height (Fixed policy).
 
         libyui widgets default to stretchable in both directions, so a
         maximized window hands the extra height to every child and
         labels/headings inflate into large blank areas (text centered).
         Pinning the vertical axis keeps them at content height, aligned
-        at the top of their box, while tables still stretch to fill the
-        page.
+        at the top of their box.
         """
         from manatools.aui.yui_common import YUIDimension  # lazy: manatools optional
 
         if hasattr(widget, "setStretchable"):
             widget.setStretchable(YUIDimension.YD_VERT, False)
         self._pinned.append(widget)
+
+    def _shrink_vertical(self, widget) -> None:
+        """Keep a widget at natural height, but let it compress.
+
+        Same as :meth:`_pin_vertical`, but no Qt size policy is forced:
+        the widget keeps the backend's Preferred policy, whose minimum
+        is the widget's minimumSizeHint — so a window smaller than the
+        content shrinks it (tables get scrollbars) instead of letting
+        it overflow the monitor.  A Fixed policy would pin the sizeHint
+        as the minimum and defeat this.  Used for tables.
+        """
+        from manatools.aui.yui_common import YUIDimension  # lazy: manatools optional
+
+        if hasattr(widget, "setStretchable"):
+            widget.setStretchable(YUIDimension.YD_VERT, False)
 
     def _apply_pinned_policies(self) -> None:
         """Force a Fixed vertical Qt size policy on pinned widgets.
@@ -361,16 +419,21 @@ class AuiRenderer:
         except ImportError:
             return
         for widget in self._pinned:
-            try:
-                backend = widget.get_backend_widget()
-                set_policy = getattr(backend, "setSizePolicy", None)
-                if not callable(set_policy):
-                    continue
-                policy = backend.sizePolicy()
-                policy.setVerticalPolicy(QtWidgets.QSizePolicy.Policy.Fixed)
-                set_policy(policy)
-            except Exception as exc:
-                logger.debug("Could not pin widget vertically: %s", exc)
+            self._set_vertical_policy(widget, QtWidgets.QSizePolicy.Policy.Fixed)
+
+    @staticmethod
+    def _set_vertical_policy(widget, policy) -> None:
+        """Apply *policy* as the widget's vertical size policy."""
+        try:
+            backend = widget.get_backend_widget()
+            set_policy = getattr(backend, "setSizePolicy", None)
+            if not callable(set_policy):
+                return
+            backend_policy = backend.sizePolicy()
+            backend_policy.setVerticalPolicy(policy)
+            set_policy(backend_policy)
+        except Exception as exc:
+            logger.debug("Could not set vertical size policy: %s", exc)
         # Reflow the layout with the new policies.
         try:
             get_backend = getattr(self._dialog, "get_backend_widget", None)
@@ -453,8 +516,9 @@ class AuiRenderer:
         ``max()``), so after every content swap we resize to the current
         size hint.  ``adjustSize()`` alone is not enough — it applies an
         expanding minimum and a screen-fraction cap — so we activate the
-        layout and resize to the exact ``sizeHint()``.  Backends without
-        this API (curses) are a natural no-op.
+        layout and resize to the exact ``sizeHint()``, clamped to the
+        screen so the window never extends past the monitor.  Backends
+        without this API (curses) are a natural no-op.
         """
         sizing = self._backend()
         if sizing is None:
@@ -472,9 +536,36 @@ class AuiRenderer:
             activate = getattr(layout(), "activate", None) if callable(layout) else None
             if callable(activate):
                 activate()
-            resize(size_hint())
+            # resize signatures vary: fake backends take a single
+            # (w, h) tuple, Qt accepts separate ints — try both.
+            width, height = self._clamp_to_screen(backend, *self._size_of(size_hint()))
+            try:
+                resize((width, height))
+            except TypeError:
+                try:
+                    resize(width, height)
+                except Exception as exc:
+                    logger.debug("Could not fit window to content: %s", exc)
         except Exception as exc:
             logger.debug("Could not fit window to content: %s", exc)
+
+    @staticmethod
+    def _clamp_to_screen(backend, width: int, height: int) -> tuple[int, int]:
+        """Clamp a requested window size to the backend's screen.
+
+        A window must never open larger than the monitor: content that
+        does not fit compresses (rows share the height, tables scroll)
+        instead of overflowing off-screen.  Backends without a screen
+        API (or fake backends in tests) pass the size through.
+        """
+        try:
+            screen = backend.screen()
+            if screen is None:
+                return width, height
+            geo = screen.availableGeometry()
+            return min(width, geo.width()), min(height, geo.height())
+        except Exception:
+            return width, height
 
     def _startup_fit_to_largest(self, factory) -> None:
         """Size the window to the largest page at startup.
@@ -503,8 +594,10 @@ class AuiRenderer:
                 sizes.append(self._size_of(hint))
         if not sizes:
             return
-        width = max(w for w, _ in sizes)
-        height = max(h for _, h in sizes)
+        backend = self._dialog.get_backend_widget()
+        width, height = self._clamp_to_screen(
+            backend, max(w for w, _ in sizes), max(h for _, h in sizes)
+        )
         # resize signatures vary: Qt accepts (w, h) ints, fake backends a
         # single (w, h) tuple — try both.
         try:
