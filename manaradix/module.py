@@ -464,6 +464,54 @@ def _build_parser() -> argparse.ArgumentParser:
         help="List the available setup profiles",
     )
 
+    # -- activity ------------------------------------------------------------
+    act_parser = subparsers.add_parser(
+        "activity",
+        help="Automated snapshot activity status and run records",
+        description="Report on the automated snapshot schedules (systemd "
+        "units) and record their runs — the generated units call "
+        "'activity record' at the end of every fire.",
+    )
+    act_subs = act_parser.add_subparsers(
+        title="activity subcommands",
+        dest="activity_command",
+        metavar="ACTION",
+    )
+    act_status = act_subs.add_parser(
+        "status",
+        help="Report per-activity status (read-only)",
+    )
+    act_status.add_argument(
+        "--subvolume", default=None,
+        help="Filter by subvolume path",
+    )
+    act_status.add_argument(
+        "--schedule", choices=_SCHEDULE_CHOICES, default=None,
+        help="Filter by schedule tier",
+    )
+    act_record = act_subs.add_parser(
+        "record",
+        help="Record one activity run (called by the generated units)",
+    )
+    act_record.add_argument(
+        "--subvolume", required=True,
+        help="Subvolume path the activity runs on",
+    )
+    act_record.add_argument(
+        "--schedule", required=True, choices=_SCHEDULE_CHOICES,
+        help="Schedule tier of the activity",
+    )
+    act_record.add_argument(
+        "--result",
+        choices=("success", "failed", "cancelled", "unknown"),
+        default=None,
+        help="Run result (default: from $SERVICE_RESULT set by systemd)",
+    )
+    act_record.add_argument(
+        "--exit-status", default=None,
+        help="Exit status of the unit (default: from $EXIT_STATUS)",
+    )
+
     # -- dbus ----------------------------------------------------------------
     dbus_parser = subparsers.add_parser(
         "dbus",
@@ -709,6 +757,68 @@ def _cmd_setup_list_profiles(ctx: AppContext, args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_activity_status(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``activity status`` — per-activity status table (read-only)."""
+    from manaradix.core.activity_status import ActivityStatus
+
+    rows = ActivityStatus(
+        ctx.policy_engine,
+        ctx.snapshot_manager,
+        ctx.config_store,
+    ).statuses()
+    if args.subvolume:
+        rows = [r for r in rows if r["subvolume"] == args.subvolume]
+    if args.schedule:
+        rows = [r for r in rows if r["schedule"] == args.schedule]
+
+    if not rows:
+        print(_("No activities are configured."))
+        return 0
+
+    print(_("Activity status:"))
+    for r in rows:
+        last = r["last_run_ts"]
+        if last is None:
+            last = _("never")
+        elif r["last_run_result"] not in (None, "success"):
+            last = _("%s (%s)") % (last, r["last_run_result"])
+        print(
+            f"  {r['subvolume']:10s}  {r['schedule']:8s}  "
+            f"{r['state']:8s}  {last}"
+        )
+    return 0
+
+
+def _cmd_activity_record(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``activity record`` — append one run record.
+
+    Invoked by the generated units as ``ExecStopPost``; runs as root by
+    construction.  A manual unprivileged call fails with a clear write
+    error instead of an auth prompt.
+    """
+    from manaradix.core.activity_status import record_activity_run
+
+    try:
+        record = record_activity_run(
+            args.subvolume,
+            args.schedule,
+            result=args.result,
+            exit_status=args.exit_status,
+        )
+    except OSError as exc:
+        logger.error("Could not write activity run record: %s", exc)
+        return 1
+    except ValueError as exc:
+        logger.error("Invalid activity record: %s", exc)
+        return 1
+
+    logger.info(
+        "Recorded %s run of %s (%s)",
+        record["result"], args.subvolume, args.schedule,
+    )
+    return 0
+
+
 def _cmd_dbus_serve(ctx: AppContext, args: argparse.Namespace) -> int:
     """Handle ``dbus serve`` — run the daemon (root only)."""
     from manaradix.dbus.wire import serve_main
@@ -768,6 +878,8 @@ _COMMAND_DISPATCH: dict[tuple[str, str], object] = {
     ("setup", "status"): _cmd_setup_status,
     ("setup", "apply"): _cmd_setup_apply,
     ("setup", "list-profiles"): _cmd_setup_list_profiles,
+    ("activity", "status"): _cmd_activity_status,
+    ("activity", "record"): _cmd_activity_record,
     ("dbus", "serve"): _cmd_dbus_serve,
     ("dbus", "status"): _cmd_dbus_status,
 }
@@ -822,6 +934,7 @@ def main() -> None:
         getattr(args, "snapshot_command", None)
         or getattr(args, "setup_command", None)
         or getattr(args, "dbus_command", None)
+        or getattr(args, "activity_command", None)
     )
     if needs_elevation(args.command, subcmd) and not is_root() and not already_reexecuted():
         logger.info(
@@ -850,7 +963,8 @@ def main() -> None:
         args.command,
         getattr(args, "snapshot_command", None)
         or getattr(args, "setup_command", None)
-        or getattr(args, "dbus_command", None),
+        or getattr(args, "dbus_command", None)
+        or getattr(args, "activity_command", None),
     )
     handler = _COMMAND_DISPATCH.get(dispatch_key)
 

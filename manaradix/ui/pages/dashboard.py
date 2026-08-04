@@ -12,6 +12,7 @@ import os
 import re
 from typing import TYPE_CHECKING
 
+from manaradix.core.activity_status import ActivityStatus
 from manaradix.i18n import _
 from manaradix.ui.model import PageModel, Widget
 from manaradix.ui.pages.snapshots import SnapshotsPage
@@ -79,6 +80,7 @@ class DashboardPage:
             self._snapshot_usage_section(),
             self._recent_snapshots_section(),
             self._active_policies_section(),
+            self._activity_status_section(),
             self._quick_actions_section(),
         ]
         return PageModel(
@@ -89,6 +91,7 @@ class DashboardPage:
                 ["filesystems"],
                 ["internal", ["snapshot_usage", "recent"]],
                 ["policies", "quick"],
+                ["activity"],
             ],
         )
 
@@ -422,6 +425,57 @@ class DashboardPage:
                 ),
             ],
         }
+
+    def _activity_status_section(self) -> dict | None:
+        """Per-activity live status: systemd state + last run evidence.
+
+        ``ActivityStatus`` is pure-read: systemctl state, the run-record
+        file, and snapshot sidecars.  Anything unreadable degrades to
+        fewer rows or no section, never a crash.
+        """
+        try:
+            statuses = ActivityStatus(
+                self.app.policy_engine,
+                self.app.snapshot_manager,
+                self.app.config_store,
+            ).statuses()
+        except Exception as exc:
+            logger.warning("Could not read activity status: %s", exc)
+            return None
+
+        if not statuses:
+            return None
+
+        return {
+            "title": _("Activity Status"),
+            "id": "activity",
+            "fields": [
+                Widget.tree(
+                    id="activity_status",
+                    rows=[
+                        {
+                            "Subvolume": r["subvolume"],
+                            "Schedule": r["schedule"],
+                            "Status": r["state"],
+                            "Last run": self._fmt_run(
+                                r["last_run_ts"], r["last_run_result"]
+                            ),
+                        }
+                        for r in statuses
+                    ],
+                    selectable=False,
+                ),
+            ],
+        }
+
+    @staticmethod
+    def _fmt_run(ts: str | None, result: str | None) -> str:
+        """Format a last-run timestamp, marking non-successful results."""
+        if not ts:
+            return _("never")
+        if result not in (None, "success"):
+            return _("%s (%s)") % (ts, result)
+        return ts
 
     def _quick_actions_section(self) -> dict:
         """Quick-action buttons."""

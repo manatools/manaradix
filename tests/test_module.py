@@ -10,6 +10,8 @@ from manaradix.core.config_store import ConfigStore
 from manaradix.model.policy import RetentionPolicy, SnapshotPolicy
 from manaradix.module import (
     _build_parser,
+    _cmd_activity_record,
+    _cmd_activity_status,
     _cmd_setup_apply,
     _cmd_setup_list_profiles,
     _cmd_setup_status,
@@ -124,6 +126,29 @@ class TestParser:
         args = parser.parse_args(["setup", "list-profiles"])
         assert args.command == "setup"
         assert args.setup_command == "list-profiles"
+
+    def test_activity_status(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args(["activity", "status", "--subvolume", "/home"])
+        assert args.command == "activity"
+        assert args.activity_command == "status"
+        assert args.subvolume == "/home"
+
+    def test_activity_record(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args([
+            "activity", "record",
+            "--subvolume", "/", "--schedule", "daily",
+        ])
+        assert args.activity_command == "record"
+        assert args.subvolume == "/"
+        assert args.schedule == "daily"
+        assert args.result is None
+
+    def test_activity_record_requires_subvolume(self) -> None:
+        parser = _build_parser()
+        with pytest.raises(SystemExit):
+            parser.parse_args(["activity", "record", "--schedule", "daily"])
 
 
 # ---------------------------------------------------------------------------
@@ -445,6 +470,81 @@ class TestCmdSetup:
             exit_code = _cmd_setup_list_profiles(ctx, MagicMock())
         assert exit_code == 0
         assert "desktop" in capsys.readouterr().out
+
+
+class TestCmdActivity:
+    def test_status_no_activities(self, capsys) -> None:
+        ctx = MagicMock()
+        ctx.config_store.list_policies.return_value = []
+        exit_code = _cmd_activity_status(
+            ctx, MagicMock(subvolume=None, schedule=None)
+        )
+        assert exit_code == 0
+        assert "No activities" in capsys.readouterr().out
+
+    def test_status_prints_rows(self, capsys) -> None:
+        ctx = MagicMock()
+        ctx.config_store.list_policies.return_value = [SnapshotPolicy(
+            subvolume="/", schedule_daily=True,
+        )]
+        with patch.object(
+            ctx.policy_engine, "unit_status",
+            return_value={
+                "subvolume": "/", "schedule": "daily", "state": "ok",
+                "last_trigger": "1", "next_trigger": "2",
+            },
+        ):
+            exit_code = _cmd_activity_status(
+                ctx, MagicMock(subvolume=None, schedule=None)
+            )
+        out = capsys.readouterr().out
+        assert exit_code == 0
+        assert "ok" in out
+
+    def test_status_filters(self) -> None:
+        ctx = MagicMock()
+        ctx.config_store.list_policies.return_value = [SnapshotPolicy(
+            subvolume="/", schedule_daily=True,
+        )]
+        with patch.object(
+            ctx.policy_engine, "unit_status",
+            return_value={
+                "subvolume": "/", "schedule": "daily", "state": "ok",
+                "last_trigger": "1", "next_trigger": "2",
+            },
+        ):
+            # Filtering to a subvolume with no activities → empty table.
+            exit_code = _cmd_activity_status(
+                ctx, MagicMock(subvolume="/home", schedule=None)
+            )
+        assert exit_code == 0
+
+    @patch("manaradix.core.activity_status.record_activity_run")
+    def test_record_writes_run(self, mock_record: MagicMock) -> None:
+        mock_record.return_value = {
+            "subvolume": "/", "schedule": "daily", "result": "success",
+        }
+        exit_code = _cmd_activity_record(
+            ctx := MagicMock(),
+            MagicMock(subvolume="/", schedule="daily",
+                      result=None, exit_status=None),
+        )
+        assert exit_code == 0
+        mock_record.assert_called_once_with(
+            "/", "daily", result=None, exit_status=None
+        )
+
+    @patch(
+        "manaradix.core.activity_status.record_activity_run",
+        side_effect=OSError("permission denied"),
+    )
+    def test_record_write_failure(self, mock_record: MagicMock) -> None:
+        exit_code = _cmd_activity_record(
+            MagicMock(),
+            MagicMock(subvolume="/", schedule="daily",
+                      result=None, exit_status=None),
+        )
+        assert exit_code == 1
 
 
 # ---------------------------------------------------------------------------

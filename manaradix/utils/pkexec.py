@@ -38,6 +38,7 @@ _READ_ONLY_COMMANDS: set[tuple[str, str | None]] = {
     ("snapshot", "info"),
     ("setup", "status"),
     ("setup", "list-profiles"),
+    ("activity", "status"),
 }
 
 # Operations requiring write access to the btrfs filesystem
@@ -54,6 +55,13 @@ _PRIVILEGED_COMMANDS: set[tuple[str, str | None]] = {
 _DAEMON_COMMANDS: set[tuple[str, str | None]] = {
     ("dbus", "serve"),
     ("dbus", "status"),
+}
+
+# Commands invoked by the generated systemd units: they run as root by
+# construction, so pkexec must never be involved — an unprivileged
+# manual call fails with a clear write error instead of an auth prompt.
+_UNIT_COMMANDS: set[tuple[str, str | None]] = {
+    ("activity", "record"),
 }
 
 _PKEXEC_BIN = "/usr/bin/pkexec"
@@ -94,7 +102,7 @@ def needs_elevation(command: str | None, subcommand: str | None) -> bool:
         return True
 
     key = (command, subcommand)
-    if key in _DAEMON_COMMANDS:
+    if key in _DAEMON_COMMANDS or key in _UNIT_COMMANDS:
         return False
     if key in _READ_ONLY_COMMANDS:
         return False

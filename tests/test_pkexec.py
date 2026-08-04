@@ -107,6 +107,16 @@ class TestNeedsElevation:
     def test_unknown_dbus_subcommand_defaults_to_elevated(self) -> None:
         assert needs_elevation("dbus", "bogus") is True
 
+    # -- Activity subcommands -----------------------------------------------
+
+    def test_activity_status_is_readonly(self) -> None:
+        assert needs_elevation("activity", "status") is False
+
+    def test_activity_record_is_unit_internal(self) -> None:
+        # Invoked by the generated units, which run as root by
+        # construction — pkexec must never be involved.
+        assert needs_elevation("activity", "record") is False
+
 
 # ---------------------------------------------------------------------------
 # reexec_with_pkexec

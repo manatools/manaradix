@@ -11,6 +11,8 @@ from __future__ import annotations
 import logging
 import os
 import re
+import time
+from datetime import datetime
 from typing import Optional
 
 from manaradix.model.policy import (
@@ -39,6 +41,31 @@ _SYSTEMD_DIR = "/etc/systemd/system"
 
 # Valid characters for systemd unit names (alphanumeric, dashes, underscores)
 _UNIT_NAME_RE = re.compile(r"[^a-zA-Z0-9_.:@-]+")
+
+# Properties queried with ``systemctl show --property=... --value`` and
+# parsed in order.  UnitFileState reports the enable state (enabled /
+# disabled / static ...); the time properties come back as unix epochs
+# with ``--timestamp=unix`` ("n/a" when never fired / not scheduled).
+_SHOW_TIMER_PROPS = (
+    "ActiveState",
+    "UnitFileState",
+    "LastTriggerUSec",
+    "NextElapseUSecRealtime",
+)
+_SHOW_SERVICE_PROPS = ("ActiveState", "UnitFileState")
+
+# Rough fire cadence per calendar tier, used for "missed" staleness
+# detection (an active timer whose last fire is far older than its
+# cadence likely fired into a machine that was off).
+_CADENCE_SECONDS: dict[str, int] = {
+    "hourly": 3600,
+    "daily": 86400,
+    "weekly": 604800,
+    "monthly": 2592000,
+}
+
+#: Staleness threshold: last fire older than this × cadence → missed.
+_MISSED_FACTOR = 2.5
 
 
 def _escape_systemd_arg(value: str) -> str:
@@ -118,6 +145,8 @@ class PolicyEngine:
             f" --type timed --schedule {schedule}\n"
             f'ExecStartPost={self._cli_path} snapshot prune --subvolume "{sub}"'
             f" --schedule {schedule}\n"
+            f"ExecStopPost={self._cli_path} activity record --subvolume \"{sub}\""
+            f" --schedule {schedule}\n"
             f"Nice=19\n"
             f"IOSchedulingClass=idle\n"
         )
@@ -159,6 +188,8 @@ class PolicyEngine:
             f'ExecStart={self._cli_path} snapshot create --subvolume "{sub}"'
             f" --type timed --schedule boot\n"
             f'ExecStartPost={self._cli_path} snapshot prune --subvolume "{sub}"'
+            f" --schedule boot\n"
+            f"ExecStopPost={self._cli_path} activity record --subvolume \"{sub}\""
             f" --schedule boot\n"
             f"Nice=19\n"
             f"IOSchedulingClass=idle\n\n"
@@ -318,6 +349,101 @@ class PolicyEngine:
         )
 
     # ------------------------------------------------------------------
+    # Status (read-only, unprivileged)
+    # ------------------------------------------------------------------
+
+    def unit_state(self, unit: str) -> str:
+        """Return the systemd ActiveState of *unit*.
+
+        One of ``active`` / ``inactive`` / ``failed`` (or whatever systemd
+        reports), ``unknown`` when systemd cannot be queried.  Used by the
+        Policies page's systemd Units table.
+        """
+        data = self._systemctl_show(unit, ("ActiveState",))
+        if not data:
+            return "unknown"
+        return data.get("ActiveState") or "unknown"
+
+    def unit_status(self, subvolume: str, schedule: str) -> dict:
+        """Query the live systemd state of one activity's units.
+
+        Read-only and unprivileged — only ``systemctl show``.  This is
+        what the dashboard and ``activity status`` surface.
+
+        The derived ``state`` is one of:
+
+        - ``unknown`` — unit files not installed (or systemd unreachable);
+        - ``failed`` — the service is in the failed state;
+        - ``inactive`` — installed but not enabled/active;
+        - ``missed`` — active, but the last fire is older than ~2.5× the
+          tier cadence (the machine was likely off during fires);
+        - ``ok`` — healthy (never fired yet counts as ok: `Persistent=true`
+          timers catch up after downtime).
+
+        Returns a dict with ``subvolume``, ``schedule``, ``state`` and the
+        raw ``last_trigger`` / ``next_trigger`` epoch strings (None when
+        unknown).
+        """
+        service = self._service_name(subvolume, schedule)
+        service_path = os.path.join(self._systemd_dir, service)
+        timer = None if schedule == _BOOT_SCHEDULE else self._timer_name(subvolume, schedule)
+        timer_path = None if timer is None else os.path.join(self._systemd_dir, timer)
+        base = {"subvolume": subvolume, "schedule": schedule}
+        if not os.path.isfile(service_path) or (
+            timer is not None and not os.path.isfile(timer_path)
+        ):
+            return {**base, "state": "unknown", "last_trigger": None, "next_trigger": None}
+
+        svc = self._systemctl_show(service, _SHOW_SERVICE_PROPS)
+        if svc is None:
+            # Files are installed but systemd does not know them (no
+            # daemon-reload since install, or systemd unreachable).
+            return {**base, "state": "unknown", "last_trigger": None, "next_trigger": None}
+        if svc.get("ActiveState") == "failed":
+            return {**base, "state": "failed", "last_trigger": None, "next_trigger": None}
+
+        if timer is None:
+            # Boot tier: enabled against multi-user.target; the oneshot
+            # runs once per boot, then rests inactive — enabled is the
+            # meaningful signal.
+            state = (
+                "ok"
+                if svc.get("UnitFileState") in ("enabled", "enabled-runtime")
+                else "inactive"
+            )
+            return {**base, "state": state, "last_trigger": None, "next_trigger": None}
+
+        tdata = self._systemctl_show(timer, _SHOW_TIMER_PROPS)
+        if tdata is None:
+            return {**base, "state": "unknown", "last_trigger": None, "next_trigger": None}
+        last_trigger = tdata.get("LastTriggerUSec")
+        next_trigger = tdata.get("NextElapseUSecRealtime")
+        active = tdata.get("ActiveState") == "active"
+        enabled = tdata.get("UnitFileState") in ("enabled", "enabled-runtime")
+        if not active or not enabled:
+            return {
+                **base,
+                "state": "inactive",
+                "last_trigger": last_trigger,
+                "next_trigger": next_trigger,
+            }
+
+        last = self._parse_epoch(last_trigger)
+        cadence = _CADENCE_SECONDS.get(schedule)
+        if last is not None and cadence and (
+            time.time() - last.timestamp() > _MISSED_FACTOR * cadence
+        ):
+            state = "missed"
+        else:
+            state = "ok"
+        return {
+            **base,
+            "state": state,
+            "last_trigger": last_trigger,
+            "next_trigger": next_trigger,
+        }
+
+    # ------------------------------------------------------------------
     # Retention / pruning
     # ------------------------------------------------------------------
 
@@ -384,3 +510,47 @@ class PolicyEngine:
             )
         except subprocess.CalledProcessError as exc:
             logger.warning("systemctl %s %s failed: %s", action, unit, exc.stderr)
+
+    def _systemctl_show(self, unit: str, props: tuple[str, ...]) -> Optional[dict]:
+        """Query systemd properties of *unit* via ``systemctl show``.
+
+        Unprivileged read; returns a dict of the requested properties
+        (None for values systemd reports as unset/"n/a"), or None when
+        the unit is unknown or systemd is unreachable.
+        """
+        import subprocess
+
+        cmd = [
+            "systemctl", "show",
+            f"--property={','.join(props)}",
+            "--value", "--no-pager", "--timestamp=unix",
+            unit,
+        ]
+        try:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        if proc.returncode != 0:
+            return None
+        # With --value and --property, systemctl emits one value per line
+        # in property order.
+        values = proc.stdout.splitlines()
+        return {
+            name: (line if line and line != "n/a" else None)
+            for name, line in zip(props, values)
+        }
+
+    @staticmethod
+    def _parse_epoch(value: Optional[str]) -> Optional[datetime]:
+        """Parse a unix-epoch string from ``systemctl show --timestamp=unix``."""
+        if not value:
+            return None
+        try:
+            return datetime.fromtimestamp(int(value))
+        except (ValueError, OSError):
+            return None

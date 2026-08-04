@@ -229,8 +229,8 @@ class AuiRenderer:
         for row in model.rows:
             row_box = factory.createHBox(parent)
             # Equal vertical weights make every row share the window
-            # height equally — with the dashboard's 4 rows that caps
-            # each at 25%, so a maximized window never overflows the
+            # height equally — with the dashboard's 5 rows that caps
+            # each at 20%, so a maximized window never overflows the
             # monitor (rows compress instead; the tables scroll).
             weight = getattr(row_box, "setWeight", None)
             if callable(weight):

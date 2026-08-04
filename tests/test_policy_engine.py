@@ -3,6 +3,8 @@
 import os
 import re
 import tempfile
+import time
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -74,6 +76,24 @@ class TestGenerateUnits:
         assert "Description=Manaradix daily snapshot of /" in unit
         assert "ExecStart=/usr/bin/manaradix" in unit
         assert "Type=oneshot" in unit
+
+    def test_generate_service_unit_records_run(self) -> None:
+        engine = PolicyEngine(cli_path="/usr/bin/manaradix")
+        unit = engine._generate_service_unit("/", "daily")
+        # ExecStopPost runs at the end of every fire — success or
+        # failure — with $SERVICE_RESULT set, feeding the run records.
+        assert (
+            'ExecStopPost=/usr/bin/manaradix activity record'
+            ' --subvolume "/" --schedule daily' in unit
+        )
+
+    def test_generate_boot_service_unit_records_run(self) -> None:
+        engine = PolicyEngine(cli_path="/usr/bin/manaradix")
+        unit = engine._generate_boot_service_unit("/")
+        assert (
+            'ExecStopPost=/usr/bin/manaradix activity record'
+            ' --subvolume "/" --schedule boot' in unit
+        )
 
     def test_generate_timer_unit(self) -> None:
         engine = PolicyEngine()
@@ -290,3 +310,172 @@ class TestExecStartInjection:
         content = unit.read_text()
         assert ";" not in content.replace("\\;", "")
         assert '--subvolume "/home\\; touch /tmp/pwned"' in content
+        # The ExecStopPost record line must be escaped exactly like
+        # ExecStart — a hostile subvolume cannot inject into it either.
+        assert (
+            'activity record --subvolume "/home\\; touch /tmp/pwned"' in content
+        )
+
+
+class TestUnitStatus:
+    """unit_status(): systemctl state → derived per-activity status.
+
+    ``_systemctl_show`` output is one value per line in property order
+    (with --value); time properties come back as unix epochs or "n/a".
+    """
+
+    @staticmethod
+    def _proc(*lines, rc=0) -> MagicMock:
+        return MagicMock(
+            returncode=rc, stdout="\n".join(lines) + "\n", stderr=""
+        )
+
+    @staticmethod
+    def _install(engine, subvolume, schedule) -> None:
+        Path(os.path.join(
+            engine._systemd_dir, engine._service_name(subvolume, schedule)
+        )).write_text("")
+        if schedule != "boot":
+            Path(os.path.join(
+                engine._systemd_dir, engine._timer_name(subvolume, schedule)
+            )).write_text("")
+
+    @patch("subprocess.run")
+    def test_unknown_when_units_missing(self, mock_run: MagicMock) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            status = engine.unit_status("/", "daily")
+        assert status["state"] == "unknown"
+        mock_run.assert_not_called()
+
+    @patch("subprocess.run")
+    def test_ok(self, mock_run: MagicMock) -> None:
+        now = int(time.time())
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "daily")
+            mock_run.side_effect = [
+                # service show: ActiveState, UnitFileState
+                self._proc("inactive", "enabled"),
+                # timer show: ActiveState, UnitFileState, last, next
+                self._proc("active", "enabled", str(now - 3600), str(now + 3600)),
+            ]
+            status = engine.unit_status("/", "daily")
+        assert status["state"] == "ok"
+        assert status["last_trigger"] == str(now - 3600)
+        assert status["next_trigger"] == str(now + 3600)
+
+    @patch("subprocess.run")
+    def test_failed_service(self, mock_run: MagicMock) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "daily")
+            mock_run.side_effect = [self._proc("failed", "enabled")]
+            status = engine.unit_status("/", "daily")
+        assert status["state"] == "failed"
+        # Failure short-circuits: no timer query needed.
+        assert mock_run.call_count == 1
+
+    @patch("subprocess.run")
+    def test_inactive_timer(self, mock_run: MagicMock) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "daily")
+            mock_run.side_effect = [
+                self._proc("inactive", "enabled"),
+                self._proc("inactive", "enabled", "n/a", "n/a"),
+            ]
+            status = engine.unit_status("/", "daily")
+        assert status["state"] == "inactive"
+
+    @patch("subprocess.run")
+    def test_missed_when_last_fire_stale(self, mock_run: MagicMock) -> None:
+        # Daily cadence: stale threshold is 2.5 days.
+        old = int(time.time()) - int(3 * 86400)
+        now = int(time.time())
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "daily")
+            mock_run.side_effect = [
+                self._proc("inactive", "enabled"),
+                self._proc("active", "enabled", str(old), str(now + 3600)),
+            ]
+            status = engine.unit_status("/", "daily")
+        assert status["state"] == "missed"
+
+    @patch("subprocess.run")
+    def test_recent_fire_not_missed(self, mock_run: MagicMock) -> None:
+        now = int(time.time())
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "daily")
+            mock_run.side_effect = [
+                self._proc("inactive", "enabled"),
+                self._proc("active", "enabled", str(now - 2 * 86400), str(now + 3600)),
+            ]
+            status = engine.unit_status("/", "daily")
+        assert status["state"] == "ok"
+
+    @patch("subprocess.run")
+    def test_boot_tier_enabled_is_ok(self, mock_run: MagicMock) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "boot")
+            mock_run.side_effect = [self._proc("inactive", "enabled")]
+            status = engine.unit_status("/", "boot")
+        assert status["state"] == "ok"
+
+    @patch("subprocess.run")
+    def test_boot_tier_failed(self, mock_run: MagicMock) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "boot")
+            mock_run.side_effect = [self._proc("failed", "enabled")]
+            status = engine.unit_status("/", "boot")
+        assert status["state"] == "failed"
+
+    @patch("subprocess.run")
+    def test_boot_tier_not_enabled(self, mock_run: MagicMock) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "boot")
+            mock_run.side_effect = [self._proc("inactive", "disabled")]
+            status = engine.unit_status("/", "boot")
+        assert status["state"] == "inactive"
+
+    @patch("subprocess.run")
+    def test_systemctl_unreachable_is_unknown(self, mock_run: MagicMock) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "daily")
+            mock_run.side_effect = [
+                self._proc("", rc=1),
+                self._proc("", rc=1),
+            ]
+            status = engine.unit_status("/", "daily")
+        assert status["state"] == "unknown"
+
+    def test_parse_epoch(self) -> None:
+        engine = PolicyEngine()
+        now = int(time.time())
+        assert engine._parse_epoch(str(now)) == datetime.fromtimestamp(now)
+        assert engine._parse_epoch(None) is None
+        assert engine._parse_epoch("n/a") is None
+        assert engine._parse_epoch("garbage") is None
+
+
+class TestUnitState:
+    def test_active(self) -> None:
+        engine = PolicyEngine()
+        with patch("subprocess.run", return_value=TestUnitStatus._proc("active")):
+            assert engine.unit_state("manaradix-snapshot-root-daily.timer") == "active"
+
+    def test_failed(self) -> None:
+        engine = PolicyEngine()
+        with patch("subprocess.run", return_value=TestUnitStatus._proc("failed")):
+            assert engine.unit_state("manaradix-snapshot-root-daily.service") == "failed"
+
+    def test_unknown_on_query_failure(self) -> None:
+        engine = PolicyEngine()
+        with patch("subprocess.run", return_value=TestUnitStatus._proc("", rc=1)):
+            assert engine.unit_state("nonexistent.service") == "unknown"

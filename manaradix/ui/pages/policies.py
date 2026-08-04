@@ -188,7 +188,13 @@ class PoliciesPage:
             "fields": [
                 Widget.tree(
                     id="systemd_units",
-                    rows=[{"Unit": u} for u in units],
+                    rows=[
+                        {
+                            "Unit": u,
+                            "Status": self.app.policy_engine.unit_state(u),
+                        }
+                        for u in units
+                    ],
                     selectable=False,
                 ),
             ],
