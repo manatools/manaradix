@@ -22,6 +22,7 @@ class TestConfigStoreDefaults:
         assert store.default_subvolume == "/"
         assert store.snapshot_dir == ".snapshots"
         assert store.boot_from_snapshot is False
+        assert store.snapshot_before_upgrade is False
 
     def test_default_no_policies(self) -> None:
         store = ConfigStore(path="/nonexistent/config.toml")
@@ -76,12 +77,15 @@ class TestConfigStoreSaveLoad:
             store.default_subvolume = "/"
             store.snapshot_dir = ".my-snaps"
             store.boot_from_snapshot = True
+            store.snapshot_before_upgrade = True
             store.set_policy(
                 SnapshotPolicy(
                     subvolume="/",
                     schedule_hourly=True,
                     schedule_daily=True,
-                    retention=RetentionPolicy(keep_daily=14, keep_hourly=20),
+                    retention=RetentionPolicy(
+                        keep_daily=14, keep_hourly=20, keep_pre_upgrade=2
+                    ),
                 )
             )
             store.save()
@@ -93,6 +97,7 @@ class TestConfigStoreSaveLoad:
             assert store2.default_subvolume == "/"
             assert store2.snapshot_dir == ".my-snaps"
             assert store2.boot_from_snapshot is True
+            assert store2.snapshot_before_upgrade is True
 
             policy = store2.get_policy("/")
             assert policy is not None
@@ -100,6 +105,7 @@ class TestConfigStoreSaveLoad:
             assert policy.schedule_daily is True
             assert policy.retention.keep_daily == 14
             assert policy.retention.keep_hourly == 20
+            assert policy.retention.keep_pre_upgrade == 2
 
     def test_load_invalid_toml_raises(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -123,6 +129,7 @@ class TestConfigStoreToDict:
         store = ConfigStore(path="/nonexistent/config.toml")
         d = store.to_dict()
         assert d["global"]["default_subvolume"] == "/"
+        assert d["global"]["snapshot_before_upgrade"] is False
         assert d["policies"] == {}
 
     def test_to_dict_with_policies(self) -> None:
@@ -138,6 +145,7 @@ class TestConfigStoreToDict:
         assert "/" in d["policies"]
         assert d["policies"]["/"]["schedule_daily"] is True
         assert d["policies"]["/"]["retention"]["keep_daily"] == 7
+        assert d["policies"]["/"]["retention"]["keep_pre_upgrade"] == 3
 
 
 class TestConfigStoreProperties:
@@ -146,6 +154,8 @@ class TestConfigStoreProperties:
         store.default_subvolume = "/data"
         store.snapshot_dir = ".snaps"
         store.boot_from_snapshot = True
+        store.snapshot_before_upgrade = True
         assert store.default_subvolume == "/data"
         assert store.snapshot_dir == ".snaps"
         assert store.boot_from_snapshot is True
+        assert store.snapshot_before_upgrade is True

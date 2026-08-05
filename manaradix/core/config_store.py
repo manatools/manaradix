@@ -26,6 +26,7 @@ _DEFAULT_CONFIG = """\
 default_subvolume = "/"
 snapshot_dir = ".snapshots"
 boot_from_snapshot = false
+snapshot_before_upgrade = false
 """
 
 
@@ -57,6 +58,7 @@ class ConfigStore:
         self._default_subvolume: str = "/"
         self._snapshot_dir: str = ".snapshots"
         self._boot_from_snapshot: bool = False
+        self._snapshot_before_upgrade: bool = False
 
         # Per-subvolume policies, keyed by subvolume path
         self._policies: dict[str, SnapshotPolicy] = {}
@@ -88,6 +90,15 @@ class ConfigStore:
     @boot_from_snapshot.setter
     def boot_from_snapshot(self, value: bool) -> None:
         self._boot_from_snapshot = value
+
+    @property
+    def snapshot_before_upgrade(self) -> bool:
+        """Whether a pre-upgrade snapshot is taken before package updates."""
+        return self._snapshot_before_upgrade
+
+    @snapshot_before_upgrade.setter
+    def snapshot_before_upgrade(self, value: bool) -> None:
+        self._snapshot_before_upgrade = value
 
     # ------------------------------------------------------------------
     # Policy accessors
@@ -150,6 +161,11 @@ class ConfigStore:
             self._boot_from_snapshot = bool(
                 global_section.get("boot_from_snapshot", self._boot_from_snapshot)
             )
+            self._snapshot_before_upgrade = bool(
+                global_section.get(
+                    "snapshot_before_upgrade", self._snapshot_before_upgrade
+                )
+            )
 
         # Policies section
         policies_section = doc.get("policies", {})
@@ -164,6 +180,9 @@ class ConfigStore:
                     keep_weekly=int(retention_raw.get("keep_weekly", 4)),
                     keep_monthly=int(retention_raw.get("keep_monthly", 3)),
                     keep_boot=int(retention_raw.get("keep_boot", 5)),
+                    keep_pre_upgrade=int(
+                        retention_raw.get("keep_pre_upgrade", 3)
+                    ),
                 )
                 policy = SnapshotPolicy(
                     subvolume=str(subvol),
@@ -190,6 +209,7 @@ class ConfigStore:
         global_table.add("default_subvolume", self._default_subvolume)
         global_table.add("snapshot_dir", self._snapshot_dir)
         global_table.add("boot_from_snapshot", self._boot_from_snapshot)
+        global_table.add("snapshot_before_upgrade", self._snapshot_before_upgrade)
         doc.add("global", global_table)
 
         # Policies section
@@ -210,6 +230,9 @@ class ConfigStore:
                 retention_table.add("keep_weekly", policy.retention.keep_weekly)
                 retention_table.add("keep_monthly", policy.retention.keep_monthly)
                 retention_table.add("keep_boot", policy.retention.keep_boot)
+                retention_table.add(
+                    "keep_pre_upgrade", policy.retention.keep_pre_upgrade
+                )
                 policy_table.add("retention", retention_table)
 
                 policies_table.add(subvol, policy_table)
@@ -230,6 +253,7 @@ class ConfigStore:
                 "default_subvolume": self._default_subvolume,
                 "snapshot_dir": self._snapshot_dir,
                 "boot_from_snapshot": self._boot_from_snapshot,
+                "snapshot_before_upgrade": self._snapshot_before_upgrade,
             },
             "policies": {
                 subvol: {
@@ -245,6 +269,7 @@ class ConfigStore:
                         "keep_weekly": p.retention.keep_weekly,
                         "keep_monthly": p.retention.keep_monthly,
                         "keep_boot": p.retention.keep_boot,
+                        "keep_pre_upgrade": p.retention.keep_pre_upgrade,
                     },
                 }
                 for subvol, p in self._policies.items()

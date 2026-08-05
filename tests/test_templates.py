@@ -12,11 +12,13 @@ role = "desktop"
 
 [global]
 boot_from_snapshot = true
+snapshot_before_upgrade = true
 
 [[policies]]
 subvolume = "/"
 schedules = ["daily", "weekly", "boot"]
 keep_daily = 3
+keep_pre_upgrade = 2
 """
 
 
@@ -39,6 +41,7 @@ class TestLoadProfiles:
         assert profile.description == "For workstations"
         assert profile.role == "desktop"
         assert profile.boot_from_snapshot is True
+        assert profile.snapshot_before_upgrade is True
         assert profile.snapshot_dir == ".snapshots"  # default
         assert len(profile.policies) == 1
 
@@ -46,9 +49,16 @@ class TestLoadProfiles:
         assert policy.subvolume == "/"
         assert policy.schedules == ["daily", "weekly", "boot"]
         assert policy.required is True  # default
-        # Explicit keep_daily is honoured; the rest use model defaults.
+        # Explicit keep_daily/keep_pre_upgrade are honoured; the rest use
+        # model defaults.
         assert policy.retention.keep_daily == 3
+        assert policy.retention.keep_pre_upgrade == 2
         assert policy.retention.keep_weekly == 4
+
+    def test_snapshot_before_upgrade_defaults_false(self, tmp_path) -> None:
+        content = DESKTOP_TOML.replace("snapshot_before_upgrade = true\n", "")
+        write_template(tmp_path, "desktop.toml", content)
+        assert load_profiles([tmp_path])[0].snapshot_before_upgrade is False
 
     def test_retention_defaults_when_unspecified(self, tmp_path) -> None:
         content = DESKTOP_TOML.replace("keep_daily = 3\n", "")

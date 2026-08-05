@@ -90,6 +90,15 @@ install -D -m 0644 data/images/manaradix.svg \
 install -D -m 0644 data/images/manaradix.png \
     %{buildroot}%{_datadir}/manaradix/images/manaradix.png
 
+# --- Pre-upgrade snapshot trigger ---
+# rpm runs this once at the START of every transaction touching /usr or
+# /etc — before any file changes — so a snapshot of / can be taken ahead
+# of package updates (distribution upgrades in particular). The script
+# decides itself whether a snapshot is wanted (config flag) and must
+# never fail the transaction (see data/libexec/manaradix-pre-upgrade).
+install -D -m 0755 data/libexec/manaradix-pre-upgrade \
+    %{buildroot}%{_libexecdir}/manaradix/pre-upgrade
+
 # --- D-Bus service: unit + bus-activation + bus policy ---
 # Bus-activated on demand; deliberately NOT enabled at boot.
 install -D -m 0644 data/systemd/manaradix-dbus.service \
@@ -115,6 +124,7 @@ msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
 %{_datadir}/applications/manaradix.desktop
 %{_datadir}/manaradix/templates/
 %{_datadir}/manaradix/images/
+%{_libexecdir}/manaradix/pre-upgrade
 %{_unitdir}/manaradix-dbus.service
 %{_datadir}/dbus-1/system-services/org.mageia.manaradix.service
 %config(noreplace) %{_sysconfdir}/dbus-1/system.d/org.mageia.manaradix.conf
@@ -148,3 +158,13 @@ fi
 %{_bindir}/systemctl daemon-reload >/dev/null 2>&1 || true
 %{_bindir}/systemctl reload dbus >/dev/null 2>&1 || \
     %{_bindir}/systemctl reload dbus-broker >/dev/null 2>&1 || true
+
+# --- Pre-upgrade snapshot trigger ---
+# Registered when manaradix is installed; rpm fires it once at the start
+# of every transaction that removes/upgrades files under /usr or /etc —
+# before any file changes — so urpmi, dnf, and direct rpm all snapshot /
+# ahead of updates. The script itself decides whether a snapshot is
+# wanted (snapshot_before_upgrade in /etc/manaradix/config.toml, btrfs
+# root) and must never fail the transaction.
+%transfiletriggerun -- /usr /etc
+%{_libexecdir}/manaradix/pre-upgrade

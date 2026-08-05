@@ -25,6 +25,7 @@ class TestSnapshotType:
         assert SnapshotType.BOOT.value == "boot"
         assert SnapshotType.PRE_RESTORE.value == "pre-restore"
         assert SnapshotType.PRE_INSTALL.value == "pre-install"
+        assert SnapshotType.PRE_UPGRADE.value == "pre-upgrade"
 
     def test_enum_from_value(self) -> None:
         assert SnapshotType("manual") == SnapshotType.MANUAL
@@ -59,6 +60,14 @@ class TestSnapshot:
     def test_is_read_only_boot(self) -> None:
         snap = self._make_snapshot(type=SnapshotType.BOOT)
         assert snap.is_read_only is True
+
+    def test_is_read_only_pre_upgrade(self) -> None:
+        snap = self._make_snapshot(type=SnapshotType.PRE_UPGRADE)
+        assert snap.is_read_only is True
+
+    def test_is_read_only_pre_restore(self) -> None:
+        snap = self._make_snapshot(type=SnapshotType.PRE_RESTORE)
+        assert snap.is_read_only is False
 
     def test_snapshot_subvol_path(self) -> None:
         snap = self._make_snapshot(
@@ -139,6 +148,7 @@ class TestRetentionPolicy:
         assert rp.keep_weekly == 4
         assert rp.keep_monthly == 3
         assert rp.keep_boot == 5
+        assert rp.keep_pre_upgrade == 3
 
     def test_validate_all_valid(self) -> None:
         rp = RetentionPolicy()
@@ -163,10 +173,18 @@ class TestRetentionPolicy:
             keep_weekly=2,
             keep_monthly=1,
             keep_boot=0,
+            keep_pre_upgrade=2,
         )
         assert rp.keep_hourly == 5
         assert rp.keep_boot == 0
+        assert rp.keep_pre_upgrade == 2
         assert rp.validate() == []
+
+    def test_validate_negative_pre_upgrade(self) -> None:
+        rp = RetentionPolicy(keep_pre_upgrade=-1)
+        errors = rp.validate()
+        assert len(errors) == 1
+        assert "keep_pre_upgrade" in errors[0]
 
 
 # ---------------------------------------------------------------------------

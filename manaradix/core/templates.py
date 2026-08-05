@@ -55,6 +55,7 @@ _KEEP_FIELDS = (
     "keep_weekly",
     "keep_monthly",
     "keep_boot",
+    "keep_pre_upgrade",
 )
 
 #: Repo checkout location of the shipped templates (editable installs).
@@ -93,6 +94,7 @@ class SetupProfile:
     description: str = ""
     role: str = "any"
     boot_from_snapshot: bool = False
+    snapshot_before_upgrade: bool = False
     snapshot_dir: str = ".snapshots"
     policies: list[TemplatePolicy] = field(default_factory=list)
 
@@ -168,6 +170,9 @@ def _parse_profile(path: Path) -> SetupProfile | None:
     if not isinstance(global_section, dict):
         global_section = {}
     boot_from_snapshot = bool(global_section.get("boot_from_snapshot", False))
+    snapshot_before_upgrade = bool(
+        global_section.get("snapshot_before_upgrade", False)
+    )
     snapshot_dir = str(global_section.get("snapshot_dir", ".snapshots"))
 
     policies: list[TemplatePolicy] = []
@@ -185,6 +190,7 @@ def _parse_profile(path: Path) -> SetupProfile | None:
         description=str(doc.get("description", "")),
         role=role,
         boot_from_snapshot=boot_from_snapshot,
+        snapshot_before_upgrade=snapshot_before_upgrade,
         snapshot_dir=snapshot_dir,
         policies=policies,
     )

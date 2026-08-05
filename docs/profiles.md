@@ -77,10 +77,11 @@ schedules = ["daily"]
 | `description` | string | `""` | shown by `setup list-profiles` |
 | `role` | `desktop` \| `server` \| `any` | `any` | `any` profiles are never auto-selected |
 | `global.boot_from_snapshot` | bool | `false` | effective only on btrfs root + GRUB |
+| `global.snapshot_before_upgrade` | bool | `false` | snapshot `/` before package updates; effective only on a btrfs root (see [pre-upgrade-snapshots.md](pre-upgrade-snapshots.md)) |
 | `global.snapshot_dir` | string | `.snapshots` | snapshot directory name |
 | `policies[].subvolume` | string | — | required per entry |
 | `policies[].schedules` | list of `hourly` \| `daily` \| `weekly` \| `monthly` \| `boot` | — | at least one required |
-| `policies[].keep_*` | non-negative int | model defaults | map onto `RetentionPolicy` (10/7/4/3/5) |
+| `policies[].keep_*` | non-negative int | model defaults | map onto `RetentionPolicy` (10/7/4/3/5/3) |
 | `policies[].required` | bool | `true` | behavior when the subvolume is missing |
 
 The `keep_*` keys map directly onto `RetentionPolicy` — templates
@@ -105,9 +106,13 @@ admin template must not block the wizard (templates.py:143):
 
 | Profile | role | Policies |
 |---------|------|----------|
-| `desktop` | `desktop` | `/` daily+weekly+boot (required); `/home` daily, `keep_daily=7` (optional) |
-| `server` | `server` | `/` hourly+daily+weekly+monthly+boot (required); `/srv` and `/var` daily, `keep_daily=7` (both optional) |
-| `kiosk` | `any` | `/` boot only, `keep_boot=10` (required) — one recovery point per boot, no periodic snapshots |
+| `desktop` | `desktop` | `/` daily+weekly+boot+pre-upgrade, `keep_pre_upgrade=3` (required); `/home` daily, `keep_daily=7` (optional) |
+| `server` | `server` | `/` hourly+daily+weekly+monthly+boot+pre-upgrade, `keep_pre_upgrade=3` (required); `/srv` and `/var` daily, `keep_daily=7` (both optional) |
+| `kiosk` | `any` | `/` boot only, `keep_boot=10`, plus pre-upgrade `keep_pre_upgrade=3` (required) — one recovery point per boot, no periodic snapshots |
+
+All three profiles set `global.snapshot_before_upgrade = true` —
+snapshot `/` before every package update (see
+[pre-upgrade-snapshots.md](pre-upgrade-snapshots.md)).
 
 ## 5. Search path & precedence
 
@@ -165,6 +170,10 @@ crash) and adapts the profile:
   GRUB configuration exists** (`GrubIntegration.has_system_grub()`: any
   of `/boot/grub2/grub.cfg`, `/boot/grub/grub.cfg`,
   `/boot/efi/EFI/*/grub.cfg`).
+- **`snapshot_before_upgrade` is effective only when the root is
+  btrfs** — the pre-upgrade trigger (an rpm `%transfiletriggerun`)
+  snapshots `/`, which only makes sense on a btrfs root; otherwise the
+  plan notes "Pre-upgrade snapshots are not available".
 - **No btrfs at all** → the wizard page shows an informational message
   and only `Skip`; `setup status` reports the same.
 
@@ -185,9 +194,9 @@ One call performs the whole setup (setup_wizard.py:222):
    `ValueError` (surfaced as the CLI error / a "Setup Failed" page).
 2. **Build the adapted plan** (as above).
 3. **Write global config**: `snapshot_dir` and the *effective*
-   `boot_from_snapshot` into `/etc/manaradix/config.toml`;
-   `default_subvolume` becomes `/` when the root is btrfs, else the
-   first available policy's subvolume.
+   `boot_from_snapshot` and `snapshot_before_upgrade` into
+   `/etc/manaradix/config.toml`; `default_subvolume` becomes `/` when
+   the root is btrfs, else the first available policy's subvolume.
 4. **Register each available policy** in the config store and apply it
    via `PolicyEngine.apply_policy` — the systemd units are the core of
    the setup, so a **unit failure is fatal** (unlike GRUB below).

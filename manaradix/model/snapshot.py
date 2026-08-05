@@ -18,6 +18,7 @@ class SnapshotType(Enum):
     BOOT = "boot"
     PRE_RESTORE = "pre-restore"
     PRE_INSTALL = "pre-install"
+    PRE_UPGRADE = "pre-upgrade"
 
 
 @dataclass
@@ -48,6 +49,7 @@ class Snapshot:
             SnapshotType.READ_ONLY,
             SnapshotType.TIMED,
             SnapshotType.BOOT,
+            SnapshotType.PRE_UPGRADE,
         )
 
     @property

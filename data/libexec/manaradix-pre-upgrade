@@ -1,0 +1,57 @@
+#!/bin/sh
+# manaradix pre-upgrade snapshot trigger
+#
+# Installed as an rpm %transfiletriggerun (see manaradix.spec): rpm runs
+# this once at the START of every transaction that removes/upgrades
+# files under /usr or /etc — i.e. essentially every package update —
+# BEFORE any file is changed.  The snapshot lets the user boot the
+# pre-upgrade system from the GRUB recovery menu, or restore it, after
+# a failed upgrade (a distribution upgrade in particular).
+#
+# CONTRACT: this script must NEVER fail the rpm transaction — rpm aborts
+# the whole transaction when a trigger exits non-zero.  Every error path
+# exits 0; failures are left on stderr (captured by rpm) only.
+#
+# Behavior is decided by the CLI it calls: `snapshot create --type
+# pre-upgrade` is a silent no-op (exit 0) when snapshot_before_upgrade
+# is disabled in /etc/manaradix/config.toml or the root filesystem is
+# not btrfs.
+#
+# Test hooks (production rpm scriptlets run with a clean environment):
+#   MANARADIX_BIN             CLI to invoke (default /usr/bin/manaradix)
+#   MANARADIX_RUN_DIR         throttle marker directory (default /run/manaradix)
+#   MANARADIX_THROTTLE_SECONDS  minimum seconds between snapshots (default 600)
+
+set +e
+
+CLI="${MANARADIX_BIN:-/usr/bin/manaradix}"
+[ -x "$CLI" ] || exit 0
+
+# Throttle: an update run often splits into several rpm transactions
+# (removals, --split-length, ...); take at most one pre-upgrade snapshot
+# per window.  /run is tmpfs, so a reboot re-arms the throttle.
+throttle="${MANARADIX_THROTTLE_SECONDS:-600}"
+run_dir="${MANARADIX_RUN_DIR:-/run/manaradix}"
+if mkdir -p "$run_dir" 2>/dev/null; then
+    marker="$run_dir/last-pre-upgrade"
+    if [ -f "$marker" ]; then
+        last=$(cat "$marker" 2>/dev/null || echo 0)
+        case "$last" in
+            ''|*[!0-9]*) last=0 ;;
+        esac
+        now=$(date +%s 2>/dev/null || echo 0)
+        case "$now" in
+            ''|*[!0-9]*) now=0 ;;
+        esac
+        if [ "$now" -lt "$((last + throttle))" ]; then
+            exit 0
+        fi
+    fi
+    date +%s > "$marker" 2>/dev/null
+fi
+
+# Bounded runtime: a slow or stuck snapshot must not stall the update.
+timeout 300 nice -n 19 ionice -c3 "$CLI" snapshot create \
+    --subvolume / --type pre-upgrade --schedule pre-upgrade
+
+exit 0

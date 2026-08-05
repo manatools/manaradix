@@ -8,6 +8,7 @@ import pytest
 
 from manaradix.core.config_store import ConfigStore
 from manaradix.model.policy import RetentionPolicy, SnapshotPolicy
+from manaradix.model.snapshot import SnapshotType
 from manaradix.module import (
     _build_parser,
     _cmd_activity_record,
@@ -94,6 +95,27 @@ class TestParser:
         assert args.snapshot_command == "prune"
         assert args.subvolume == "/"
         assert args.schedule == "daily"
+
+    def test_snapshot_create_pre_upgrade(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args([
+            "snapshot", "create",
+            "--subvolume", "/",
+            "--type", "pre-upgrade",
+            "--schedule", "pre-upgrade",
+        ])
+        assert args.snapshot_type == "pre-upgrade"
+        assert args.schedule == "pre-upgrade"
+
+    def test_snapshot_prune_pre_upgrade(self) -> None:
+        parser = _build_parser()
+        args = parser.parse_args([
+            "snapshot", "prune",
+            "--subvolume", "/",
+            "--schedule", "pre-upgrade",
+        ])
+        assert args.snapshot_command == "prune"
+        assert args.schedule == "pre-upgrade"
 
     def test_snapshot_info(self) -> None:
         parser = _build_parser()
@@ -325,6 +347,79 @@ class TestCmdSnapshotCreate:
         exit_code = _cmd_snapshot_create(ctx, args)
         assert exit_code == 0
 
+    def test_create_pre_upgrade_disabled_is_noop(self) -> None:
+        """With the config flag off, create must skip silently (exit 0)."""
+        ctx = self._ctx()  # snapshot_before_upgrade defaults to False
+        args = MagicMock(
+            subvolume="/", snapshot_type="pre-upgrade", schedule="pre-upgrade",
+            description="", read_write=False, mount="/", dry_run=False,
+        )
+        with patch.object(ctx.snapshot_manager, "create") as mock_create:
+            exit_code = _cmd_snapshot_create(ctx, args)
+        assert exit_code == 0
+        mock_create.assert_not_called()
+
+    def test_create_pre_upgrade_enabled_creates_and_prunes(self) -> None:
+        ctx = self._ctx()
+        ctx.config_store.snapshot_before_upgrade = True
+        ctx.config_store.set_policy(
+            SnapshotPolicy(
+                subvolume="/",
+                schedule_daily=True,
+                retention=RetentionPolicy(keep_pre_upgrade=2),
+            )
+        )
+        args = MagicMock(
+            subvolume="/", snapshot_type="pre-upgrade", schedule="pre-upgrade",
+            description="", read_write=False, mount="/", dry_run=False,
+        )
+        snap = MagicMock(
+            id="2026-08-05_12-00-00", subvolume="/", path="/x",
+            type=SnapshotType.PRE_UPGRADE, schedule="pre-upgrade", description="",
+        )
+        with (
+            patch.object(
+                ctx.snapshot_manager, "create", return_value=snap
+            ) as mock_create,
+            patch.object(
+                ctx.snapshot_manager, "prune", return_value=[]
+            ) as mock_prune,
+        ):
+            exit_code = _cmd_snapshot_create(ctx, args)
+        assert exit_code == 0
+        mock_create.assert_called_once()
+        # The pre-upgrade tier has no systemd unit, so the create handler
+        # prunes right away using the policy's keep_pre_upgrade.
+        mock_prune.assert_called_once()
+        assert mock_prune.call_args.kwargs["schedule"] == "pre-upgrade"
+        assert mock_prune.call_args.kwargs["keep_count"] == 2
+
+    def test_create_pre_upgrade_prune_failure_not_fatal(self) -> None:
+        ctx = self._ctx()
+        ctx.config_store.snapshot_before_upgrade = True
+        ctx.config_store.set_policy(
+            SnapshotPolicy(
+                subvolume="/", schedule_daily=True,
+                retention=RetentionPolicy(),
+            )
+        )
+        args = MagicMock(
+            subvolume="/", snapshot_type="pre-upgrade", schedule="pre-upgrade",
+            description="", read_write=False, mount="/", dry_run=False,
+        )
+        snap = MagicMock(
+            id="2026-08-05_12-00-00", subvolume="/", path="/x",
+            type=SnapshotType.PRE_UPGRADE, schedule="pre-upgrade", description="",
+        )
+        with (
+            patch.object(ctx.snapshot_manager, "create", return_value=snap),
+            patch.object(
+                ctx.snapshot_manager, "prune", side_effect=RuntimeError("boom")
+            ),
+        ):
+            exit_code = _cmd_snapshot_create(ctx, args)
+        assert exit_code == 0
+
 
 class TestCmdSnapshotList:
     def _ctx(self):
@@ -372,6 +467,21 @@ class TestCmdSnapshotPrune:
     def test_prune_with_policy_dry_run(self, mock_load: MagicMock) -> None:
         ctx = self._make_ctx()
         args = MagicMock(subvolume="/", schedule="daily", mount="/", dry_run=True)
+        exit_code = _cmd_snapshot_prune(ctx, args)
+        assert exit_code == 0
+
+    def test_prune_pre_upgrade_uses_keep_pre_upgrade(self) -> None:
+        ctx = _init_services("/nonexistent/config.toml", ".snapshots")
+        ctx.config_store.set_policy(
+            SnapshotPolicy(
+                subvolume="/",
+                schedule_daily=True,
+                retention=RetentionPolicy(keep_pre_upgrade=2),
+            )
+        )
+        args = MagicMock(
+            subvolume="/", schedule="pre-upgrade", mount="/", dry_run=True
+        )
         exit_code = _cmd_snapshot_prune(ctx, args)
         assert exit_code == 0
 

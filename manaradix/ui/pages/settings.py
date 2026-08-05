@@ -70,6 +70,12 @@ class SettingsPage:
                     checked=self.app.config_store.boot_from_snapshot,
                     on_change=self.on_boot_from_snapshot_toggle,
                 ),
+                Widget.checkbox(
+                    id="setting_snapshot_before_upgrade",
+                    label=_("Snapshot / before system upgrades"),
+                    checked=self.app.config_store.snapshot_before_upgrade,
+                    on_change=self.on_snapshot_before_upgrade_toggle,
+                ),
                 Widget.button(
                     id="btn_save_settings",
                     label=_("Save Settings"),
@@ -224,6 +230,17 @@ class SettingsPage:
                 self.app.grub_integration.update_grub()
             except Exception as exc:
                 logger.error("Failed to enable GRUB integration: %s", exc)
+
+    def on_snapshot_before_upgrade_toggle(self) -> None:
+        """Toggle pre-upgrade snapshots.
+
+        The rpm trigger is always installed with the package; the config
+        flag is the whole activation.  The change is persisted by the
+        Save Settings button, like the other global settings.
+        """
+        self.app.config_store.snapshot_before_upgrade = (
+            not self.app.config_store.snapshot_before_upgrade
+        )
 
     # -- Callbacks: compression ---------------------------------------------
 

@@ -17,6 +17,7 @@ class RetentionPolicy:
         keep_weekly: Number of weekly snapshots to retain.
         keep_monthly: Number of monthly snapshots to retain.
         keep_boot: Number of boot snapshots to retain.
+        keep_pre_upgrade: Number of pre-upgrade snapshots to retain.
     """
 
     keep_hourly: int = 10
@@ -24,6 +25,7 @@ class RetentionPolicy:
     keep_weekly: int = 4
     keep_monthly: int = 3
     keep_boot: int = 5
+    keep_pre_upgrade: int = 3
 
     def validate(self) -> list[str]:
         """Validate retention values. Returns a list of error messages."""
@@ -34,6 +36,7 @@ class RetentionPolicy:
             "keep_weekly",
             "keep_monthly",
             "keep_boot",
+            "keep_pre_upgrade",
         ):
             value = getattr(self, field_name)
             if not isinstance(value, int) or value < 0:

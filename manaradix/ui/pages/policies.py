@@ -18,7 +18,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _SCHEDULE_KEYS = ["hourly", "daily", "weekly", "monthly", "boot"]
-_RETENTION_KEYS = ["keep_hourly", "keep_daily", "keep_weekly", "keep_monthly", "keep_boot"]
+_RETENTION_KEYS = [
+    "keep_hourly",
+    "keep_daily",
+    "keep_weekly",
+    "keep_monthly",
+    "keep_boot",
+    "keep_pre_upgrade",
+]
 
 _SCHEDULE_LABELS = {
     "hourly": _("Hourly"),
@@ -34,6 +41,7 @@ _RETENTION_LABELS = {
     "keep_weekly": _("Keep weekly"),
     "keep_monthly": _("Keep monthly"),
     "keep_boot": _("Keep boot"),
+    "keep_pre_upgrade": _("Keep pre-upgrade"),
 }
 
 
@@ -80,10 +88,10 @@ class PoliciesPage:
                             "Subvolume": p.subvolume,
                             "Enabled": str(p.enabled),
                             "Schedules": ", ".join(p.active_schedules) if p.active_schedules else "none",
-                            "Keep H/D/W/M/B": (
+                            "Keep H/D/W/M/B/P": (
                                 f"{p.retention.keep_hourly}/{p.retention.keep_daily}/"
                                 f"{p.retention.keep_weekly}/{p.retention.keep_monthly}/"
-                                f"{p.retention.keep_boot}"
+                                f"{p.retention.keep_boot}/{p.retention.keep_pre_upgrade}"
                             ),
                         }
                         for p in policies

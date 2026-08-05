@@ -144,13 +144,16 @@ def build_plan(app_context: AppContext, profile: SetupProfile) -> dict[str, Any]
     - ``boot`` schedules are kept only for the ``/`` policy when the
       root filesystem is btrfs;
     - ``boot_from_snapshot`` is effective only when the root is btrfs
-      and GRUB is present.
+      and GRUB is present;
+    - ``snapshot_before_upgrade`` is effective only when the root
+      filesystem is btrfs (the pre-upgrade trigger snapshots ``/``).
 
     Returns the plan dict consumed by the wizard UI and by
     :func:`apply_profile`:
 
     ``{"profile_id", "snapshot_dir", "boot_from_snapshot_effective",
-    "applicable", "layout", "policies", "notes"}``
+    "snapshot_before_upgrade_effective", "applicable", "layout",
+    "policies", "notes"}``
     """
     layout = system_layout(app_context)
     targets = set(layout["btrfs_targets"])
@@ -208,10 +211,17 @@ def build_plan(app_context: AppContext, profile: SetupProfile) -> dict[str, Any]
             _("The GRUB recovery menu is not available: it needs a btrfs root filesystem and GRUB.")
         )
 
+    pre_upgrade_effective = profile.snapshot_before_upgrade and root_is_btrfs
+    if profile.snapshot_before_upgrade and not pre_upgrade_effective:
+        notes.append(
+            _("Pre-upgrade snapshots are not available: the root filesystem is not btrfs.")
+        )
+
     return {
         "profile_id": profile.id,
         "snapshot_dir": profile.snapshot_dir,
         "boot_from_snapshot_effective": grub_effective,
+        "snapshot_before_upgrade_effective": pre_upgrade_effective,
         "applicable": any(p["available"] for p in policies),
         "layout": layout,
         "policies": policies,
@@ -266,6 +276,7 @@ def apply_profile(
     store = app_context.config_store
     store.snapshot_dir = plan["snapshot_dir"]
     store.boot_from_snapshot = plan["boot_from_snapshot_effective"]
+    store.snapshot_before_upgrade = plan["snapshot_before_upgrade_effective"]
 
     available = [p for p in plan["policies"] if p["available"]]
     store.default_subvolume = (
@@ -306,6 +317,7 @@ def apply_profile(
         "config_written": not dry_run,
         "profile_id": plan["profile_id"],
         "grub_effective": plan["boot_from_snapshot_effective"],
+        "snapshot_before_upgrade": plan["snapshot_before_upgrade_effective"],
         "policies": [
             {
                 "subvolume": e["subvolume"],

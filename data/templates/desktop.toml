@@ -1,6 +1,9 @@
 # Manaradix setup profile: Desktop workstation
 # Daily and weekly history plus a boot-time recovery point, with the
 # GRUB recovery menu — the classic baseline for a graphical workstation.
+# Also snapshots / before every package update (urpmi/dnf/rpm), so a
+# failed upgrade — a distribution upgrade in particular — can be
+# reverted from the GRUB recovery menu.
 id = "desktop"
 name = "Desktop workstation"
 description = "Daily and weekly snapshots with a boot-time recovery point, plus the GRUB recovery menu — suited for a graphical workstation."
@@ -9,11 +12,13 @@ role = "desktop"
 [global]
 boot_from_snapshot = true
 snapshot_dir = ".snapshots"
+snapshot_before_upgrade = true
 
 [[policies]]
 subvolume = "/"
 required = true
 schedules = ["daily", "weekly", "boot"]
+keep_pre_upgrade = 3
 
 [[policies]]
 subvolume = "/home"

@@ -2,6 +2,8 @@
 # Minimal setup for a single-purpose device: one snapshot at every boot
 # (a known-good point to return to) with the GRUB recovery menu, and no
 # periodic snapshots — the machine's state barely changes between boots.
+# A pre-upgrade snapshot before package updates adds an upgrade-time
+# recovery point without any periodic snapshots.
 id = "kiosk"
 name = "Kiosk"
 description = "Minimal setup for a single-purpose device: a snapshot at every boot with the GRUB recovery menu, no periodic snapshots."
@@ -10,9 +12,11 @@ role = "any"
 [global]
 boot_from_snapshot = true
 snapshot_dir = ".snapshots"
+snapshot_before_upgrade = true
 
 [[policies]]
 subvolume = "/"
 required = true
 schedules = ["boot"]
 keep_boot = 10
+keep_pre_upgrade = 3

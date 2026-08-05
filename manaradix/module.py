@@ -41,6 +41,7 @@ _SCHEDULE_TO_RETENTION: dict[str, str] = {
     "weekly": "keep_weekly",
     "monthly": "keep_monthly",
     "boot": "keep_boot",
+    "pre-upgrade": "keep_pre_upgrade",
 }
 
 _SCHEDULE_CHOICES = list(_SCHEDULE_TO_RETENTION)
@@ -353,7 +354,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     snap_create.add_argument(
         "--schedule", choices=_SCHEDULE_CHOICES, default="",
-        help="Schedule tier for retention pruning (only meaningful with --type timed)",
+        help="Schedule tier for retention pruning (only meaningful with "
+        "--type timed or --type pre-upgrade)",
     )
     snap_create.add_argument(
         "--description", default="",
@@ -547,6 +549,18 @@ def _cmd_snapshot_create(ctx: AppContext, args: argparse.Namespace) -> int:
     snapshot_type = SnapshotType(args.snapshot_type)
     read_only = not args.read_write
 
+    # Pre-upgrade snapshots are gated on the global config flag: the rpm
+    # file trigger invokes this CLI at the start of every package
+    # transaction, and a disabled feature (or a non-btrfs root) must be
+    # a silent no-op — a snapshot failure must never fail an update.
+    if snapshot_type is SnapshotType.PRE_UPGRADE:
+        if not ctx.config_store.snapshot_before_upgrade:
+            logger.info(
+                "Pre-upgrade snapshots are disabled "
+                "(snapshot_before_upgrade is false); skipping."
+            )
+            return 0
+
     try:
         snap = ctx.snapshot_manager.create(
             subvolume=args.subvolume,
@@ -573,7 +587,48 @@ def _cmd_snapshot_create(ctx: AppContext, args: argparse.Namespace) -> int:
         print(_("  Schedule:    %s") % snap.schedule)
     if snap.description:
         print(_("  Description: %s") % snap.description)
+
+    # The pre-upgrade tier is event-driven (no systemd unit with an
+    # ExecStartPost prune), so prune right after creating — like the
+    # timer units do.
+    if snapshot_type is SnapshotType.PRE_UPGRADE:
+        _prune_pre_upgrade(ctx, args.subvolume, mount=args.mount)
+
     return 0
+
+
+def _prune_pre_upgrade(
+    ctx: AppContext,
+    subvolume: str,
+    *,
+    mount: str = "/",
+) -> None:
+    """Prune the pre-upgrade tier for *subvolume* to its retention count.
+
+    Mirrors what the generated systemd units do via ``ExecStartPost``
+    (``snapshot prune --schedule <tier>``); the pre-upgrade tier has no
+    systemd unit, so pruning happens right after creation.  Failures are
+    logged, never fatal — pruning must not fail the snapshot.
+    """
+    policy = ctx.config_store.get_policy(subvolume)
+    if policy is None:
+        logger.info(
+            "No policy configured for %s; pre-upgrade snapshots are not pruned.",
+            subvolume,
+        )
+        return
+    try:
+        deleted = ctx.snapshot_manager.prune(
+            subvolume=subvolume,
+            schedule="pre-upgrade",
+            keep_count=policy.retention.keep_pre_upgrade,
+            mount=mount,
+        )
+    except Exception as exc:
+        logger.warning("Could not prune pre-upgrade snapshots: %s", exc)
+        return
+    if deleted:
+        logger.info("Pruned pre-upgrade snapshots: %s", ", ".join(deleted))
 
 
 def _cmd_snapshot_list(ctx: AppContext, args: argparse.Namespace) -> int:

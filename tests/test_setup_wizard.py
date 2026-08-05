@@ -50,6 +50,7 @@ def make_profile(**overrides) -> SetupProfile:
         description="",
         role="desktop",
         boot_from_snapshot=True,
+        snapshot_before_upgrade=True,
         snapshot_dir=".snapshots",
         policies=[
             TemplatePolicy(subvolume="/", schedules=["daily", "weekly", "boot"]),
@@ -195,6 +196,7 @@ class TestBuildPlan:
 
         assert plan["applicable"] is True
         assert plan["boot_from_snapshot_effective"] is True
+        assert plan["snapshot_before_upgrade_effective"] is True
         assert plan["snapshot_dir"] == ".snapshots"
         assert plan["notes"] == []
 
@@ -218,11 +220,13 @@ class TestBuildPlan:
         plan = build_plan(ctx, make_profile())
 
         assert plan["boot_from_snapshot_effective"] is False
+        assert plan["snapshot_before_upgrade_effective"] is False
         root = next(p for p in plan["policies"] if p["subvolume"] == "/")
         assert root["available"] is False
         assert "boot" not in root["schedules"]
         assert any("Boot snapshots are not available" in n for n in plan["notes"])
         assert any("GRUB recovery menu is not available" in n for n in plan["notes"])
+        assert any("Pre-upgrade snapshots are not available" in n for n in plan["notes"])
 
     def test_boot_only_policy_needs_btrfs_root(self) -> None:
         # A boot-only policy for a btrfs subvolume is dropped when the
@@ -328,6 +332,7 @@ class TestApplyProfile:
         assert ctx.config_store.default_subvolume == "/"
         assert ctx.config_store.snapshot_dir == ".snapshots"
         assert ctx.config_store.boot_from_snapshot is True
+        assert ctx.config_store.snapshot_before_upgrade is True
         assert ctx.config_store.set_policy.call_count == 2
         ctx.config_store.save.assert_called_once()
         assert ctx.policy_engine.apply_policy.call_count == 2
@@ -357,6 +362,7 @@ class TestApplyProfile:
             summary = apply_profile(ctx, "desktop")
 
         assert ctx.config_store.boot_from_snapshot is False
+        assert ctx.config_store.snapshot_before_upgrade is False
         ctx.grub_integration.install_script.assert_not_called()
         assert summary["grub_installed"] is False
 
