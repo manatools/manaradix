@@ -358,7 +358,7 @@ records file, unreadable config, or unreachable systemd produce fewer or
 
 ## 7. Configuration surfaces
 
-### 6.1 Policies page (GUI)
+### 7.1 Policies page (GUI)
 
 The Policies tab (`manaradix/ui/pages/policies.py`) shows:
 
@@ -377,7 +377,7 @@ Applying writes the policy to the config store *and* runs
 drops the config entry. After every callback the page re-renders from
 fresh state, so the tables always reflect what just happened.
 
-### 6.2 CLI
+### 7.2 CLI
 
 | Command | Purpose |
 |---------|---------|
@@ -391,7 +391,7 @@ fresh state, so the tables always reflect what just happened.
 Privileged operations re-exec via pkexec; the systemd units run as root
 by construction.
 
-### 6.3 D-Bus
+### 7.3 D-Bus
 
 The system service exposes the same operations programmatically:
 `PolicyApply` / `PolicyRemove` (manage-policies tier, polkit

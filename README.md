@@ -16,15 +16,15 @@ The Qt frontend. The same pages render in GTK and ncurses.
 
 | Dashboard | Snapshots |
 |---|---|
-| ![Dashboard](data/screenshots/dashboard.png) | ![Snapshots](data/screenshots/snapshots.png) |
+| ![Dashboard](docs/assets/screenshots/dashboard.png) | ![Snapshots](docs/assets/screenshots/snapshots.png) |
 
 | Policies | Settings |
 |---|---|
-| ![Policies](data/screenshots/policies.png) | ![Settings](data/screenshots/settings.png) |
+| ![Policies](docs/assets/screenshots/policies.png) | ![Settings](docs/assets/screenshots/settings.png) |
 
 | Setup Wizard | About |
 |---|---|
-| ![Setup Wizard](data/screenshots/setup.png) | ![About](data/screenshots/about.png) |
+| ![Setup Wizard](docs/assets/screenshots/setup.png) | ![About](docs/assets/screenshots/about.png) |
 
 ## System Requirements
 
@@ -36,6 +36,18 @@ The Qt frontend. The same pages render in GTK and ncurses.
 | systemd | 255+ | Timers for automated snapshots |
 | polkit | 0.120+ | Privilege escalation for non-root users |
 | grub2 | — | Boot-from-snapshot support |
+
+## Installation
+
+```bash
+urpmi manaradix
+```
+
+(or Rpmdrake / GNOME Software once the package is available for your
+release). The package installs the CLI/GUI launcher, man pages
+(`man manaradix`, `man 5 manaradix-config`), polkit rules, the setup
+profiles, and the bus-activated D-Bus service. See
+[docs/install.md](docs/install.md) for details and post-install steps.
 
 ## Development Setup
 
@@ -139,7 +151,9 @@ python-manatools; you can set it directly instead
 ## CLI Usage
 
 When no subcommand is given, `manaradix` launches the GUI. Subcommands run
-headless and are suitable for scripts and systemd service units.
+headless and are suitable for scripts and systemd service units. The
+complete reference (every option, exit code, and the privilege model) is
+in [docs/cli.md](docs/cli.md).
 
 ### Create a snapshot
 
@@ -199,6 +213,15 @@ manaradix snapshot prune --subvolume / --schedule daily --dry-run
 This is the command invoked automatically by the systemd timer units — you
 normally don't run it by hand.
 
+### Automated activity status
+
+The generated units record every run; this reports the current state of
+each scheduled tier:
+
+```bash
+manaradix activity status
+```
+
 ### First-run setup wizard
 
 When the system has no snapshots and no snapshot policies (a stock Mageia
@@ -211,7 +234,8 @@ only proposed when the root filesystem is btrfs (and GRUB is present).
 Apply it in one click, or configure everything manually from Policies and
 Settings.
 
-The same setup is available headless (spec.md §15):
+The same setup is available headless — the full wizard/profiles
+documentation is in [docs/profiles.md](docs/profiles.md):
 
 ```bash
 # Is setup needed?
@@ -331,6 +355,7 @@ Default location: `/etc/manaradix/config.toml` (TOML format).
 | `default_subvolume` | string | `"/"` | Default subvolume path |
 | `snapshot_dir` | string | `".snapshots"` | Snapshot storage relative to mount |
 | `boot_from_snapshot` | bool | `false` | Enable GRUB snapshot boot menu |
+| `snapshot_before_upgrade` | bool | `false` | Snapshot the root before every rpm package transaction |
 
 ### `[policies."<subvolume>"]`
 
@@ -352,6 +377,7 @@ Default location: `/etc/manaradix/config.toml` (TOML format).
 | `keep_weekly` | int | `4` | Weekly snapshots to retain |
 | `keep_monthly` | int | `3` | Monthly snapshots to retain |
 | `keep_boot` | int | `5` | Boot snapshots to retain |
+| `keep_pre_upgrade` | int | `3` | Pre-upgrade snapshots to retain |
 
 ## Snapshot Types
 
@@ -363,6 +389,7 @@ Default location: `/etc/manaradix/config.toml` (TOML format).
 | `boot` | Created at boot time | Yes |
 | `pre-restore` | Safety snapshot taken before a restore | Yes |
 | `pre-install` | Snapshot taken before package installation | Yes |
+| `pre-upgrade` | Taken by the rpm file trigger before a package transaction | Yes |
 
 ## Polkit Privilege Model
 
@@ -422,64 +449,66 @@ polkit gates each method).
 ```
 manaradix/
 ├── pyproject.toml
+├── mkdocs.yml                      # Documentation site (MkDocs) configuration
 ├── README.md
-├── spec.md                          # Full technical specification
+├── spec.md                         # Full technical specification
+├── CLAUDE.md                       # Contributor orientation
 ├── data/
-│   ├── polkit/                      # Polkit policy XML
-│   ├── desktop/                     # .desktop launcher
-│   ├── systemd/                     # manaradix-dbus.service unit
-│   └── dbus/                        # Bus activation + bus policy files
+│   ├── polkit/                     # Polkit policy XML
+│   ├── desktop/                    # .desktop launcher
+│   ├── systemd/                    # manaradix-dbus.service unit
+│   ├── dbus/                       # Bus activation + bus policy files
+│   ├── libexec/                    # manaradix-pre-upgrade rpm trigger
+│   ├── images/                     # Logo (SVG + PNG)
+│   ├── screenshots/                # UI screenshots
+│   └── templates/                  # Setup profiles (desktop/server/kiosk)
+├── docs/                           # Documentation site + design docs
+├── locale/                         # gettext translations (it.po, .pot)
 ├── manaradix/
 │   ├── __init__.py
-│   ├── module.py                    # AppContext, run_app(), main() CLI
-│   ├── model/                       # Data classes: Snapshot, Subvolume, Policy
-│   ├── core/                        # Business logic (no UI imports)
-│   │   ├── btrfs_ops.py             # /usr/bin/btrfs CLI wrapper
-│   │   ├── snapshot_manager.py      # Snapshot lifecycle + journal
-│   │   ├── policy_engine.py         # systemd unit generation
-│   │   ├── grub_integration.py      # /etc/grub.d/41_manaradix
-│   │   └── config_store.py          # /etc/manaradix/config.toml
-│   ├── dbus/                        # System D-Bus service + client
-│   │   ├── constants.py             # Interface + method→polkit-action map
-│   │   ├── convert.py               # Model ↔ D-Bus value conversion
-│   │   ├── errors.py                # Typed client exceptions
-│   │   ├── polkit.py                # GI Polkit authorization checks
-│   │   ├── service.py               # Per-method logic (auth + delegation)
-│   │   ├── wire.py                  # dbus.service.Object + serve_main()
-│   │   └── client.py                # Python client library
-│   ├── ui/                          # Declarative UI (toolkit-agnostic)
+│   ├── module.py                   # AppContext, run_app(), main() CLI
+│   ├── i18n.py                     # gettext domain + _()
+│   ├── model/                      # Data classes: Snapshot, Subvolume, Policy
+│   ├── core/                       # Business logic (no UI imports)
+│   │   ├── btrfs_ops.py            # /usr/bin/btrfs CLI wrapper
+│   │   ├── snapshot_manager.py     # Snapshot lifecycle + journal
+│   │   ├── policy_engine.py        # systemd unit generation
+│   │   ├── grub_integration.py     # /etc/grub.d/41_manaradix
+│   │   ├── config_store.py         # /etc/manaradix/config.toml
+│   │   ├── setup_wizard.py         # First-run detection + profile apply
+│   │   ├── templates.py            # Setup profile loader/validator
+│   │   ├── activity_status.py      # Automated snapshot run records
+│   │   └── assets.py               # Logo path resolution
+│   ├── dbus/                       # System D-Bus service + client
+│   │   ├── constants.py            # Interface + method→polkit-action map
+│   │   ├── convert.py              # Model ↔ D-Bus value conversion
+│   │   ├── errors.py               # Typed client exceptions
+│   │   ├── polkit.py               # GI Polkit authorization checks
+│   │   ├── service.py              # Per-method logic (auth + delegation)
+│   │   ├── wire.py                 # dbus.service.Object + serve_main()
+│   │   └── client.py               # Python client library
+│   ├── ui/                         # Declarative UI (toolkit-agnostic)
 │   │   ├── navigation.py
-│   │   ├── model.py                 # PageModel / Widget descriptor factories
-│   │   ├── renderer.py              # Descriptor → manatools YUI widgets
+│   │   ├── model.py                # PageModel / Widget descriptor factories
+│   │   ├── renderer.py             # Descriptor → manatools YUI widgets
 │   │   └── pages/
-│   │       ├── dashboard.py         # Dashboard (disk/fs/snapshot stats)
-│   │       ├── snapshots.py         # Snapshot management
-│   │       ├── policies.py          # Policy editor
-│   │       └── settings.py          # Global settings + maintenance
+│   │       ├── dashboard.py        # Dashboard (disk/fs/snapshot stats)
+│   │       ├── snapshots.py        # Snapshot management
+│   │       ├── policies.py         # Policy editor
+│   │       ├── settings.py         # Global settings + maintenance
+│   │       ├── setup.py            # First-run setup wizard page
+│   │       └── about.py            # About: author, license
 │   └── utils/
-└── tests/
-    ├── test_models.py
-    ├── test_btrfs_ops.py
-    ├── test_snapshot_manager.py
-    ├── test_config_store.py
-    ├── test_policy_engine.py
-    ├── test_grub_integration.py
-    ├── test_module.py
-    ├── test_pkexec.py
-    ├── test_ui_model.py
-    └── test_ui_renderer.py
+│       └── pkexec.py               # pkexec re-exec for privileged ops
+└── tests/                          # 18 test files, 561 tests
 ```
 
 ## Architecture Principles
 
-- **Frontend-agnostic** — Business logic lives in pure-Python modules with
-  zero UI imports. The `aui` layer reads model objects and dispatches events.
-- **CLI-first** — Every operation is a library call; the GUI and CLI entry
-  point are thin shells over the same core services.
-- **Idempotent** — Re-running a config apply produces the same state.
-- **Dry-run** — All destructive operations support `dry_run=True`.
-- **Journaled** — `SnapshotManager` keeps an in-memory journal of applied
-  changes for potential rollback.
+Frontend-agnostic (no UI imports in business logic), CLI-first (every
+operation is a library call), idempotent operations, dry-run support, and
+journaled changes — see [`spec.md`](spec.md) §4 and the
+[development docs](docs/development.md).
 
 ## Translations
 
@@ -512,6 +541,12 @@ An Italian translation ships at `locale/it.po`; other languages are welcome.
 The translation template is at `locale/manaradix.pot`.  System-installed
 ``.mo`` files go to ``/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo``,
 compiled and installed by the RPM spec (``msgfmt`` + ``%find_lang``).
+
+## Documentation
+
+User guide, CLI/configuration references, and the D-Bus interface are in
+[`docs/`](docs/README.md) — rendered as an MkDocs site with `mkdocs serve`
+from the repository root.
 
 ## License
 

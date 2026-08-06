@@ -48,8 +48,8 @@ Requires:       python3dist(python-manatools)
 Suggests:       grub2
 
 %description
-Manaradix is a system utility for Mageia providing a unified graphical,
-text, and web interface for managing Btrfs snapshots, subvolumes, and
+Manaradix is a system utility for Mageia providing a unified graphical
+and text interface for managing Btrfs snapshots, subvolumes, and
 filesystem parameters.
 
 Features:
@@ -61,7 +61,7 @@ Features:
   - Policy-based retention and pruning
   - Filesystem maintenance (scrub, balance, defrag, compression)
   - Multi-frontend support via the python-manatools aui backend
-    (Qt, GTK, ncurses, Web)
+    (Qt, GTK, ncurses)
 
 %prep
 %autosetup -n %{name}-%{version}
@@ -79,6 +79,12 @@ install -D -m 0644 data/polkit/org.mageia.manaradix.policy \
 # --- Desktop launcher ---
 install -D -m 0644 data/desktop/manaradix.desktop \
     %{buildroot}%{_datadir}/applications/manaradix.desktop
+
+# --- Man pages ---
+install -D -m 0644 data/man/man1/manaradix.1 \
+    %{buildroot}%{_mandir}/man1/manaradix.1
+install -D -m 0644 data/man/man5/manaradix-config.5 \
+    %{buildroot}%{_mandir}/man5/manaradix-config.5
 
 # --- Setup wizard profiles (TOML templates) ---
 install -d %{buildroot}%{_datadir}/manaradix/templates
@@ -117,6 +123,8 @@ msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
 %files -f %{name}.lang
 %license LICENSE
 %doc README.md
+%{_mandir}/man1/manaradix.1.*
+%{_mandir}/man5/manaradix-config.5.*
 %{_bindir}/manaradix
 %{python3_sitelib}/manaradix/
 %{python3_sitelib}/manaradix-%{version}*.dist-info/

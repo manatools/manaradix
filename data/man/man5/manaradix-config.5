@@ -1,0 +1,125 @@
+.TH MANARADIX-CONFIG 5 "2026-08-05" "manaradix 0.1.1" "File Formats"
+.SH NAME
+manaradix-config \- configuration file for manaradix
+.SH DESCRIPTION
+.I /etc/manaradix/config.toml
+holds the global settings and per-subvolume snapshot policies of
+.BR manaradix (1).
+The file is TOML.  If it is missing, built-in defaults apply; it is
+created when settings are first saved from the GUI, the CLI, or a setup
+profile.
+.SH GLOBAL SETTINGS
+The
+.B [global]
+table holds:
+.TP
+.B default_subvolume
+String.  Default subvolume path (default:
+.IR "/" ).
+.TP
+.B snapshot_dir
+String.  Snapshot storage directory relative to the mount point
+(default:
+.IR .snapshots ).
+.TP
+.B boot_from_snapshot
+Boolean.  Enable the GRUB boot-from-snapshot menu
+(default: false).
+.TP
+.B snapshot_before_upgrade
+Boolean.  Take a pre-upgrade snapshot of the root subvolume before every
+rpm package transaction, via the rpm file trigger shipped with the
+package (default: false).
+.SH POLICIES
+Each
+.B [policies."\fI<subvolume>\fR"]
+table (the key is the subvolume path, quoted) configures a snapshot
+policy.  Keys:
+.TP
+.B enabled
+Boolean.  Whether the policy is active (default: true).
+.TP
+.B schedule_hourly
+Boolean.  Take hourly snapshots (default: false).
+.TP
+.B schedule_daily
+Boolean.  Take daily snapshots (default: true).
+.TP
+.B schedule_weekly
+Boolean.  Take weekly snapshots (default: false).
+.TP
+.B schedule_monthly
+Boolean.  Take monthly snapshots (default: false).
+.TP
+.B schedule_boot
+Boolean.  Snapshot on every boot (default: false).
+.SS Retention
+The
+.B [policies."\fI<subvolume>\fR".retention]
+table holds how many snapshots of each tier to keep:
+.TP
+.B keep_hourly
+Integer (default: 10).
+.TP
+.B keep_daily
+Integer (default: 7).
+.TP
+.B keep_weekly
+Integer (default: 4).
+.TP
+.B keep_monthly
+Integer (default: 3).
+.TP
+.B keep_boot
+Integer (default: 5).
+.TP
+.B keep_pre_upgrade
+Integer (default: 3).
+.SH SETUP PROFILES
+Rather than hand-editing this file, the setup wizard
+.RB ( "manaradix setup" )
+applies one of the shipped profiles — TOML templates for
+.B desktop
+(role: desktop), \fBserver\fR (role: server), and \fBkiosk\fR
+(role: any).  Templates are searched in
+.BR MANARADIX_TEMPLATE_DIRS ,
+then the repository
+.I data/templates/
+when running from a checkout,
+.IR /usr/share/manaradix/templates/
+(shipped by the RPM), and
+.IR /etc/manaradix/templates.d/
+(administrator overrides and extras); later directories override
+profiles with the same id.
+.SH EXAMPLE
+.nf
+[global]
+default_subvolume = "/"
+snapshot_dir = ".snapshots"
+boot_from_snapshot = true
+snapshot_before_upgrade = true
+
+[policies."/"]
+enabled = true
+schedule_hourly = false
+schedule_daily = true
+schedule_weekly = true
+schedule_monthly = false
+schedule_boot = true
+
+[policies."/".retention]
+keep_hourly = 10
+keep_daily = 7
+keep_weekly = 4
+keep_monthly = 3
+keep_boot = 5
+keep_pre_upgrade = 3
+
+[policies."/home"]
+enabled = true
+schedule_daily = true
+.fi
+.SH SEE ALSO
+.BR manaradix (1),
+.BR btrfs (8),
+.BR systemd.timer (5)

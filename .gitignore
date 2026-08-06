@@ -32,3 +32,4 @@ spec.md
 
 *.src.rpm
 *.tar.gz
+site/

@@ -1,0 +1,60 @@
+site_name: Manaradix
+site_description: Btrfs snapshot, subvolume, and filesystem management utility for Mageia
+repo_url: https://bitbucket.org/_pmat_/manaradix
+edit_uri: ""
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.]
+          options:
+            show_source: true
+            show_root_heading: false
+            docstring_section_style: table
+            docstring_style: google
+
+markdown_extensions:
+  - admonition
+  - tables
+  - fenced_code
+  - def_list
+
+nav:
+  - Home: index.md
+  - Install: install.md
+  - User guide:
+      - Quick start: quickstart.md
+      - CLI reference: cli.md
+      - Configuration: configuration.md
+      - Automated snapshots: automated-snapshots.md
+      - Boot from snapshot: boot-from-snapshot.md
+      - Setup profiles: profiles.md
+      - Pre-upgrade snapshots: pre-upgrade-snapshots.md
+  - D-Bus interface: api/dbus.md
+  - API reference: api/python.md
+  - Development: development.md
+  - Design & internals: activities.md
+  - Roadmap & issues: SECURITY_AND_PERFORMANCES.md
+
+# docs/README.md is the index for repository browsing, not a site page.
+exclude_docs: |
+  README.md

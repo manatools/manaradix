@@ -1,0 +1,200 @@
+.TH MANARADIX 1 "2026-08-05" "manaradix 0.1.1" "User Commands"
+.SH NAME
+manaradix \- Btrfs snapshot, subvolume, and filesystem management utility for Mageia
+.SH SYNOPSIS
+.B manaradix
+[\fIOPTIONS\fR] [\fICOMMAND\fR [\fISUBCOMMAND\fR [\fIOPTIONS\fR]]]
+.SH DESCRIPTION
+.B manaradix
+provides a unified graphical and text interface for managing Btrfs
+snapshots, subvolumes, and filesystem parameters on Mageia 10 and
+Cauldron.  It is built on top of python-manatools using the aui
+(Abstract UI) backend, so a single codebase renders in Qt, GTK, and
+ncurses frontends.
+
+With no subcommand,
+.B manaradix
+launches the GUI.  The GUI always re-executes via pkexec (polkit) so
+snapshot operations work from a normal user session.
+
+Subcommands run headless and are suitable for scripts and systemd
+service units:
+.B snapshot
+(create, list, delete, prune, info),
+.B setup
+(status, apply, list-profiles),
+.B activity
+(status, record), and
+.B dbus
+(serve, status).
+
+All destructive operations support
+.BR \-\-dry\-run .
+.SH OPTIONS
+.TP
+.B \-\-config \fIPATH\fR
+Path to the configuration file (default:
+.IR /etc/manaradix/config.toml ).
+.TP
+.B \-\-snapshot\-dir \fIDIR\fR
+Snapshot storage directory relative to the mount point (default:
+.IR .snapshots ).
+.TP
+.B \-\-debug
+Enable debug logging.
+.TP
+.B \-\-frontend \fI{\fRqt\fR,\fRgtk\fR,\fRncurses\fR}\fR
+UI toolkit frontend (default: auto-detect; qt/gtk fall back to
+ncurses).  Only meaningful in GUI mode.  Maps to the
+.B MUI_BACKEND
+environment variable understood by python-manatools.
+.SH COMMANDS
+.SS snapshot
+Snapshot lifecycle and retention pruning.
+.TP
+.B manaradix snapshot create
+[\fB\-\-subvolume\fR \fIPATH\fR] [\fB\-\-type\fR \fITYPE\fR]
+[\fB\-\-schedule\fR \fIS\fR] [\fB\-\-description\fR \fITEXT\fR]
+[\fB\-\-read\-write\fR] [\fB\-\-mount\fR \fIPATH\fR] [\fB\-\-dry\-run\fR]
+
+Create a snapshot.  \fB\-\-subvolume\fR is the source subvolume path
+(default
+.IR / ).
+\fB\-\-type\fR selects the snapshot type: \fBmanual\fR (default),
+\fBreadonly\fR, \fBtimed\fR, \fBboot\fR, \fBpre\-restore\fR,
+\fBpre\-install\fR, or \fBpre\-upgrade\fR.  \fB\-\-schedule\fR tags the
+snapshot with a retention tier (\fBhourly\fR, \fBdaily\fR, \fBweekly\fR,
+\fBmonthly\fR, \fBboot\fR, \fBpre\-upgrade\fR); it is only meaningful
+with \fB\-\-type timed\fR or \fB\-\-type pre\-upgrade\fR.  Snapshots are
+read-only by default; \fB\-\-read\-write\fR creates a writable one.
+
+When \fB\-\-type pre\-upgrade\fR is requested but
+.B snapshot_before_upgrade
+is disabled in the configuration, the command silently does nothing and
+exits 0.
+.TP
+.B manaradix snapshot list
+[\fB\-\-mount\fR \fIPATH\fR] [\fB\-\-subvolume\fR \fIPATH\fR]
+
+List snapshots for a mount point (default
+.IR / ),
+optionally filtered by source subvolume.
+.TP
+.B manaradix snapshot info
+\fB\-\-id\fR \fIID\fR [\fB\-\-mount\fR \fIPATH\fR]
+
+Show details of one snapshot.  \fIID\fR is the snapshot timestamp, e.g.
+.IR 2026\-01\-15_14\-00\-00 .
+.TP
+.B manaradix snapshot delete
+\fB\-\-id\fR \fIID\fR [\fB\-\-mount\fR \fIPATH\fR] [\fB\-\-dry\-run\fR]
+
+Delete a snapshot and its metadata.
+.TP
+.B manaradix snapshot prune
+\fB\-\-subvolume\fR \fIPATH\fR \fB\-\-schedule\fR \fIS\fR
+[\fB\-\-mount\fR \fIPATH\fR] [\fB\-\-dry\-run\fR]
+
+Keep the N most recent snapshots for the given schedule tier, N coming
+from the retention policy in the configuration, and delete the rest.
+This is the command invoked by the generated systemd timer units; it
+warns and exits 0 if no policy is configured for the subvolume.
+.SS setup
+First-run setup wizard (headless).
+.TP
+.B manaradix setup status
+
+Report whether the recommended setup is still needed (no snapshots and
+no policies), the detected role, and the default profile.  Read-only.
+.TP
+.B manaradix setup list\-profiles
+
+List the available setup profiles.  Read-only.
+.TP
+.B manaradix setup apply
+[\fB\-\-profile\fR \fIID\fR] [\fB\-\-dry\-run\fR]
+
+Apply a setup profile (global configuration, per-subvolume policies,
+systemd units, GRUB script as the layout permits).  \fB\-\-profile\fR
+selects the profile (desktop, server, kiosk, or a custom template id);
+it defaults to the profile detected for this system.  Elevated via
+pkexec.
+.SS activity
+Automated snapshot activity status and run records.
+.TP
+.B manaradix activity status
+[\fB\-\-subvolume\fR \fIPATH\fR] [\fB\-\-schedule\fR \fIS\fR]
+
+Report per-activity status: state, last run, result.  Read-only, never
+elevated.
+.TP
+.B manaradix activity record
+\fB\-\-subvolume\fR \fIPATH\fR \fB\-\-schedule\fR \fIS\fR
+[\fB\-\-result\fR \fI{\fRsuccess\fR,\fRfailed\fR,\fRcancelled\fR,\fRunknown\fR}\fR]
+[\fB\-\-exit\-status\fR \fIN\fR]
+
+Append a run record.  Invoked by the generated systemd service units
+(ExecStopPost), which run as root; manual unprivileged calls fail
+without an auth prompt.  \fB\-\-result\fR defaults to the
+.B SERVICE_RESULT
+environment variable set by systemd, \fB\-\-exit\-status\fR to
+.BR EXIT_STATUS .
+.SS dbus
+System D-Bus service.
+.TP
+.B manaradix dbus serve
+
+Run the system D-Bus service (org.mageia.manaradix) in the foreground.
+Root only — exits 1 otherwise.  Normally the service is bus-activated
+on demand and this command is only used by the systemd unit
+.BR manaradix-dbus.service .
+Exits 1 if the bus name is already taken; shuts down cleanly on SIGTERM.
+.TP
+.B manaradix dbus status
+
+Report whether the service is running, without activating it (checks
+the bus name owner).  Prints
+.B running
+and exits 0, or prints a hint and exits 2.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.  Includes the documented no-ops: pre-upgrade snapshots with
+the feature disabled, and pruning with no policy configured.
+.TP
+.B 1
+Operation failure, pkexec unavailable or failed, daemon refused (not
+root, bus name taken), GUI startup failure.
+.TP
+.B 2
+.B dbus status
+when the service is not running.  (argparse usage errors also exit 2;
+\fB\-\-help\fR exits 0.)
+.SH ENVIRONMENT
+.TP
+.B MUI_BACKEND
+UI backend selection (\fBqt\fR, \fBgtk\fR, \fBncurses\fR), understood
+by python-manatools.
+.TP
+.B MANARADIX_PKEXEC
+Set on the re-executed process to prevent pkexec elevation loops.
+.TP
+.B MANARADIX_TEMPLATE_DIRS
+Colon-separated search path for setup profile templates.
+.SH FILES
+.TP
+.I /etc/manaradix/config.toml
+Configuration (see
+.BR manaradix-config (5)).
+.TP
+.I /usr/share/manaradix/templates/
+Shipped setup profiles (TOML).
+.TP
+.I /etc/manaradix/templates.d/
+Administrator template overrides and extras.
+.SH SEE ALSO
+.BR manaradix-config (5),
+.BR btrfs (8),
+.BR systemd.timer (5),
+.BR pkexec (1),
+.BR polkit (8)
