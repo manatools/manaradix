@@ -58,6 +58,15 @@ class Widget:
 
     @staticmethod
     def image(*, id: str | None = None, path: str = "") -> dict[str, Any]:
+        """Image from a file path; renders as a YUI ``createImage``.
+
+        Args:
+            id: Optional widget id for the descriptor.
+            path: Absolute path to the image file (default "").
+
+        Returns:
+            The widget descriptor dict (``widget`` kind ``"image"``).
+        """
         return {"widget": "image", "id": id, "path": path}
 
     @staticmethod
@@ -67,6 +76,18 @@ class Widget:
         label: str,
         callback: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
+        """Clickable button; renders as a YUI push button wired with
+        ``setNotify`` so ``callback`` fires on activation.
+
+        Args:
+            id: Optional widget id for the descriptor.
+            label: Button text.
+            callback: Invoked (with no arguments) when the button is
+                activated, or None for a display-only button.
+
+        Returns:
+            The widget descriptor dict (``widget`` kind ``"button"``).
+        """
         return {"widget": "button", "id": id, "label": label, "callback": callback}
 
     @staticmethod
@@ -77,6 +98,21 @@ class Widget:
         selectable: bool = False,
         on_select: Callable[[dict[str, Any]], None] | None = None,
     ) -> dict[str, Any]:
+        """Multi-column table of rows; renders as a YUI ``YTable`` with a
+        ``YTableHeader``.
+
+        Args:
+            id: Optional widget id for the descriptor.
+            rows: Row dicts; column names are the union of row keys in
+                first-appearance order.
+            selectable: When True the table notifies (``setNotify``) on
+                row selection and ``on_select`` receives the row dict.
+            on_select: Invoked with the selected row dict on selection,
+                or None.
+
+        Returns:
+            The widget descriptor dict (``widget`` kind ``"tree"``).
+        """
         return {
             "widget": "tree",
             "id": id,
@@ -92,6 +128,17 @@ class Widget:
         label: str = "",
         value: str = "",
     ) -> dict[str, Any]:
+        """Single-line text input; renders as a YUI input field
+        (``createInputField``).
+
+        Args:
+            id: Optional widget id for the descriptor.
+            label: Field label.
+            value: Initial field value (default "").
+
+        Returns:
+            The widget descriptor dict (``widget`` kind ``"text"``).
+        """
         return {"widget": "text", "id": id, "label": label, "value": value}
 
     @staticmethod
@@ -102,6 +149,19 @@ class Widget:
         checked: bool = False,
         on_change: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
+        """Checkbox; renders as a YUI ``createCheckBox`` wired with
+        ``setNotify`` so ``on_change`` fires on state changes.
+
+        Args:
+            id: Optional widget id for the descriptor.
+            label: Checkbox text.
+            checked: Initial checked state (default False).
+            on_change: Invoked (with no arguments) when the state
+                changes, or None.
+
+        Returns:
+            The widget descriptor dict (``widget`` kind ``"checkbox"``).
+        """
         return {
             "widget": "checkbox",
             "id": id,
@@ -119,6 +179,20 @@ class Widget:
         selected: str = "",
         on_change: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
+        """Dropdown selection; renders as a YUI combo box
+        (``createComboBox``, not editable) wired with ``setNotify``.
+
+        Args:
+            id: Optional widget id for the descriptor.
+            label: Dropdown label.
+            options: Selectable option strings.
+            selected: Initially selected option (default "").
+            on_change: Invoked with the selected option's value when the
+                selection changes, or None.
+
+        Returns:
+            The widget descriptor dict (``widget`` kind ``"dropdown"``).
+        """
         return {
             "widget": "dropdown",
             "id": id,
@@ -138,6 +212,21 @@ class Widget:
         max_val: int = 999,
         on_change: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
+        """Integer spinner; renders as a YUI int field (``createIntField``)
+        wired with ``setNotify`` so ``on_change`` fires on value changes.
+
+        Args:
+            id: Optional widget id for the descriptor.
+            label: Spinner label.
+            value: Initial integer value (default 0).
+            min_val: Minimum allowed value (default 0).
+            max_val: Maximum allowed value (default 999).
+            on_change: Invoked (with no arguments) when the value
+                changes, or None.
+
+        Returns:
+            The widget descriptor dict (``widget`` kind ``"spinner"``).
+        """
         return {
             "widget": "spinner",
             "id": id,

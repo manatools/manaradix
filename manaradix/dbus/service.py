@@ -112,7 +112,7 @@ class ManaradixHandler:
 
     # -- Helpers ------------------------------------------------------------
 
-    def _get_snapshot(self, kwargs) -> Any:
+    def _get_snapshot(self, kwargs: dict) -> Any:
         """Resolve a snapshot by id, raising NotFoundError when missing."""
         snap = self._ctx.snapshot_manager.get(
             _s(kwargs["id"]), _s(kwargs.get("mount", "/"))
@@ -134,62 +134,207 @@ class ManaradixHandler:
 
     # -- Tier 1: read -------------------------------------------------------
 
-    def handle_Ping(self, kwargs) -> str:
+    def handle_Ping(self, kwargs: dict) -> str:
+        """Return the service version string.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            The ``__version__`` string.
+        """
         from manaradix import __version__
 
         return __version__
 
-    def handle_ListSnapshots(self, kwargs) -> list[dict]:
+    def handle_ListSnapshots(self, kwargs: dict) -> list[dict]:
+        """List the snapshots on a btrfs filesystem.
+
+        Args:
+            kwargs: Method arguments (``mount``).
+
+        Returns:
+            One dict per snapshot.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
         snaps = self._ctx.snapshot_manager.list_all(
             _s(kwargs.get("mount", "/"))
         )
         return [snapshot_to_dbus(s) for s in snaps]
 
-    def handle_GetSnapshot(self, kwargs) -> dict:
+    def handle_GetSnapshot(self, kwargs: dict) -> dict:
+        """Get one snapshot by its ID.
+
+        Args:
+            kwargs: Method arguments (``id``, ``mount``).
+
+        Returns:
+            The snapshot as a dict.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
         return snapshot_to_dbus(self._get_snapshot(kwargs))
 
-    def handle_ListSubvolumes(self, kwargs) -> list[dict]:
+    def handle_ListSubvolumes(self, kwargs: dict) -> list[dict]:
+        """List the subvolumes on a btrfs filesystem.
+
+        Args:
+            kwargs: Method arguments (``mount``).
+
+        Returns:
+            One dict per subvolume.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
         subvols = self._ctx.btrfs_ops.list_subvolumes(
             _s(kwargs.get("mount", "/"))
         )
         return [subvolume_to_dbus(s) for s in subvols]
 
-    def handle_FilesystemUsage(self, kwargs) -> dict:
+    def handle_FilesystemUsage(self, kwargs: dict) -> dict:
+        """Get the usage of a btrfs filesystem.
+
+        Args:
+            kwargs: Method arguments (``mount``).
+
+        Returns:
+            The filesystem usage dict.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
         return self._ctx.btrfs_ops.filesystem_usage(
             _s(kwargs.get("mount", "/"))
         )
 
-    def handle_FilesystemShow(self, kwargs) -> list[dict]:
+    def handle_FilesystemShow(self, kwargs: dict) -> list[dict]:
+        """List all btrfs filesystems with their devices and sizes.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            One dict per filesystem.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
         return self._ctx.btrfs_ops.filesystem_show()
 
-    def handle_BtrfsMounts(self, kwargs) -> list[dict]:
+    def handle_BtrfsMounts(self, kwargs: dict) -> list[dict]:
+        """List the mounted btrfs filesystems.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            One dict per mount.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
         return self._ctx.btrfs_ops.btrfs_mounts()
 
-    def handle_BalanceStatus(self, kwargs) -> dict:
+    def handle_BalanceStatus(self, kwargs: dict) -> dict:
+        """Get the balance status of a btrfs filesystem.
+
+        Args:
+            kwargs: Method arguments (``mount``).
+
+        Returns:
+            The balance status dict (total / relocated / running).
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
         return balance_status_to_dbus(
             self._ctx.btrfs_ops.balance_status(_s(kwargs.get("mount", "/")))
         )
 
-    def handle_ScrubStatus(self, kwargs) -> dict:
+    def handle_ScrubStatus(self, kwargs: dict) -> dict:
+        """Get the scrub status of a btrfs filesystem.
+
+        Args:
+            kwargs: Method arguments (``mount``).
+
+        Returns:
+            The scrub status dict (extents / errors / running).
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
         return scrub_status_to_dbus(
             self._ctx.btrfs_ops.scrub_status(_s(kwargs.get("mount", "/")))
         )
 
-    def handle_GetCompression(self, kwargs) -> str:
+    def handle_GetCompression(self, kwargs: dict) -> str:
+        """Get the compression algorithm of a subvolume.
+
+        Args:
+            kwargs: Method arguments (``path``).
+
+        Returns:
+            The compression algorithm name (empty string when unset).
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
         return _s(
             self._ctx.btrfs_ops.get_compression(_s(kwargs["path"])) or ""
         )
 
-    def handle_ListPolicies(self, kwargs) -> list[dict]:
+    def handle_ListPolicies(self, kwargs: dict) -> list[dict]:
+        """List the configured snapshot policies.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            One dict per policy.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The configuration could not
+                be read.
+        """
         return [
             policy_to_dbus(p)
             for p in self._ctx.config_store.list_policies()
         ]
 
-    def handle_GetConfig(self, kwargs) -> dict:
+    def handle_GetConfig(self, kwargs: dict) -> dict:
+        """Get the global configuration.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            The configuration dict.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The configuration could not
+                be read.
+        """
         return self._ctx.config_store.to_dict()
 
-    def handle_SetupStatus(self, kwargs) -> dict:
+    def handle_SetupStatus(self, kwargs: dict) -> dict:
+        """Report whether the setup wizard is needed and the system role.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            The setup status dict (needs_setup / role / default_profile /
+            root_is_btrfs / grub_present).
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The system layout could not
+                be determined.
+        """
         layout = system_layout(self._ctx)
         role = detect_role()
         profiles = load_profiles()
@@ -204,18 +349,56 @@ class ManaradixHandler:
             grub_present=layout["grub_present"],
         )
 
-    def handle_ListSetupProfiles(self, kwargs) -> list[dict]:
+    def handle_ListSetupProfiles(self, kwargs: dict) -> list[dict]:
+        """List the available setup profiles.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            One dict per profile.
+        """
         return [profile_to_dbus(p) for p in load_profiles()]
 
-    def handle_GrubIsInstalled(self, kwargs) -> bool:
+    def handle_GrubIsInstalled(self, kwargs: dict) -> bool:
+        """Check whether the manaradix GRUB script is installed.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            True when ``/etc/grub.d/41_manaradix`` exists.
+        """
         return self._ctx.grub_integration.is_installed()
 
-    def handle_GrubListEntries(self, kwargs) -> list[str]:
+    def handle_GrubListEntries(self, kwargs: dict) -> list[str]:
+        """List the snapshot entries of the manaradix GRUB script.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            The entry labels (empty when the script is not installed).
+        """
         return self._ctx.grub_integration.list_snapshot_entries()
 
     # -- Tier 2: manage snapshots -------------------------------------------
 
-    def handle_CreateSnapshot(self, kwargs) -> dict:
+    def handle_CreateSnapshot(self, kwargs: dict) -> dict:
+        """Create a snapshot of a subvolume.
+
+        Args:
+            kwargs: Method arguments (``subvolume``, ``description``,
+                ``read_only``, ``snapshot_type``, ``schedule``, ``mount``,
+                ``dry_run``).
+
+        Returns:
+            The created snapshot as a dict.
+
+        Raises:
+            org.mageia.manaradix.Error.InvalidArgs: Unknown snapshot type.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         snap = self._ctx.snapshot_manager.create(
             _s(kwargs.get("subvolume", "/")),
             description=_s(kwargs.get("description", "")),
@@ -229,14 +412,39 @@ class ManaradixHandler:
         )
         return snapshot_to_dbus(snap)
 
-    def handle_DeleteSnapshot(self, kwargs) -> bool:
+    def handle_DeleteSnapshot(self, kwargs: dict) -> bool:
+        """Delete a snapshot and its metadata.
+
+        Args:
+            kwargs: Method arguments (``id``, ``mount``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.snapshot_manager.delete(
             self._get_snapshot(kwargs),
             dry_run=_b(kwargs.get("dry_run", False)),
         )
         return True
 
-    def handle_PruneSnapshots(self, kwargs) -> list[str]:
+    def handle_PruneSnapshots(self, kwargs: dict) -> list[str]:
+        """Prune a subvolume/schedule tier, keeping the most recent snapshots.
+
+        Args:
+            kwargs: Method arguments (``subvolume``, ``schedule``,
+                ``keep_count``, ``mount``, ``dry_run``).
+
+        Returns:
+            The IDs of the deleted snapshots.
+
+        Raises:
+            org.mageia.manaradix.Error.InvalidArgs: Negative *keep_count*.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         return self._ctx.snapshot_manager.prune(
             _s(kwargs["subvolume"]),
             _s(kwargs["schedule"]),
@@ -245,14 +453,38 @@ class ManaradixHandler:
             dry_run=_b(kwargs.get("dry_run", False)),
         )
 
-    def handle_RenameSnapshot(self, kwargs) -> dict:
+    def handle_RenameSnapshot(self, kwargs: dict) -> dict:
+        """Rename a snapshot (update its description).
+
+        Args:
+            kwargs: Method arguments (``id``, ``mount``, ``description``).
+
+        Returns:
+            The renamed snapshot as a dict.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         snap = self._ctx.snapshot_manager.rename(
             self._get_snapshot(kwargs),
             _s(kwargs["description"]),
         )
         return snapshot_to_dbus(snap)
 
-    def handle_RestoreSnapshot(self, kwargs) -> dict:
+    def handle_RestoreSnapshot(self, kwargs: dict) -> dict:
+        """Restore a snapshot (swap method).
+
+        Args:
+            kwargs: Method arguments (``id``, ``mount``, ``dry_run``).
+
+        Returns:
+            The pre-restore snapshot as a dict.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         pre_restore = self._ctx.snapshot_manager.restore(
             self._get_snapshot(kwargs),
             mount=_s(kwargs.get("mount", "/")),
@@ -260,7 +492,20 @@ class ManaradixHandler:
         )
         return snapshot_to_dbus(pre_restore)
 
-    def handle_BrowseSnapshot(self, kwargs) -> bool:
+    def handle_BrowseSnapshot(self, kwargs: dict) -> bool:
+        """Mount a snapshot read-only for browsing.
+
+        Args:
+            kwargs: Method arguments (``id``, ``mount``, ``mount_point``,
+                ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.snapshot_manager.browse(
             self._get_snapshot(kwargs),
             _s(kwargs.get("mount_point", BROWSE_MOUNT_POINT)),
@@ -268,14 +513,38 @@ class ManaradixHandler:
         )
         return True
 
-    def handle_Unbrowse(self, kwargs) -> bool:
+    def handle_Unbrowse(self, kwargs: dict) -> bool:
+        """Unmount a snapshot mounted for browsing.
+
+        Args:
+            kwargs: Method arguments (``mount_point``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.snapshot_manager.unbrowse(
             _s(kwargs.get("mount_point", BROWSE_MOUNT_POINT)),
             dry_run=_b(kwargs.get("dry_run", False)),
         )
         return True
 
-    def handle_ExportSnapshot(self, kwargs) -> bool:
+    def handle_ExportSnapshot(self, kwargs: dict) -> bool:
+        """Export a snapshot as a ``btrfs send`` stream.
+
+        Args:
+            kwargs: Method arguments (``id``, ``mount``, ``output_file``,
+                ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.snapshot_manager.export_snapshot(
             self._get_snapshot(kwargs),
             _s(kwargs["output_file"]),
@@ -283,7 +552,19 @@ class ManaradixHandler:
         )
         return True
 
-    def handle_ImportSnapshot(self, kwargs) -> bool:
+    def handle_ImportSnapshot(self, kwargs: dict) -> bool:
+        """Import a snapshot from a ``btrfs receive`` stream.
+
+        Args:
+            kwargs: Method arguments (``input_file``, ``dest_path``,
+                ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.snapshot_manager.import_snapshot(
             _s(kwargs["input_file"]),
             _s(kwargs["dest_path"]),
@@ -293,7 +574,23 @@ class ManaradixHandler:
 
     # -- Tier 3: manage policies ---------------------------------------------
 
-    def handle_ApplyPolicy(self, kwargs) -> list[str]:
+    def handle_ApplyPolicy(self, kwargs: dict) -> list[str]:
+        """Apply a snapshot policy to a subvolume.
+
+        Args:
+            kwargs: Method arguments (``subvolume``, ``enabled``,
+                ``schedule_hourly``, ``schedule_daily``, ``schedule_weekly``,
+                ``schedule_monthly``, ``schedule_boot``, ``keep_hourly``,
+                ``keep_daily``, ``keep_weekly``, ``keep_monthly``,
+                ``keep_boot``, ``dry_run``).
+
+        Returns:
+            The unit file paths that were written.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The policy is invalid or the
+                systemd units could not be written.
+        """
         policy = policy_from_args(
             subvolume=kwargs["subvolume"],
             enabled=kwargs.get("enabled", True),
@@ -315,7 +612,19 @@ class ManaradixHandler:
             self._ctx.config_store.save()
         return written
 
-    def handle_RemovePolicy(self, kwargs) -> list[str]:
+    def handle_RemovePolicy(self, kwargs: dict) -> list[str]:
+        """Remove the snapshot policy of a subvolume.
+
+        Args:
+            kwargs: Method arguments (``subvolume``, ``dry_run``).
+
+        Returns:
+            The unit file paths that were removed.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The systemd units could not
+                be removed.
+        """
         subvolume = _s(kwargs["subvolume"])
         dry_run = _b(kwargs.get("dry_run", False))
         removed = self._ctx.policy_engine.remove_policy(
@@ -326,7 +635,20 @@ class ManaradixHandler:
             self._ctx.config_store.save()
         return removed
 
-    def handle_SetConfig(self, kwargs) -> bool:
+    def handle_SetConfig(self, kwargs: dict) -> bool:
+        """Update the global configuration.
+
+        Args:
+            kwargs: Method arguments (``default_subvolume``,
+                ``snapshot_dir``, ``boot_from_snapshot``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The configuration could not
+                be saved.
+        """
         store = self._ctx.config_store
         dry_run = _b(kwargs.get("dry_run", False))
         if kwargs.get("default_subvolume"):
@@ -339,7 +661,19 @@ class ManaradixHandler:
             store.save()
         return True
 
-    def handle_SetupApply(self, kwargs) -> dict:
+    def handle_SetupApply(self, kwargs: dict) -> dict:
+        """Apply a setup profile to the system.
+
+        Args:
+            kwargs: Method arguments (``profile_id``, ``dry_run``).
+
+        Returns:
+            A dict describing what the profile applied.
+
+        Raises:
+            org.mageia.manaradix.Error.InvalidArgs: Unknown profile ID.
+            org.mageia.manaradix.Error.Failed: The setup failed.
+        """
         from manaradix.core.setup_wizard import apply_profile
 
         profile_id = _s(kwargs.get("profile_id", "")) or None
@@ -349,7 +683,20 @@ class ManaradixHandler:
             dry_run=_b(kwargs.get("dry_run", False)),
         )
 
-    def handle_GrubInstall(self, kwargs) -> bool:
+    def handle_GrubInstall(self, kwargs: dict) -> bool:
+        """Install the manaradix GRUB script.
+
+        Args:
+            kwargs: Method arguments (``snapshot_dir``, ``subvol_name``,
+                ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The script could not be
+                installed.
+        """
         self._ctx.grub_integration.install_script(
             _s(kwargs.get("snapshot_dir", "/.snapshots")),
             _s(kwargs.get("subvol_name", "root")),
@@ -357,13 +704,36 @@ class ManaradixHandler:
         )
         return True
 
-    def handle_GrubUninstall(self, kwargs) -> bool:
+    def handle_GrubUninstall(self, kwargs: dict) -> bool:
+        """Remove the manaradix GRUB script.
+
+        Args:
+            kwargs: Method arguments (``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The script could not be
+                removed.
+        """
         self._ctx.grub_integration.uninstall_script(
             dry_run=_b(kwargs.get("dry_run", False))
         )
         return True
 
-    def handle_GrubUpdate(self, kwargs) -> bool:
+    def handle_GrubUpdate(self, kwargs: dict) -> bool:
+        """Regenerate the GRUB configuration.
+
+        Args:
+            kwargs: Method arguments (``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: GRUB regeneration failed.
+        """
         self._ctx.grub_integration.update_grub(
             dry_run=_b(kwargs.get("dry_run", False))
         )
@@ -371,7 +741,19 @@ class ManaradixHandler:
 
     # -- Tier 4: manage filesystem -------------------------------------------
 
-    def handle_BalanceStart(self, kwargs) -> bool:
+    def handle_BalanceStart(self, kwargs: dict) -> bool:
+        """Start a balance of a btrfs filesystem.
+
+        Args:
+            kwargs: Method arguments (``mount``, ``dusage``, ``musage``,
+                ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.btrfs_ops.balance_start(
             _s(kwargs.get("mount", "/")),
             dusage=_i(kwargs.get("dusage", 0)),
@@ -380,28 +762,72 @@ class ManaradixHandler:
         )
         return True
 
-    def handle_BalanceCancel(self, kwargs) -> bool:
+    def handle_BalanceCancel(self, kwargs: dict) -> bool:
+        """Cancel a running balance.
+
+        Args:
+            kwargs: Method arguments (``mount``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.btrfs_ops.balance_cancel(
             _s(kwargs.get("mount", "/")),
             dry_run=_b(kwargs.get("dry_run", False)),
         )
         return True
 
-    def handle_ScrubStart(self, kwargs) -> bool:
+    def handle_ScrubStart(self, kwargs: dict) -> bool:
+        """Start a scrub of a btrfs filesystem.
+
+        Args:
+            kwargs: Method arguments (``mount``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.btrfs_ops.scrub_start(
             _s(kwargs.get("mount", "/")),
             dry_run=_b(kwargs.get("dry_run", False)),
         )
         return True
 
-    def handle_ScrubCancel(self, kwargs) -> bool:
+    def handle_ScrubCancel(self, kwargs: dict) -> bool:
+        """Cancel a running scrub.
+
+        Args:
+            kwargs: Method arguments (``mount``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.btrfs_ops.scrub_cancel(
             _s(kwargs.get("mount", "/")),
             dry_run=_b(kwargs.get("dry_run", False)),
         )
         return True
 
-    def handle_Defragment(self, kwargs) -> bool:
+    def handle_Defragment(self, kwargs: dict) -> bool:
+        """Defragment a path on a btrfs filesystem.
+
+        Args:
+            kwargs: Method arguments (``path``, ``recursive``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.btrfs_ops.defragment(
             _s(kwargs["path"]),
             recursive=_b(kwargs.get("recursive", False)),
@@ -409,7 +835,18 @@ class ManaradixHandler:
         )
         return True
 
-    def handle_SetCompression(self, kwargs) -> bool:
+    def handle_SetCompression(self, kwargs: dict) -> bool:
+        """Set the compression algorithm of a subvolume.
+
+        Args:
+            kwargs: Method arguments (``path``, ``algorithm``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.btrfs_ops.set_compression(
             _s(kwargs["path"]),
             _s(kwargs["algorithm"]),
@@ -417,21 +854,54 @@ class ManaradixHandler:
         )
         return True
 
-    def handle_CreateSubvolume(self, kwargs) -> bool:
+    def handle_CreateSubvolume(self, kwargs: dict) -> bool:
+        """Create a subvolume.
+
+        Args:
+            kwargs: Method arguments (``path``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.btrfs_ops.create_subvolume(
             _s(kwargs["path"]),
             dry_run=_b(kwargs.get("dry_run", False)),
         )
         return True
 
-    def handle_DeleteSubvolume(self, kwargs) -> bool:
+    def handle_DeleteSubvolume(self, kwargs: dict) -> bool:
+        """Delete a subvolume.
+
+        Args:
+            kwargs: Method arguments (``path``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.btrfs_ops.delete_subvolume(
             _s(kwargs["path"]),
             dry_run=_b(kwargs.get("dry_run", False)),
         )
         return True
 
-    def handle_SetDefaultSubvolume(self, kwargs) -> bool:
+    def handle_SetDefaultSubvolume(self, kwargs: dict) -> bool:
+        """Set the default subvolume of a btrfs filesystem.
+
+        Args:
+            kwargs: Method arguments (``id``, ``mount``, ``dry_run``).
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+        """
         self._ctx.btrfs_ops.set_default_subvolume(
             _i(kwargs["id"]),
             _s(kwargs.get("mount", "/")),

@@ -69,35 +69,79 @@ class ConfigStore:
 
     @property
     def default_subvolume(self) -> str:
+        """The ``[global] default_subvolume`` value: the subvolume used
+        as the default target for operations.
+
+        Returns:
+            The default subvolume path (default ``"/"``).
+        """
         return self._default_subvolume
 
     @default_subvolume.setter
     def default_subvolume(self, value: str) -> None:
+        """Set the ``[global] default_subvolume`` value.
+
+        Args:
+            value: The default subvolume path.
+        """
         self._default_subvolume = value
 
     @property
     def snapshot_dir(self) -> str:
+        """The ``[global] snapshot_dir`` value: the directory, relative
+        to each btrfs mount, where snapshots are stored.
+
+        Returns:
+            The snapshot directory (default ``".snapshots"``).
+        """
         return self._snapshot_dir
 
     @snapshot_dir.setter
     def snapshot_dir(self, value: str) -> None:
+        """Set the ``[global] snapshot_dir`` value.
+
+        Args:
+            value: The snapshot directory relative to the btrfs mount.
+        """
         self._snapshot_dir = value
 
     @property
     def boot_from_snapshot(self) -> bool:
+        """The ``[global] boot_from_snapshot`` value: whether snapshots
+        appear as bootable entries in the GRUB menu.
+
+        Returns:
+            True when snapshots are listed in GRUB (default False).
+        """
         return self._boot_from_snapshot
 
     @boot_from_snapshot.setter
     def boot_from_snapshot(self, value: bool) -> None:
+        """Set the ``[global] boot_from_snapshot`` value.
+
+        Args:
+            value: Whether snapshots appear as bootable GRUB entries.
+        """
         self._boot_from_snapshot = value
 
     @property
     def snapshot_before_upgrade(self) -> bool:
-        """Whether a pre-upgrade snapshot is taken before package updates."""
+        """Whether a pre-upgrade snapshot is taken before package updates
+        (the ``[global] snapshot_before_upgrade`` value).
+
+        Returns:
+            True when pre-upgrade snapshots are enabled (default False).
+        """
         return self._snapshot_before_upgrade
 
     @snapshot_before_upgrade.setter
     def snapshot_before_upgrade(self, value: bool) -> None:
+        """Set the ``[global] snapshot_before_upgrade`` value.
+
+        Args:
+            value: Whether a pre-upgrade snapshot is taken before
+                package updates.
+        """
         self._snapshot_before_upgrade = value
 
     # ------------------------------------------------------------------

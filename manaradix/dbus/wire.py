@@ -76,91 +76,293 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, out_signature="s",
                          sender_keyword="sender")
-    def Ping(self, sender=None):
+    def Ping(self, sender=None) -> str:
+        """Check service liveness.
+
+        Returns:
+            The service version string.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("Ping", {}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="s", out_signature="aa{sv}",
                          sender_keyword="sender")
-    def ListSnapshots(self, mount, sender=None):
+    def ListSnapshots(self, mount: str, sender=None) -> list[dict]:
+        """List the snapshots on a btrfs filesystem.
+
+        Args:
+            mount: Mount point of the btrfs filesystem.
+
+        Returns:
+            One dict per snapshot.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("ListSnapshots", {"mount": mount}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="ss", out_signature="a{sv}",
                          sender_keyword="sender")
-    def GetSnapshot(self, snapshot_id, mount, sender=None):
+    def GetSnapshot(self, snapshot_id: str, mount: str,
+                    sender=None) -> dict:
+        """Get one snapshot by its ID.
+
+        Args:
+            snapshot_id: The snapshot ID (timestamp directory name).
+            mount: Mount point of the btrfs filesystem.
+
+        Returns:
+            The snapshot as a dict.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("GetSnapshot", {"id": snapshot_id, "mount": mount},
                               sender)
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="s", out_signature="aa{sv}",
                          sender_keyword="sender")
-    def ListSubvolumes(self, mount, sender=None):
+    def ListSubvolumes(self, mount: str, sender=None) -> list[dict]:
+        """List the subvolumes on a btrfs filesystem.
+
+        Args:
+            mount: Mount point of the btrfs filesystem.
+
+        Returns:
+            One dict per subvolume.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("ListSubvolumes", {"mount": mount}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="s", out_signature="a{sv}",
                          sender_keyword="sender")
-    def FilesystemUsage(self, mount, sender=None):
+    def FilesystemUsage(self, mount: str, sender=None) -> dict:
+        """Get the usage of a btrfs filesystem.
+
+        Args:
+            mount: Mount point of the btrfs filesystem.
+
+        Returns:
+            The filesystem usage dict.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("FilesystemUsage", {"mount": mount}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, out_signature="aa{sv}",
                          sender_keyword="sender")
-    def FilesystemShow(self, sender=None):
+    def FilesystemShow(self, sender=None) -> list[dict]:
+        """List all btrfs filesystems with their devices and sizes.
+
+        Returns:
+            One dict per filesystem.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("FilesystemShow", {}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, out_signature="aa{sv}",
                          sender_keyword="sender")
-    def BtrfsMounts(self, sender=None):
+    def BtrfsMounts(self, sender=None) -> list[dict]:
+        """List the mounted btrfs filesystems.
+
+        Returns:
+            One dict per mount.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("BtrfsMounts", {}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="s", out_signature="a{sv}",
                          sender_keyword="sender")
-    def BalanceStatus(self, mount, sender=None):
+    def BalanceStatus(self, mount: str, sender=None) -> dict:
+        """Get the balance status of a btrfs filesystem.
+
+        Args:
+            mount: Mount point of the btrfs filesystem.
+
+        Returns:
+            The balance status dict (total / relocated / running).
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("BalanceStatus", {"mount": mount}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="s", out_signature="a{sv}",
                          sender_keyword="sender")
-    def ScrubStatus(self, mount, sender=None):
+    def ScrubStatus(self, mount: str, sender=None) -> dict:
+        """Get the scrub status of a btrfs filesystem.
+
+        Args:
+            mount: Mount point of the btrfs filesystem.
+
+        Returns:
+            The scrub status dict (extents / errors / running).
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("ScrubStatus", {"mount": mount}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="s", out_signature="s",
                          sender_keyword="sender")
-    def GetCompression(self, path, sender=None):
+    def GetCompression(self, path: str, sender=None) -> str:
+        """Get the compression algorithm of a subvolume.
+
+        Args:
+            path: Subvolume path.
+
+        Returns:
+            The compression algorithm name (empty string when unset).
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("GetCompression", {"path": path}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, out_signature="aa{sv}",
                          sender_keyword="sender")
-    def ListPolicies(self, sender=None):
+    def ListPolicies(self, sender=None) -> list[dict]:
+        """List the configured snapshot policies.
+
+        Returns:
+            One dict per policy.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The configuration could not
+                be read.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("ListPolicies", {}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, out_signature="a{sv}",
                          sender_keyword="sender")
-    def GetConfig(self, sender=None):
+    def GetConfig(self, sender=None) -> dict:
+        """Get the global configuration.
+
+        Returns:
+            The configuration dict.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The configuration could not
+                be read.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("GetConfig", {}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, out_signature="a{sv}",
                          sender_keyword="sender")
-    def SetupStatus(self, sender=None):
+    def SetupStatus(self, sender=None) -> dict:
+        """Report whether the setup wizard is needed and the system role.
+
+        Returns:
+            The setup status dict (needs_setup / role / default_profile /
+            root_is_btrfs / grub_present).
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The system layout could not
+                be determined.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("SetupStatus", {}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, out_signature="aa{sv}",
                          sender_keyword="sender")
-    def ListSetupProfiles(self, sender=None):
+    def ListSetupProfiles(self, sender=None) -> list[dict]:
+        """List the available setup profiles.
+
+        Returns:
+            One dict per profile.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The profiles could not be
+                loaded.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("ListSetupProfiles", {}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, out_signature="b",
                          sender_keyword="sender")
-    def GrubIsInstalled(self, sender=None):
+    def GrubIsInstalled(self, sender=None) -> bool:
+        """Check whether the manaradix GRUB script is installed.
+
+        Returns:
+            True when ``/etc/grub.d/41_manaradix`` exists.
+
+        Requires the read polkit action.
+        """
         return self._dispatch("GrubIsInstalled", {}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, out_signature="as",
                          sender_keyword="sender")
-    def GrubListEntries(self, sender=None):
+    def GrubListEntries(self, sender=None) -> list[str]:
+        """List the snapshot entries of the manaradix GRUB script.
+
+        Returns:
+            The entry labels (empty when the script is not installed).
+
+        Requires the read polkit action.
+        """
         return self._dispatch("GrubListEntries", {}, sender)
 
     # -- Tier 2: manage snapshots -------------------------------------------
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="ssbsssb",
                          out_signature="a{sv}", sender_keyword="sender")
-    def CreateSnapshot(self, subvolume, description, read_only, snapshot_type,
-                       schedule, mount, dry_run, sender=None):
+    def CreateSnapshot(self, subvolume: str, description: str,
+                       read_only: bool, snapshot_type: str, schedule: str,
+                       mount: str, dry_run: bool, sender=None) -> dict:
+        """Create a snapshot of a subvolume.
+
+        Args:
+            subvolume: Source subvolume path.
+            description: Snapshot description.
+            read_only: Create a read-only snapshot.
+            snapshot_type: Snapshot type name (``manual``, ``pre-upgrade``,
+                ...).
+            schedule: Schedule label (e.g. ``daily``).
+            mount: Mount point of the btrfs filesystem.
+            dry_run: Preview only.
+
+        Returns:
+            The created snapshot as a dict.
+
+        Raises:
+            org.mageia.manaradix.Error.InvalidArgs: Unknown snapshot type.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-snapshots polkit action.
+        """
         return self._dispatch(
             "CreateSnapshot",
             {"subvolume": subvolume, "description": description,
@@ -171,7 +373,24 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="ssb", out_signature="b",
                          sender_keyword="sender")
-    def DeleteSnapshot(self, snapshot_id, mount, dry_run, sender=None):
+    def DeleteSnapshot(self, snapshot_id: str, mount: str, dry_run: bool,
+                       sender=None) -> bool:
+        """Delete a snapshot and its metadata.
+
+        Args:
+            snapshot_id: The snapshot ID to delete.
+            mount: Mount point of the btrfs filesystem.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-snapshots polkit action.
+        """
         return self._dispatch(
             "DeleteSnapshot", {"id": snapshot_id, "mount": mount,
                                "dry_run": dry_run}, sender
@@ -179,8 +398,28 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="ssisb",
                          out_signature="as", sender_keyword="sender")
-    def PruneSnapshots(self, subvolume, schedule, keep_count, mount, dry_run,
-                       sender=None):
+    def PruneSnapshots(self, subvolume: str, schedule: str,
+                       keep_count: int, mount: str, dry_run: bool,
+                       sender=None) -> list[str]:
+        """Prune a subvolume/schedule tier, keeping the most recent snapshots.
+
+        Args:
+            subvolume: Subvolume path to prune.
+            schedule: Schedule tier (``hourly``, ``daily``, ``weekly``,
+                ``monthly``, ``boot``).
+            keep_count: Number of most recent snapshots to keep.
+            mount: Mount point of the btrfs filesystem.
+            dry_run: Preview only.
+
+        Returns:
+            The IDs of the deleted snapshots.
+
+        Raises:
+            org.mageia.manaradix.Error.InvalidArgs: Negative *keep_count*.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-snapshots polkit action.
+        """
         return self._dispatch(
             "PruneSnapshots",
             {"subvolume": subvolume, "schedule": schedule,
@@ -190,7 +429,24 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sss", out_signature="a{sv}",
                          sender_keyword="sender")
-    def RenameSnapshot(self, snapshot_id, mount, description, sender=None):
+    def RenameSnapshot(self, snapshot_id: str, mount: str,
+                       description: str, sender=None) -> dict:
+        """Rename a snapshot (update its description).
+
+        Args:
+            snapshot_id: The snapshot ID to rename.
+            mount: Mount point of the btrfs filesystem.
+            description: The new description.
+
+        Returns:
+            The renamed snapshot as a dict.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-snapshots polkit action.
+        """
         return self._dispatch(
             "RenameSnapshot", {"id": snapshot_id, "mount": mount,
                                "description": description}, sender
@@ -198,7 +454,24 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="ssb", out_signature="a{sv}",
                          sender_keyword="sender")
-    def RestoreSnapshot(self, snapshot_id, mount, dry_run, sender=None):
+    def RestoreSnapshot(self, snapshot_id: str, mount: str, dry_run: bool,
+                        sender=None) -> dict:
+        """Restore a snapshot (swap method).
+
+        Args:
+            snapshot_id: The snapshot ID to restore.
+            mount: Mount point of the btrfs filesystem.
+            dry_run: Preview only.
+
+        Returns:
+            The pre-restore snapshot as a dict.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-snapshots polkit action.
+        """
         return self._dispatch(
             "RestoreSnapshot", {"id": snapshot_id, "mount": mount,
                                 "dry_run": dry_run}, sender
@@ -206,8 +479,25 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sssb", out_signature="b",
                          sender_keyword="sender")
-    def BrowseSnapshot(self, snapshot_id, mount, mount_point, dry_run,
-                       sender=None):
+    def BrowseSnapshot(self, snapshot_id: str, mount: str,
+                       mount_point: str, dry_run: bool, sender=None) -> bool:
+        """Mount a snapshot read-only for browsing.
+
+        Args:
+            snapshot_id: The snapshot ID to browse.
+            mount: Mount point of the btrfs filesystem.
+            mount_point: Directory to mount the snapshot at.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-snapshots polkit action.
+        """
         return self._dispatch(
             "BrowseSnapshot",
             {"id": snapshot_id, "mount": mount, "mount_point": mount_point,
@@ -217,7 +507,21 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sb", out_signature="b",
                          sender_keyword="sender")
-    def Unbrowse(self, mount_point, dry_run, sender=None):
+    def Unbrowse(self, mount_point: str, dry_run: bool, sender=None) -> bool:
+        """Unmount a snapshot mounted for browsing.
+
+        Args:
+            mount_point: Directory the snapshot is mounted at.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-snapshots polkit action.
+        """
         return self._dispatch(
             "Unbrowse", {"mount_point": mount_point, "dry_run": dry_run},
             sender,
@@ -225,8 +529,25 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sssb", out_signature="b",
                          sender_keyword="sender")
-    def ExportSnapshot(self, snapshot_id, mount, output_file, dry_run,
-                       sender=None):
+    def ExportSnapshot(self, snapshot_id: str, mount: str,
+                       output_file: str, dry_run: bool, sender=None) -> bool:
+        """Export a snapshot as a ``btrfs send`` stream.
+
+        Args:
+            snapshot_id: The snapshot ID to export.
+            mount: Mount point of the btrfs filesystem.
+            output_file: Destination path for the stream.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.NotFound: No snapshot with that ID.
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-snapshots polkit action.
+        """
         return self._dispatch(
             "ExportSnapshot",
             {"id": snapshot_id, "mount": mount, "output_file": output_file,
@@ -236,7 +557,23 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="ssb", out_signature="b",
                          sender_keyword="sender")
-    def ImportSnapshot(self, input_file, dest_path, dry_run, sender=None):
+    def ImportSnapshot(self, input_file: str, dest_path: str,
+                       dry_run: bool, sender=None) -> bool:
+        """Import a snapshot from a ``btrfs receive`` stream.
+
+        Args:
+            input_file: Path of the snapshot stream to import.
+            dest_path: Destination subvolume directory for the import.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-snapshots polkit action.
+        """
         return self._dispatch(
             "ImportSnapshot", {"input_file": input_file,
                                "dest_path": dest_path, "dry_run": dry_run},
@@ -247,10 +584,38 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sbbbbbbiiiiib",
                          out_signature="as", sender_keyword="sender")
-    def ApplyPolicy(self, subvolume, enabled, schedule_hourly, schedule_daily,
-                    schedule_weekly, schedule_monthly, schedule_boot,
-                    keep_hourly, keep_daily, keep_weekly, keep_monthly,
-                    keep_boot, dry_run, sender=None):
+    def ApplyPolicy(self, subvolume: str, enabled: bool,
+                    schedule_hourly: bool, schedule_daily: bool,
+                    schedule_weekly: bool, schedule_monthly: bool,
+                    schedule_boot: bool, keep_hourly: int, keep_daily: int,
+                    keep_weekly: int, keep_monthly: int, keep_boot: int,
+                    dry_run: bool, sender=None) -> list[str]:
+        """Apply a snapshot policy to a subvolume.
+
+        Args:
+            subvolume: Subvolume path the policy applies to.
+            enabled: Whether the policy is enabled.
+            schedule_hourly: Enable the hourly schedule.
+            schedule_daily: Enable the daily schedule.
+            schedule_weekly: Enable the weekly schedule.
+            schedule_monthly: Enable the monthly schedule.
+            schedule_boot: Enable the boot schedule.
+            keep_hourly: Snapshots to keep in the hourly tier.
+            keep_daily: Snapshots to keep in the daily tier.
+            keep_weekly: Snapshots to keep in the weekly tier.
+            keep_monthly: Snapshots to keep in the monthly tier.
+            keep_boot: Snapshots to keep in the boot tier.
+            dry_run: Preview only.
+
+        Returns:
+            The unit file paths that were written.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The policy is invalid or the
+                systemd units could not be written.
+
+        Requires the manage-policies polkit action.
+        """
         return self._dispatch(
             "ApplyPolicy",
             {"subvolume": subvolume, "enabled": enabled,
@@ -267,7 +632,23 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sb", out_signature="as",
                          sender_keyword="sender")
-    def RemovePolicy(self, subvolume, dry_run, sender=None):
+    def RemovePolicy(self, subvolume: str, dry_run: bool,
+                     sender=None) -> list[str]:
+        """Remove the snapshot policy of a subvolume.
+
+        Args:
+            subvolume: Subvolume path to remove the policy for.
+            dry_run: Preview only.
+
+        Returns:
+            The unit file paths that were removed.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The systemd units could not
+                be removed.
+
+        Requires the manage-policies polkit action.
+        """
         return self._dispatch(
             "RemovePolicy", {"subvolume": subvolume, "dry_run": dry_run},
             sender,
@@ -275,8 +656,26 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="ssbb", out_signature="b",
                          sender_keyword="sender")
-    def SetConfig(self, default_subvolume, snapshot_dir, boot_from_snapshot,
-                  dry_run, sender=None):
+    def SetConfig(self, default_subvolume: str, snapshot_dir: str,
+                  boot_from_snapshot: bool, dry_run: bool,
+                  sender=None) -> bool:
+        """Update the global configuration.
+
+        Args:
+            default_subvolume: The default subvolume path.
+            snapshot_dir: The snapshot directory name.
+            boot_from_snapshot: Enable booting from snapshots in GRUB.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The configuration could not
+                be saved.
+
+        Requires the manage-policies polkit action.
+        """
         return self._dispatch(
             "SetConfig",
             {"default_subvolume": default_subvolume,
@@ -287,7 +686,23 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sb", out_signature="a{sv}",
                          sender_keyword="sender")
-    def SetupApply(self, profile_id, dry_run, sender=None):
+    def SetupApply(self, profile_id: str, dry_run: bool,
+                   sender=None) -> dict:
+        """Apply a setup profile to the system.
+
+        Args:
+            profile_id: The profile ID to apply (empty for the default).
+            dry_run: Preview only.
+
+        Returns:
+            A dict describing what the profile applied.
+
+        Raises:
+            org.mageia.manaradix.Error.InvalidArgs: Unknown profile ID.
+            org.mageia.manaradix.Error.Failed: The setup failed.
+
+        Requires the manage-policies polkit action.
+        """
         return self._dispatch(
             "SetupApply", {"profile_id": profile_id, "dry_run": dry_run},
             sender,
@@ -295,7 +710,24 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="ssb", out_signature="b",
                          sender_keyword="sender")
-    def GrubInstall(self, snapshot_dir, subvol_name, dry_run, sender=None):
+    def GrubInstall(self, snapshot_dir: str, subvol_name: str, dry_run: bool,
+                    sender=None) -> bool:
+        """Install the manaradix GRUB script.
+
+        Args:
+            snapshot_dir: Snapshot directory name used in the entries.
+            subvol_name: Subvolume name used in the entries.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The script could not be
+                installed.
+
+        Requires the manage-policies polkit action.
+        """
         return self._dispatch(
             "GrubInstall", {"snapshot_dir": snapshot_dir,
                             "subvol_name": subvol_name, "dry_run": dry_run},
@@ -304,21 +736,65 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="b", out_signature="b",
                          sender_keyword="sender")
-    def GrubUninstall(self, dry_run, sender=None):
+    def GrubUninstall(self, dry_run: bool, sender=None) -> bool:
+        """Remove the manaradix GRUB script.
+
+        Args:
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The script could not be
+                removed.
+
+        Requires the manage-policies polkit action.
+        """
         return self._dispatch(
             "GrubUninstall", {"dry_run": dry_run}, sender
         )
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="b", out_signature="b",
                          sender_keyword="sender")
-    def GrubUpdate(self, dry_run, sender=None):
+    def GrubUpdate(self, dry_run: bool, sender=None) -> bool:
+        """Regenerate the GRUB configuration.
+
+        Args:
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: GRUB regeneration failed.
+
+        Requires the manage-policies polkit action.
+        """
         return self._dispatch("GrubUpdate", {"dry_run": dry_run}, sender)
 
     # -- Tier 4: manage filesystem -------------------------------------------
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="siib", out_signature="b",
                          sender_keyword="sender")
-    def BalanceStart(self, mount, dusage, musage, dry_run, sender=None):
+    def BalanceStart(self, mount: str, dusage: int, musage: int,
+                     dry_run: bool, sender=None) -> bool:
+        """Start a balance of a btrfs filesystem.
+
+        Args:
+            mount: Mount point of the btrfs filesystem.
+            dusage: Balance data usage threshold (percent).
+            musage: Balance metadata usage threshold (percent).
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-filesystem polkit action.
+        """
         return self._dispatch(
             "BalanceStart", {"mount": mount, "dusage": dusage,
                              "musage": musage, "dry_run": dry_run}, sender
@@ -326,28 +802,86 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sb", out_signature="b",
                          sender_keyword="sender")
-    def BalanceCancel(self, mount, dry_run, sender=None):
+    def BalanceCancel(self, mount: str, dry_run: bool, sender=None) -> bool:
+        """Cancel a running balance.
+
+        Args:
+            mount: Mount point of the btrfs filesystem.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-filesystem polkit action.
+        """
         return self._dispatch(
             "BalanceCancel", {"mount": mount, "dry_run": dry_run}, sender
         )
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sb", out_signature="b",
                          sender_keyword="sender")
-    def ScrubStart(self, mount, dry_run, sender=None):
+    def ScrubStart(self, mount: str, dry_run: bool, sender=None) -> bool:
+        """Start a scrub of a btrfs filesystem.
+
+        Args:
+            mount: Mount point of the btrfs filesystem.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-filesystem polkit action.
+        """
         return self._dispatch(
             "ScrubStart", {"mount": mount, "dry_run": dry_run}, sender
         )
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sb", out_signature="b",
                          sender_keyword="sender")
-    def ScrubCancel(self, mount, dry_run, sender=None):
+    def ScrubCancel(self, mount: str, dry_run: bool, sender=None) -> bool:
+        """Cancel a running scrub.
+
+        Args:
+            mount: Mount point of the btrfs filesystem.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-filesystem polkit action.
+        """
         return self._dispatch(
             "ScrubCancel", {"mount": mount, "dry_run": dry_run}, sender
         )
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sbb", out_signature="b",
                          sender_keyword="sender")
-    def Defragment(self, path, recursive, dry_run, sender=None):
+    def Defragment(self, path: str, recursive: bool, dry_run: bool,
+                   sender=None) -> bool:
+        """Defragment a path on a btrfs filesystem.
+
+        Args:
+            path: Filesystem path to defragment.
+            recursive: Defragment the directory tree recursively.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-filesystem polkit action.
+        """
         return self._dispatch(
             "Defragment", {"path": path, "recursive": recursive,
                            "dry_run": dry_run}, sender
@@ -355,7 +889,23 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="ssb", out_signature="b",
                          sender_keyword="sender")
-    def SetCompression(self, path, algorithm, dry_run, sender=None):
+    def SetCompression(self, path: str, algorithm: str, dry_run: bool,
+                       sender=None) -> bool:
+        """Set the compression algorithm of a subvolume.
+
+        Args:
+            path: Subvolume path.
+            algorithm: Compression algorithm name (e.g. ``zstd``).
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-filesystem polkit action.
+        """
         return self._dispatch(
             "SetCompression", {"path": path, "algorithm": algorithm,
                                "dry_run": dry_run}, sender
@@ -363,21 +913,65 @@ class ManaradixService(dbus.service.Object):
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sb", out_signature="b",
                          sender_keyword="sender")
-    def CreateSubvolume(self, path, dry_run, sender=None):
+    def CreateSubvolume(self, path: str, dry_run: bool, sender=None) -> bool:
+        """Create a subvolume.
+
+        Args:
+            path: Path of the new subvolume.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-filesystem polkit action.
+        """
         return self._dispatch(
             "CreateSubvolume", {"path": path, "dry_run": dry_run}, sender
         )
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="sb", out_signature="b",
                          sender_keyword="sender")
-    def DeleteSubvolume(self, path, dry_run, sender=None):
+    def DeleteSubvolume(self, path: str, dry_run: bool, sender=None) -> bool:
+        """Delete a subvolume.
+
+        Args:
+            path: Path of the subvolume to delete.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-filesystem polkit action.
+        """
         return self._dispatch(
             "DeleteSubvolume", {"path": path, "dry_run": dry_run}, sender
         )
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="isb", out_signature="b",
                          sender_keyword="sender")
-    def SetDefaultSubvolume(self, subvol_id, mount, dry_run, sender=None):
+    def SetDefaultSubvolume(self, subvol_id: int, mount: str, dry_run: bool,
+                            sender=None) -> bool:
+        """Set the default subvolume of a btrfs filesystem.
+
+        Args:
+            subvol_id: The subvolume ID to make default.
+            mount: Mount point of the btrfs filesystem.
+            dry_run: Preview only.
+
+        Returns:
+            True on success.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs operation failed.
+
+        Requires the manage-filesystem polkit action.
+        """
         return self._dispatch(
             "SetDefaultSubvolume", {"id": subvol_id, "mount": mount,
                                     "dry_run": dry_run}, sender
