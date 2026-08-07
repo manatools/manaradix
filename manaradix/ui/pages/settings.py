@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from manaradix.core.pre_upgrade import is_installed, install_script
 from manaradix.i18n import _
 from manaradix.ui.model import PageModel, Widget
 
@@ -241,8 +242,11 @@ class SettingsPage:
         """Toggle pre-upgrade snapshots.
 
         The rpm trigger is always installed with the package; the config
-        flag is the whole activation.  The change is persisted by the
-        Save Settings button, like the other global settings.
+        flag is the whole activation.  A development checkout has no
+        RPM, though: enabling installs the missing trigger script on
+        demand (a failed install leaves the flag off).  The change is
+        persisted by the Save Settings button, like the other global
+        settings.
 
         Args:
             value: The checkbox's new state (handed by the renderer);
@@ -251,7 +255,17 @@ class SettingsPage:
         """
         if value is None:
             value = not self.app.config_store.snapshot_before_upgrade
-        self.app.config_store.snapshot_before_upgrade = bool(value)
+        value = bool(value)
+        if value and not is_installed():
+            try:
+                install_script()
+            except Exception as exc:
+                # Without the script the trigger would not fire: keep the
+                # flag off rather than promising snapshots that cannot
+                # happen.
+                logger.error("Failed to install pre-upgrade trigger script: %s", exc)
+                return
+        self.app.config_store.snapshot_before_upgrade = value
 
     # -- Callbacks: compression ---------------------------------------------
 

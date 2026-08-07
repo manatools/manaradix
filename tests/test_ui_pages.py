@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 from manaradix.model.snapshot import SnapshotType
 from manaradix.ui.pages.about import AboutPage
 from manaradix.ui.pages.dashboard import DashboardPage
+from manaradix.ui.pages.settings import SettingsPage
 from manaradix.ui.pages.snapshots import SnapshotsPage
 
 
@@ -209,3 +210,50 @@ class TestSnapshotsPageErrors:
         assert all(
             s["title"] != "Error" for s in page.build_model().sections
         )
+
+
+# ---------------------------------------------------------------------------
+# Settings page
+# ---------------------------------------------------------------------------
+
+
+class TestSettingsPreUpgradeToggle:
+    def test_toggle_on_installs_missing_script(self, tmp_path, monkeypatch) -> None:
+        """A development checkout has no RPM: enabling installs the
+        trigger script on demand (same contract as the Triggers page)."""
+        import manaradix.core.pre_upgrade as pre_upgrade_mod
+
+        script = tmp_path / "libexec" / "manaradix" / "pre-upgrade"
+        monkeypatch.setattr(pre_upgrade_mod, "SCRIPT_PATH", str(script))
+        page = SettingsPage(app_context=_app())
+        page.on_snapshot_before_upgrade_toggle(True)
+        assert script.is_file()
+        assert page.app.config_store.snapshot_before_upgrade is True
+
+    def test_toggle_on_with_script_present_skips_install(
+        self, tmp_path, monkeypatch
+    ) -> None:
+        monkeypatch.setattr("manaradix.ui.pages.settings.is_installed", lambda: True)
+        page = SettingsPage(app_context=_app())
+        page.on_snapshot_before_upgrade_toggle(True)
+        assert page.app.config_store.snapshot_before_upgrade is True
+
+    def test_toggle_off_never_installs(self, tmp_path, monkeypatch) -> None:
+        page = SettingsPage(app_context=_app())
+        page.app.config_store.snapshot_before_upgrade = True
+        page.on_snapshot_before_upgrade_toggle(False)
+        assert page.app.config_store.snapshot_before_upgrade is False
+
+    def test_install_failure_keeps_flag_off(self, tmp_path, monkeypatch) -> None:
+        """Without the script the trigger cannot fire: a failed install
+        must not leave the flag on promising snapshots that cannot
+        happen."""
+        monkeypatch.setattr(
+            "manaradix.ui.pages.settings.install_script",
+            MagicMock(side_effect=PermissionError(13, "nope")),
+        )
+        page = SettingsPage(app_context=_app())
+        page.app.config_store.snapshot_before_upgrade = False
+        page.on_snapshot_before_upgrade_toggle(True)
+        # The failed install left the flag untouched.
+        assert page.app.config_store.snapshot_before_upgrade is False
