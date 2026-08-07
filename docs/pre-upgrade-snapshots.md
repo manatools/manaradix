@@ -177,6 +177,13 @@ keep_pre_upgrade = 3             # NEW keep_* key (templates._KEEP_FIELDS)
 - **Policies page** (`ui/pages/policies.py`): `keep_pre_upgrade` joins
   `_RETENTION_KEYS`, so the retention summary and editor show "Keep
   pre-upgrade" like the other tiers.
+- **Triggers page** (`ui/pages/triggers.py`): the pre-upgrade row shows
+  "script missing" when the flag is on but the trigger script is absent
+  (a development checkout has no RPM to install it).  Enabling the
+  trigger then installs the script on demand from the embedded copy in
+  `core/pre_upgrade.py` (`install_script()`, root needed for
+  `/usr/libexec/manaradix/`); the embedded source is kept byte-identical
+  to `data/libexec/manaradix-pre-upgrade` by a parity test.
 
 ## 9. RPM packaging
 

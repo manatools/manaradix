@@ -1,5 +1,7 @@
 """Tests for the Triggers page (view + enable/disable of snapshot triggers)."""
 
+import stat
+
 from unittest.mock import MagicMock
 
 from manaradix.core.config_store import ConfigStore
@@ -221,12 +223,35 @@ class TestTriggerActions:
         app.policy_engine.remove_policy.assert_called_once_with("/")
         assert app.config_store.get_policy("/") is None
 
-    def test_enable_pre_upgrade_sets_flag(self, tmp_path) -> None:
+    def test_enable_pre_upgrade_sets_flag(self, tmp_path, monkeypatch) -> None:
+        # Script already installed (an RPM install): enabling is a pure
+        # config flip, no install attempt.
+        monkeypatch.setattr("manaradix.ui.pages.triggers.is_installed", lambda: True)
         page, app = _make_page(tmp_path, snapshot_before_upgrade=False)
         page._selected = {"Subvolume": "/", "Schedule": "pre-upgrade"}
         page.on_enable_trigger()
         assert app.config_store.snapshot_before_upgrade is True
         app.policy_engine.apply_policy.assert_not_called()
+
+    def test_enable_pre_upgrade_installs_missing_script(
+        self, tmp_path, monkeypatch
+    ) -> None:
+        """A development checkout has no RPM to ship the trigger script:
+        enabling installs it, so the row leaves the "script missing"
+        state."""
+        import manaradix.core.pre_upgrade as pre_upgrade_mod
+
+        script = tmp_path / "libexec" / "manaradix" / "pre-upgrade"
+        monkeypatch.setattr(pre_upgrade_mod, "SCRIPT_PATH", str(script))
+        page, app = _make_page(tmp_path, snapshot_before_upgrade=False)
+        page._selected = {"Subvolume": "/", "Schedule": "pre-upgrade"}
+        page.on_enable_trigger()
+        assert script.is_file()
+        assert stat.S_IMODE(script.stat().st_mode) == 0o755
+        assert app.config_store.snapshot_before_upgrade is True
+        # The rebuilt row reports "enabled", not "script missing".
+        row = _row(page, "/", "pre-upgrade")
+        assert row["State"] == "enabled"
 
     def test_disable_pre_upgrade_clears_flag(self, tmp_path) -> None:
         page, app = _make_page(tmp_path, snapshot_before_upgrade=True)

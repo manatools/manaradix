@@ -11,13 +11,13 @@ policy.
 from __future__ import annotations
 
 import logging
-import os
 import re
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from manaradix.core import activity_status as activity_status_mod
 from manaradix.core.activity_status import ActivityStatus, merge_never
+from manaradix.core.pre_upgrade import is_installed, install_script
 from manaradix.i18n import _
 from manaradix.model.policy import SnapshotPolicy
 from manaradix.ui.model import PageModel, Widget
@@ -26,10 +26,6 @@ if TYPE_CHECKING:
     from manaradix.module import AppContext
 
 logger = logging.getLogger(__name__)
-
-#: Pre-upgrade trigger script installed by the RPM (see
-#: data/libexec/manaradix-pre-upgrade).
-_PRE_UPGRADE_SCRIPT = "/usr/libexec/manaradix/pre-upgrade"
 
 #: Parse generated unit names back into (subvolume, schedule).  The
 #: sanitized fragment is reversible: "/" becomes "root", "/home" becomes
@@ -169,7 +165,7 @@ class TriggersPage:
     def _pre_upgrade_row(self) -> dict:
         """The rpm file trigger: config flag + installed script + evidence."""
         enabled = bool(self.app.config_store.snapshot_before_upgrade)
-        if enabled and not os.path.isfile(_PRE_UPGRADE_SCRIPT):
+        if enabled and not is_installed():
             state = _("script missing")
         else:
             state = _("enabled") if enabled else _("disabled")
@@ -273,6 +269,11 @@ class TriggersPage:
         subvolume, schedule = row["Subvolume"], row["Schedule"]
         try:
             if schedule == "pre-upgrade":
+                # A development checkout has no RPM to ship the trigger
+                # script; install it on demand so enabling actually
+                # works.  Install first: a failure leaves the flag off.
+                if enabled and not is_installed():
+                    install_script()
                 self.app.config_store.snapshot_before_upgrade = enabled
                 self.app.config_store.save()
                 return

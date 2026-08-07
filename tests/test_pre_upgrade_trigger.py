@@ -18,6 +18,8 @@ import subprocess
 import time
 from pathlib import Path
 
+from manaradix.core.pre_upgrade import SCRIPT_PATH, SCRIPT_SOURCE, install_script
+
 TRIGGER = (
     Path(__file__).resolve().parents[1] / "data" / "libexec" / "manaradix-pre-upgrade"
 )
@@ -119,3 +121,24 @@ class TestTriggerContract:
         run_trigger(tmp_path, cli=cli, throttle="1")
         log = (tmp_path / "invocations.log").read_text()
         assert log.count("snapshot") == 2
+
+
+class TestEmbeddedSource:
+    """The on-demand installer must write exactly what the RPM ships."""
+
+    def test_embedded_source_matches_data_file(self) -> None:
+        assert SCRIPT_SOURCE == TRIGGER.read_text(encoding="utf-8")
+
+    def test_install_script_writes_executable(self, tmp_path) -> None:
+        target = tmp_path / "libexec" / "manaradix" / "pre-upgrade"
+        install_script(str(target))
+        assert target.read_text(encoding="utf-8") == SCRIPT_SOURCE
+        assert stat.S_IMODE(target.stat().st_mode) == 0o755
+
+    def test_install_script_dry_run_writes_nothing(self, tmp_path) -> None:
+        target = tmp_path / "pre-upgrade"
+        assert install_script(str(target), dry_run=True) == str(target)
+        assert not target.exists()
+
+    def test_install_script_default_path(self) -> None:
+        assert install_script(dry_run=True) == SCRIPT_PATH
