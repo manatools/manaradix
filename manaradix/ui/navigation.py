@@ -15,6 +15,7 @@ from manaradix.ui.pages.policies import PoliciesPage
 from manaradix.ui.pages.settings import SettingsPage
 from manaradix.ui.pages.setup import SetupWizardPage
 from manaradix.ui.pages.snapshots import SnapshotsPage
+from manaradix.ui.pages.triggers import TriggersPage
 
 if TYPE_CHECKING:
     from manaradix.module import AppContext
@@ -35,6 +36,7 @@ def build_navigation(app_context: AppContext) -> list:
         DashboardPage(app_context),
         SnapshotsPage(app_context),
         PoliciesPage(app_context),
+        TriggersPage(app_context),
         SettingsPage(app_context),
         AboutPage(app_context),
     ]

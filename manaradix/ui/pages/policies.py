@@ -120,7 +120,9 @@ class PoliciesPage:
                 ],
             }
 
-        # Schedule toggles
+        # Schedule toggles — each checkbox carries a closure so its
+        # callback knows which schedule it belongs to (the renderer hands
+        # the new checked value to every on_change).
         schedule_fields = []
         for key in _SCHEDULE_KEYS:
             active = key in policy.active_schedules
@@ -129,7 +131,7 @@ class PoliciesPage:
                     id=f"schedule_{key}",
                     label=_("On %s") % _SCHEDULE_LABELS[key],
                     checked=active,
-                    on_change=self.on_schedule_toggle,
+                    on_change=lambda value, k=key: self.on_schedule_toggle(k, value),
                 )
             )
 
@@ -144,7 +146,7 @@ class PoliciesPage:
                     value=current,
                     min_val=0,
                     max_val=999,
-                    on_change=self.on_retention_change,
+                    on_change=lambda value, k=key: self.on_retention_change(k, value),
                 )
             )
 
@@ -229,34 +231,71 @@ class PoliciesPage:
         except Exception as exc:
             logger.error("Failed to add policy: %s", exc)
 
-    def on_schedule_toggle(self) -> None:
-        """Toggle a schedule on/off for the selected policy.
+    def on_schedule_toggle(self, schedule: str, value: bool | None = None) -> None:
+        """Set one schedule on/off for the selected policy and re-apply.
 
-        In a full UI the widget id and checked state are read from the
-        event.  This stub marks the page as needing a save+apply.
+        Args:
+            schedule: The schedule tier (hourly/daily/weekly/monthly/boot).
+            value: The new checked state (handed by the renderer); None
+                toggles the current state.
         """
-        pass
+        policy = self._get_selected_policy(self._list_policies())
+        if policy is None:
+            return
+        if value is None:
+            value = schedule in policy.active_schedules
+        updated = self.app.config_store.toggle_schedule(
+            policy.subvolume, schedule, bool(value)
+        )
+        if updated is None:
+            return
+        self._save_and_apply(updated)
 
-    def on_retention_change(self) -> None:
-        """Update a retention value for the selected policy."""
-        pass
+    def on_retention_change(self, key: str, value: int | None = None) -> None:
+        """Update one retention value for the selected policy.
 
-    def on_enabled_toggle(self) -> None:
-        """Toggle the policy enabled state."""
-        pass
+        Retention is read from the config at prune time, so a config
+        save is all that is needed — no unit regeneration.
+
+        Args:
+            key: The retention field (``keep_hourly`` ... ``keep_pre_upgrade``).
+            value: The new value (handed by the renderer); None keeps
+                the current value.
+        """
+        policy = self._get_selected_policy(self._list_policies())
+        if policy is None or not hasattr(policy.retention, key):
+            return
+        try:
+            setattr(policy.retention, key, int(value))
+        except (TypeError, ValueError) as exc:
+            logger.error("Invalid retention value %r for %s: %s", value, key, exc)
+            return
+        try:
+            self.app.config_store.save()
+        except Exception as exc:
+            logger.error("Failed to save retention change: %s", exc)
+
+    def on_enabled_toggle(self, value: bool | None = None) -> None:
+        """Toggle the policy enabled state and re-apply.
+
+        Args:
+            value: The new checked state (handed by the renderer); None
+                toggles the current state.
+        """
+        policy = self._get_selected_policy(self._list_policies())
+        if policy is None:
+            return
+        if value is None:
+            value = not policy.enabled
+        policy.enabled = bool(value)
+        self._save_and_apply(policy)
 
     def on_apply_policy(self) -> None:
         """Write the selected policy to config and generate systemd units."""
         policy = self._get_selected_policy(self._list_policies())
         if policy is None:
             return
-        try:
-            self.app.config_store.set_policy(policy)
-            self.app.config_store.save()
-            written = self.app.policy_engine.apply_policy(policy)
-            logger.info("Applied policy for %s: %d units written", policy.subvolume, len(written))
-        except Exception as exc:
-            logger.error("Failed to apply policy: %s", exc)
+        self._save_and_apply(policy)
 
     def on_dry_run_policy(self) -> None:
         """Preview what systemd units would be created/removed."""
@@ -302,3 +341,26 @@ class PoliciesPage:
             if p.subvolume == self._selected_subvolume:
                 return p
         return None
+
+    def _save_and_apply(self, policy: SnapshotPolicy) -> None:
+        """Persist *policy* and bring its systemd units in line.
+
+        A policy with no schedules left is disabled — there is nothing
+        to apply, so its units are removed instead of regenerated.
+        """
+        try:
+            self.app.config_store.save()
+            if policy.active_schedules:
+                written = self.app.policy_engine.apply_policy(policy)
+                logger.info(
+                    "Applied policy for %s: %d units written",
+                    policy.subvolume, len(written),
+                )
+            else:
+                self.app.policy_engine.remove_policy(policy.subvolume)
+                logger.info(
+                    "Removed units for %s (no schedules left)",
+                    policy.subvolume,
+                )
+        except Exception as exc:
+            logger.error("Failed to apply policy change: %s", exc)

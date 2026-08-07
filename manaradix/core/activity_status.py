@@ -140,6 +140,21 @@ def record_activity_run(
     return record
 
 
+def merge_never(state: str, last_run_ts, last_trigger) -> str:
+    """Downgrade an ``ok`` state to ``never`` when there is no run evidence.
+
+    The boot tier has no systemd last-trigger signal — its oneshot runs
+    at boot and then rests inactive — so an enabled boot service with
+    no run record and no snapshot would otherwise report ``ok`` forever.
+    The rule is harmless for timer tiers: the engine already reports
+    ``failed`` for a fire that never became a run, and an ``ok`` timer
+    tier always carries a ``last_trigger``.
+    """
+    if state == "ok" and last_run_ts is None and last_trigger is None:
+        return "never"
+    return state
+
+
 class ActivityStatus:
     """Per-activity status: live systemd state + last-run evidence.
 
@@ -217,7 +232,9 @@ class ActivityStatus:
 
         Row: ``{subvolume, schedule, state, last_trigger, next_trigger,
         last_run_ts, last_run_result}`` — the last-run fields come from
-        ``last_run()`` and may be None.
+        ``last_run()`` and may be None.  ``state`` of ``ok`` is downgraded
+        to ``never`` when no run evidence exists at all (see
+        :func:`merge_never`).
         """
         try:
             policies = [p for p in self.config.list_policies() if p.enabled]
@@ -239,6 +256,11 @@ class ActivityStatus:
                 last = self.last_run(policy.subvolume, schedule)
                 rows.append({
                     **status,
+                    "state": merge_never(
+                        status["state"],
+                        last["ts"] if last else None,
+                        status.get("last_trigger"),
+                    ),
                     "last_run_ts": last["ts"] if last else None,
                     "last_run_result": last["result"] if last else None,
                 })

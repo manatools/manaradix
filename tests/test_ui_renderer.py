@@ -206,7 +206,9 @@ class FakeFactory:
         return self._create("pushbutton", parent, label=label)
 
     def createCheckBox(self, parent, label, is_checked=False):
-        return self._create("checkbox", parent, label=label)
+        widget = self._create("checkbox", parent, label=label)
+        widget.setValue(is_checked)
+        return widget
 
     def createInputField(self, parent, label):
         return self._create("inputfield", parent, label=label)
@@ -215,7 +217,9 @@ class FakeFactory:
         return self._create("combobox", parent, label=label)
 
     def createIntField(self, parent, label, minVal, maxVal, initialVal):
-        return self._create("intfield", parent, label=label)
+        widget = self._create("intfield", parent, label=label)
+        widget.setValue(initialVal)
+        return widget
 
     def createTable(self, parent, header):
         return self._create("table", parent)
@@ -295,15 +299,17 @@ class PageA:
     def on_go(self):
         self.clicks += 1
 
-    def on_toggle(self):
+    def on_toggle(self, value=None):
         self.changed += 1
+        self.last_toggle = value
 
     def on_drop(self, value=None):
         self.changed += 1
         self.last_drop = value
 
-    def on_spin(self):
+    def on_spin(self, value=None):
         self.changed += 1
+        self.last_spin = value
 
     def on_select(self, row):
         self.selected = row
@@ -670,6 +676,8 @@ class TestDispatch:
         renderer, factory = make_renderer([page], [chk_changed, YCancelEvent()])
         renderer.run()
         assert page.changed == 1
+        # The callback receives the checkbox's current value.
+        assert page.last_toggle is True
 
     def test_dropdown_on_change(self) -> None:
         page = PageA()
@@ -684,6 +692,8 @@ class TestDispatch:
         renderer, factory = make_renderer([page], [sp_changed, YCancelEvent()])
         renderer.run()
         assert page.changed == 1
+        # The callback receives the int field's current value.
+        assert page.last_spin == 5
 
     def test_tree_selection_reconstructs_row(self) -> None:
         page = PageA()

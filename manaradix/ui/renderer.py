@@ -694,7 +694,11 @@ class AuiRenderer:
         elif kind in ("checkbox", "spinner"):
             if reason not in _CHANGE_REASONS:
                 return
-            callback()
+            # The descriptor's checked/value is stale (the page is rebuilt
+            # after every dispatch), but the widget holds its current
+            # value — hand it to the callback, same contract as dropdowns.
+            get_value = getattr(widget, "value", None)
+            callback(get_value() if callable(get_value) else None)
         else:
             return
 

@@ -325,22 +325,30 @@ show`, no privileges) returns the live state plus a derived `state`:
 
 | `state` | Meaning |
 |---------|---------|
-| `ok` | units installed, enabled and active; last fire within ~2.5× the tier cadence (never fired yet counts as ok — `Persistent=true` timers catch up) |
+| `never` | installed, enabled and active, but the timer has never fired — or, for the boot tier, the service has never executed at any boot (freshly enabled, or the machine was always off at fire time) |
+| `ok` | units installed, enabled and active; the timer has fired within ~2.5× the tier cadence **and the service actually ran** |
 | `missed` | timer active, but the last fire is older than ~2.5× the cadence — the machine was likely off during fires (hourly: 2.5 h, daily: 2.5 d, weekly: ~2.5 w, monthly: ~2.5 mo) |
-| `failed` | the service is in the failed state — this fire (or a previous one) went wrong |
+| `failed` | the service is in the failed state, **or the timer fired without the service ever executing** — the fire never became a run (e.g. the CLI binary was missing) |
 | `inactive` | installed but not enabled/active (e.g. left over after a policy was disabled) |
 | `unknown` | unit files missing, or systemd does not know them (no `daemon-reload` since install, or systemd unreachable) |
 
-The boot tier has no timer, so its state is simply `ok`/`failed`/
-`inactive`/`unknown` from the enabled/failed state of its oneshot service.
+The boot tier has no timer, so its raw state is `ok`/`never`/`failed`/
+`inactive`/`unknown` from the enabled state and the last-execution
+timestamp of its oneshot service (`ExecMainStartTimestamp` — set once the
+service has ever run at a boot) — see below for the evidence merge that
+applies on top.
 
 `ActivityStatus.statuses()` (core/activity_status.py) aggregates one row
 per **enabled** policy × active schedule, merging the unit state with the
 newest run evidence: the newest run record for the pair (which also covers
 failed fires), falling back to the newest snapshot tagged with the tier
-when there is no record yet.  Every input degrades gracefully — missing
-records file, unreadable config, or unreachable systemd produce fewer or
-"unknown" rows, never a crash.
+when there is no record yet.  The merge also downgrades an `ok` state to
+`never` when **no run evidence exists at all** (`merge_never()`) — this is
+what makes the boot tier honest, since a boot oneshot has no systemd
+last-trigger signal and would otherwise report `ok` forever after being
+enabled.  Every input degrades gracefully — missing records file,
+unreadable config, or unreachable systemd produce fewer or "unknown" rows,
+never a crash.
 
 ### 6.3 Surfaces
 
@@ -353,6 +361,14 @@ records file, unreadable config, or unreachable systemd produce fewer or
   every installed unit now shows its systemd `ActiveState`
   (active/inactive/failed/…) next to the file name, so a failed unit is
   visible right next to its policy.
+- **Triggers page — "Configured Triggers" table**
+  (`ui/pages/triggers.py`): the operational view of every snapshot
+  trigger — one row per (subvolume, schedule) with mechanism (systemd
+  timer / boot service / rpm file trigger), state, last run and next
+  run, plus **Enable/Disable Selected** actions that flip one trigger
+  (config policy + systemd units) without touching the rest of the
+  policy.  The pre-upgrade row shows the rpm file trigger with its
+  config flag and whether the script is installed.
 - **CLI** — `manaradix activity status [--subvolume X] [--schedule S]`
   (read-only, never pkexec): same table for terminals and scripts.
 

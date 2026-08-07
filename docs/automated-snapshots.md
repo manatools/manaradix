@@ -22,7 +22,9 @@ snapshots on a schedule and automatically prune old ones.
    engine.apply_policy(policy)
    ```
 
-   Or from the GUI: **Policies → select a subvolume → Apply Policy**.
+   Or from the GUI: **Policies → select a subvolume → Apply Policy** (the
+   Triggers tab shows the resulting systemd units with their live state and
+   lets you enable/disable any of them individually).
 
 ## Unit naming and behavior
 

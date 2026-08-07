@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import shutil
 import time
 from datetime import datetime
 from typing import Optional
@@ -46,13 +47,20 @@ _UNIT_NAME_RE = re.compile(r"[^a-zA-Z0-9_.:@-]+")
 # parsed in order.  UnitFileState reports the enable state (enabled /
 # disabled / static ...); the time properties come back as unix epochs
 # with ``--timestamp=unix`` ("n/a" when never fired / not scheduled).
+# ExecMainStartTimestamp is the last time the service's process was
+# started — None means the service has never executed, which is the
+# evidence that a recorded timer fire never became a run.
 _SHOW_TIMER_PROPS = (
     "ActiveState",
     "UnitFileState",
     "LastTriggerUSec",
     "NextElapseUSecRealtime",
 )
-_SHOW_SERVICE_PROPS = ("ActiveState", "UnitFileState")
+_SHOW_SERVICE_PROPS = (
+    "ActiveState",
+    "UnitFileState",
+    "ExecMainStartTimestamp",
+)
 
 # Rough fire cadence per calendar tier, used for "missed" staleness
 # detection (an active timer whose last fire is far older than its
@@ -107,11 +115,11 @@ class PolicyEngine:
 
     def __init__(
         self,
-        cli_path: str = "/usr/bin/manaradix",
+        cli_path: Optional[str] = None,
         systemd_dir: str = _SYSTEMD_DIR,
     ) -> None:
-        self._cli_path = cli_path
         self._systemd_dir = systemd_dir
+        self._cli_path = self._resolve_cli_path(cli_path)
 
     def _sanitize_name(self, subvolume: str) -> str:
         """Turn a subvolume path into a safe systemd unit name fragment.
@@ -373,12 +381,17 @@ class PolicyEngine:
         The derived ``state`` is one of:
 
         - ``unknown`` — unit files not installed (or systemd unreachable);
-        - ``failed`` — the service is in the failed state;
+        - ``failed`` — the service is in the failed state, or the timer
+          fired but the service never executed (the fire never became a
+          run — e.g. the CLI binary was missing);
         - ``inactive`` — installed but not enabled/active;
+        - ``never`` — active and enabled, but the timer has never fired
+          (freshly enabled, or the machine was always off at fire time) —
+          for the boot tier: the service has never executed at any boot;
         - ``missed`` — active, but the last fire is older than ~2.5× the
           tier cadence (the machine was likely off during fires);
-        - ``ok`` — healthy (never fired yet counts as ok: `Persistent=true`
-          timers catch up after downtime).
+        - ``ok`` — healthy: the timer has fired within the tier cadence
+          and the service actually ran.
 
         Returns a dict with ``subvolume``, ``schedule``, ``state`` and the
         raw ``last_trigger`` / ``next_trigger`` epoch strings (None when
@@ -404,13 +417,16 @@ class PolicyEngine:
 
         if timer is None:
             # Boot tier: enabled against multi-user.target; the oneshot
-            # runs once per boot, then rests inactive — enabled is the
-            # meaningful signal.
-            state = (
-                "ok"
-                if svc.get("UnitFileState") in ("enabled", "enabled-runtime")
-                else "inactive"
-            )
+            # runs once per boot, then rests inactive.  Enabled + an
+            # actual execution is "ok"; enabled but never executed at any
+            # boot is "never" (there is no run evidence at all).
+            enabled = svc.get("UnitFileState") in ("enabled", "enabled-runtime")
+            if not enabled:
+                state = "inactive"
+            elif svc.get("ExecMainStartTimestamp") is None:
+                state = "never"
+            else:
+                state = "ok"
             return {**base, "state": state, "last_trigger": None, "next_trigger": None}
 
         tdata = self._systemctl_show(timer, _SHOW_TIMER_PROPS)
@@ -430,7 +446,17 @@ class PolicyEngine:
 
         last = self._parse_epoch(last_trigger)
         cadence = _CADENCE_SECONDS.get(schedule)
-        if last is not None and cadence and (
+        executed = svc.get("ExecMainStartTimestamp") is not None
+        if last is None:
+            # Active and enabled, but never fired: "ok" would be a lie —
+            # there is no evidence of a run at all.
+            state = "never"
+        elif not executed:
+            # The timer fired (last_trigger set) but systemd never
+            # executed the service — the fire never became a run (missing
+            # CLI binary, unit vanished at trigger time, ...).
+            state = "failed"
+        elif cadence and (
             time.time() - last.timestamp() > _MISSED_FACTOR * cadence
         ):
             state = "missed"
@@ -472,6 +498,41 @@ class PolicyEngine:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _resolve_cli_path(cli_path: Optional[str]) -> str:
+        """Resolve the CLI path embedded in generated unit files.
+
+        An explicit *cli_path* (packaging, tests) wins unconditionally.
+        Otherwise the packaged default ``/usr/bin/manaradix`` is used
+        when it exists; failing that, ``manaradix`` is looked up on
+        ``PATH`` (a pip install in the invoking user's environment).
+        When elevated via ``pkexec`` or ``sudo`` the environment is
+        sanitized (or root-only), so the invoking user's
+        ``~/.local/bin`` is also tried (``PKEXEC_UID`` / ``SUDO_UID``)
+        — this makes generated units work on machines where the tool was
+        installed with ``pip install --user`` instead of via the RPM.
+        """
+        if cli_path:
+            return cli_path
+        if os.path.isfile("/usr/bin/manaradix"):
+            return "/usr/bin/manaradix"
+        found = shutil.which("manaradix")
+        if found:
+            return found
+        uid = os.environ.get("PKEXEC_UID") or os.environ.get("SUDO_UID")
+        if uid:
+            try:
+                import pwd
+
+                home = pwd.getpwuid(int(uid)).pw_dir
+            except (KeyError, ValueError, OSError):
+                home = None
+            if home:
+                user_bin = os.path.join(home, ".local", "bin", "manaradix")
+                if os.path.isfile(user_bin):
+                    return user_bin
+        return "/usr/bin/manaradix"
 
     def _write_unit_file(self, path: str, content: str) -> None:
         """Write a systemd unit file."""
@@ -517,13 +578,17 @@ class PolicyEngine:
         Unprivileged read; returns a dict of the requested properties
         (None for values systemd reports as unset/"n/a"), or None when
         the unit is unknown or systemd is unreachable.
+
+        ``systemctl show`` emits ``Name=value`` lines sorted
+        alphabetically (not in ``--property=`` order), so the output is
+        parsed by name rather than by position.
         """
         import subprocess
 
         cmd = [
             "systemctl", "show",
             f"--property={','.join(props)}",
-            "--value", "--no-pager", "--timestamp=unix",
+            "--no-pager", "--timestamp=unix",
             unit,
         ]
         try:
@@ -537,20 +602,47 @@ class PolicyEngine:
             return None
         if proc.returncode != 0:
             return None
-        # With --value and --property, systemctl emits one value per line
-        # in property order.
-        values = proc.stdout.splitlines()
-        return {
-            name: (line if line and line != "n/a" else None)
-            for name, line in zip(props, values)
-        }
+        wanted = set(props)
+        out: dict[str, Optional[str]] = {}
+        for line in proc.stdout.splitlines():
+            name, sep, value = line.partition("=")
+            if sep and name in wanted:
+                out[name] = None if not value or value == "n/a" else value
+        return out
 
     @staticmethod
     def _parse_epoch(value: Optional[str]) -> Optional[datetime]:
-        """Parse a unix-epoch string from ``systemctl show --timestamp=unix``."""
+        """Parse a timestamp from ``systemctl show`` into a datetime.
+
+        Accepts a unix epoch string (older systemd honors
+        ``--timestamp=unix``) and the human-readable local format
+        (``Mon 2026-08-03 07:42:02 CEST``) that systemd 257+ always
+        emits — with a last-resort parse that drops an unrecognized
+        timezone abbreviation and treats the wall time as local.
+        """
         if not value:
             return None
         try:
             return datetime.fromtimestamp(int(value))
         except (ValueError, OSError):
+            pass
+        # Plain local wall time, no timezone suffix.
+        try:
+            return datetime.strptime(value, "%a %Y-%m-%d %H:%M:%S")
+        except ValueError:
+            pass
+        # With a timezone abbreviation — glibc's %Z typically consumes
+        # the token without attaching an offset, which is fine: the
+        # datetime is local either way.
+        try:
+            return datetime.strptime(value, "%a %Y-%m-%d %H:%M:%S %Z")
+        except ValueError:
+            pass
+        # Unrecognized abbreviation: drop the trailing token and treat
+        # the remaining wall time as local.
+        try:
+            return datetime.strptime(
+                value.rsplit(" ", 1)[0], "%a %Y-%m-%d %H:%M:%S"
+            )
+        except (ValueError, IndexError):
             return None

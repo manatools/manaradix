@@ -30,8 +30,8 @@ the detected role (graphical → desktop, headless → server) and switchable
 from a dropdown. The plan is adapted to the actual layout: only btrfs
 subvolumes get policies, and boot snapshots / the GRUB recovery menu are
 only proposed when the root filesystem is btrfs (and GRUB is present).
-Apply it in one click, or configure everything manually from Policies and
-Settings.
+Apply it in one click, or configure everything manually from the Policies,
+Triggers and Settings tabs (see below).
 
 The same setup is available headless:
 

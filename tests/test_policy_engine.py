@@ -318,16 +318,37 @@ class TestExecStartInjection:
 
 
 class TestUnitStatus:
-    """unit_status(): systemctl state → derived per-activity status.
+    """unit_status(): systemctl state -> derived per-activity status.
 
-    ``_systemctl_show`` output is one value per line in property order
-    (with --value); time properties come back as unix epochs or "n/a".
+    ``systemctl show`` emits one ``Name=value`` line per property, sorted
+    alphabetically rather than in ``--property=`` order; the parser is
+    order-independent and the mocks below write Name=value lines.  Time
+    properties come back as unix epochs (older systemd honoring
+    ``--timestamp=unix``) or as human-readable local dates (systemd
+    257+), or "n/a" when never set.
     """
 
     @staticmethod
     def _proc(*lines, rc=0) -> MagicMock:
         return MagicMock(
             returncode=rc, stdout="\n".join(lines) + "\n", stderr=""
+        )
+
+    @staticmethod
+    def _svc(active="inactive", ufs="enabled", exec_start="n/a") -> MagicMock:
+        return TestUnitStatus._proc(
+            f"ActiveState={active}",
+            f"UnitFileState={ufs}",
+            f"ExecMainStartTimestamp={exec_start}",
+        )
+
+    @staticmethod
+    def _timer(active="active", ufs="enabled", last="n/a", next_="n/a") -> MagicMock:
+        return TestUnitStatus._proc(
+            f"ActiveState={active}",
+            f"UnitFileState={ufs}",
+            f"LastTriggerUSec={last}",
+            f"NextElapseUSecRealtime={next_}",
         )
 
     @staticmethod
@@ -355,10 +376,8 @@ class TestUnitStatus:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "daily")
             mock_run.side_effect = [
-                # service show: ActiveState, UnitFileState
-                self._proc("inactive", "enabled"),
-                # timer show: ActiveState, UnitFileState, last, next
-                self._proc("active", "enabled", str(now - 3600), str(now + 3600)),
+                self._svc(exec_start=str(now - 3600)),
+                self._timer(last=str(now - 3600), next_=str(now + 3600)),
             ]
             status = engine.unit_status("/", "daily")
         assert status["state"] == "ok"
@@ -370,7 +389,7 @@ class TestUnitStatus:
         with tempfile.TemporaryDirectory() as tmpdir:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "daily")
-            mock_run.side_effect = [self._proc("failed", "enabled")]
+            mock_run.side_effect = [self._svc(active="failed")]
             status = engine.unit_status("/", "daily")
         assert status["state"] == "failed"
         # Failure short-circuits: no timer query needed.
@@ -381,12 +400,40 @@ class TestUnitStatus:
         with tempfile.TemporaryDirectory() as tmpdir:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "daily")
-            mock_run.side_effect = [
-                self._proc("inactive", "enabled"),
-                self._proc("inactive", "enabled", "n/a", "n/a"),
-            ]
+            mock_run.side_effect = [self._svc(), self._timer(active="inactive")]
             status = engine.unit_status("/", "daily")
         assert status["state"] == "inactive"
+
+    @patch("subprocess.run")
+    def test_never_fired_is_never(self, mock_run: MagicMock) -> None:
+        # Active + enabled, but the timer has never fired ("n/a" last
+        # trigger): "ok" would be a lie.
+        now = int(time.time())
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "daily")
+            mock_run.side_effect = [self._svc(), self._timer(next_=str(now + 3600))]
+            status = engine.unit_status("/", "daily")
+        assert status["state"] == "never"
+        assert status["last_trigger"] is None
+        assert status["next_trigger"] == str(now + 3600)
+
+    @patch("subprocess.run")
+    def test_fired_without_execution_is_failed(self, mock_run: MagicMock) -> None:
+        # The timer fired (LastTriggerUSec set) but the service never
+        # executed (ExecMainStartTimestamp "n/a") — the fire never became
+        # a run (e.g. the CLI binary is missing).  "ok" would be a lie.
+        now = int(time.time())
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "daily")
+            mock_run.side_effect = [
+                self._svc(),
+                self._timer(last=str(now - 3600), next_=str(now + 3600)),
+            ]
+            status = engine.unit_status("/", "daily")
+        assert status["state"] == "failed"
+        assert status["last_trigger"] == str(now - 3600)
 
     @patch("subprocess.run")
     def test_missed_when_last_fire_stale(self, mock_run: MagicMock) -> None:
@@ -397,8 +444,8 @@ class TestUnitStatus:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "daily")
             mock_run.side_effect = [
-                self._proc("inactive", "enabled"),
-                self._proc("active", "enabled", str(old), str(now + 3600)),
+                self._svc(exec_start=str(old)),
+                self._timer(last=str(old), next_=str(now + 3600)),
             ]
             status = engine.unit_status("/", "daily")
         assert status["state"] == "missed"
@@ -410,27 +457,39 @@ class TestUnitStatus:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "daily")
             mock_run.side_effect = [
-                self._proc("inactive", "enabled"),
-                self._proc("active", "enabled", str(now - 2 * 86400), str(now + 3600)),
+                self._svc(exec_start=str(now - 2 * 86400)),
+                self._timer(last=str(now - 2 * 86400), next_=str(now + 3600)),
             ]
             status = engine.unit_status("/", "daily")
         assert status["state"] == "ok"
 
     @patch("subprocess.run")
     def test_boot_tier_enabled_is_ok(self, mock_run: MagicMock) -> None:
+        now = int(time.time())
         with tempfile.TemporaryDirectory() as tmpdir:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "boot")
-            mock_run.side_effect = [self._proc("inactive", "enabled")]
+            mock_run.side_effect = [self._svc(exec_start=str(now - 86400))]
             status = engine.unit_status("/", "boot")
         assert status["state"] == "ok"
+
+    @patch("subprocess.run")
+    def test_boot_tier_enabled_never_executed_is_never(self, mock_run: MagicMock) -> None:
+        # Enabled against multi-user.target but the service has never
+        # executed at any boot: no run evidence at all -> "never".
+        with tempfile.TemporaryDirectory() as tmpdir:
+            engine = PolicyEngine(systemd_dir=tmpdir)
+            self._install(engine, "/", "boot")
+            mock_run.side_effect = [self._svc()]
+            status = engine.unit_status("/", "boot")
+        assert status["state"] == "never"
 
     @patch("subprocess.run")
     def test_boot_tier_failed(self, mock_run: MagicMock) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "boot")
-            mock_run.side_effect = [self._proc("failed", "enabled")]
+            mock_run.side_effect = [self._svc(active="failed")]
             status = engine.unit_status("/", "boot")
         assert status["state"] == "failed"
 
@@ -439,7 +498,7 @@ class TestUnitStatus:
         with tempfile.TemporaryDirectory() as tmpdir:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "boot")
-            mock_run.side_effect = [self._proc("inactive", "disabled")]
+            mock_run.side_effect = [self._svc(ufs="disabled")]
             status = engine.unit_status("/", "boot")
         assert status["state"] == "inactive"
 
@@ -463,19 +522,92 @@ class TestUnitStatus:
         assert engine._parse_epoch("n/a") is None
         assert engine._parse_epoch("garbage") is None
 
+    def test_parse_epoch_human_local(self) -> None:
+        # systemd 257+ ignores --timestamp=unix and emits local wall
+        # time ("Mon 2026-08-03 07:42:02 CEST"); the weekday/timezone
+        # abbreviations may or may not be recognized by the platform's
+        # strptime — both paths must land on the same wall time.
+        engine = PolicyEngine()
+        parsed = engine._parse_epoch("Mon 2026-08-03 07:42:02 CEST")
+        assert parsed is not None
+        assert parsed.strftime("%Y-%m-%d %H:%M") == "2026-08-03 07:42"
+        assert engine._parse_epoch("Mon 2026-08-03 07:42:02") is not None
+
+
 
 class TestUnitState:
     def test_active(self) -> None:
         engine = PolicyEngine()
-        with patch("subprocess.run", return_value=TestUnitStatus._proc("active")):
+        with patch("subprocess.run", return_value=TestUnitStatus._proc("ActiveState=active")):
             assert engine.unit_state("manaradix-snapshot-root-daily.timer") == "active"
 
     def test_failed(self) -> None:
         engine = PolicyEngine()
-        with patch("subprocess.run", return_value=TestUnitStatus._proc("failed")):
+        with patch("subprocess.run", return_value=TestUnitStatus._proc("ActiveState=failed")):
             assert engine.unit_state("manaradix-snapshot-root-daily.service") == "failed"
 
     def test_unknown_on_query_failure(self) -> None:
         engine = PolicyEngine()
         with patch("subprocess.run", return_value=TestUnitStatus._proc("", rc=1)):
             assert engine.unit_state("nonexistent.service") == "unknown"
+
+
+class TestCliPathResolution:
+    """Generated units must embed a CLI path that actually exists.
+
+    The packaged default is /usr/bin/manaradix; dev machines install with
+    ``pip install --user`` so PATH and the pkexec-invoking user's
+    ``~/.local/bin`` are consulted as fallbacks.
+    """
+
+    def test_explicit_path_wins(self) -> None:
+        engine = PolicyEngine(cli_path="/opt/manaradix")
+        assert engine._cli_path == "/opt/manaradix"
+
+    @patch("os.path.isfile", return_value=True)
+    def test_packaged_default_when_present(self, _mock: MagicMock) -> None:
+        engine = PolicyEngine()
+        assert engine._cli_path == "/usr/bin/manaradix"
+
+    def test_path_lookup_fallback(self) -> None:
+        with patch("os.path.isfile", return_value=False), patch(
+            "shutil.which", return_value="/home/u/.local/bin/manaradix"
+        ), patch.dict(os.environ, {}, clear=True):
+            engine = PolicyEngine()
+        assert engine._cli_path == "/home/u/.local/bin/manaradix"
+
+    def test_pkexec_uid_fallback(self) -> None:
+        # Under pkexec PATH is sanitized; the invoking user's pip --user
+        # install is recovered via PKEXEC_UID.
+        user_bin = "/home/u/.local/bin/manaradix"
+        with patch(
+            "os.path.isfile",
+            side_effect=lambda p: p == user_bin,
+        ), patch("shutil.which", return_value=None), patch.dict(
+            os.environ, {"PKEXEC_UID": "1000"}
+        ), patch(
+            "pwd.getpwuid", return_value=MagicMock(pw_dir="/home/u")
+        ):
+            engine = PolicyEngine()
+        assert engine._cli_path == user_bin
+
+    def test_sudo_uid_fallback(self) -> None:
+        # sudo keeps SUDO_UID while running as root — same recovery.
+        user_bin = "/home/v/.local/bin/manaradix"
+        with patch(
+            "os.path.isfile",
+            side_effect=lambda p: p == user_bin,
+        ), patch("shutil.which", return_value=None), patch.dict(
+            os.environ, {"SUDO_UID": "1001"}
+        ), patch(
+            "pwd.getpwuid", return_value=MagicMock(pw_dir="/home/v")
+        ):
+            engine = PolicyEngine()
+        assert engine._cli_path == user_bin
+
+    def test_fallback_to_default_when_nothing_found(self) -> None:
+        with patch("os.path.isfile", return_value=False), patch(
+            "shutil.which", return_value=None
+        ), patch.dict(os.environ, {}, clear=True):
+            engine = PolicyEngine()
+        assert engine._cli_path == "/usr/bin/manaradix"

@@ -166,6 +166,38 @@ class ConfigStore:
         """Remove the policy for *subvolume*."""
         self._policies.pop(subvolume, None)
 
+    def toggle_schedule(
+        self, subvolume: str, schedule: str, enabled: bool
+    ) -> Optional[SnapshotPolicy]:
+        """Set one schedule flag on a subvolume's policy.
+
+        Enabling a schedule re-activates the policy; disabling its last
+        schedule disables the policy (a policy with no schedules is
+        invalid — :meth:`SnapshotPolicy.validate` requires at least one).
+
+        Args:
+            subvolume: The policy's subvolume.
+            schedule: One of ``hourly``/``daily``/``weekly``/``monthly``/
+                ``boot`` (``pre-upgrade`` is a global flag, not a policy
+                schedule).
+            enabled: The new schedule state.
+
+        Returns:
+            The updated policy, or None when the subvolume has no policy.
+        """
+        policy = self._policies.get(subvolume)
+        if policy is None:
+            return None
+        flag = f"schedule_{schedule}"
+        if not hasattr(policy, flag):
+            return policy
+        setattr(policy, flag, enabled)
+        if enabled:
+            policy.enabled = True
+        elif not policy.active_schedules:
+            policy.enabled = False
+        return policy
+
     # ------------------------------------------------------------------
     # Serialization
     # ------------------------------------------------------------------

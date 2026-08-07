@@ -68,6 +68,46 @@ class TestConfigStorePolicies:
         assert len(store.list_policies()) == 1
 
 
+class TestToggleSchedule:
+    def test_enable_sets_flag_and_reactivates(self) -> None:
+        store = ConfigStore(path="/nonexistent/config.toml")
+        policy = SnapshotPolicy(subvolume="/", schedule_daily=True)
+        policy.enabled = False
+        store.set_policy(policy)
+        updated = store.toggle_schedule("/", "weekly", True)
+        assert updated is policy
+        assert policy.schedule_weekly is True
+        assert policy.enabled is True
+
+    def test_disable_keeps_other_schedules(self) -> None:
+        store = ConfigStore(path="/nonexistent/config.toml")
+        policy = SnapshotPolicy(subvolume="/", schedule_daily=True, schedule_weekly=True)
+        store.set_policy(policy)
+        store.toggle_schedule("/", "weekly", False)
+        assert policy.schedule_weekly is False
+        assert policy.enabled is True
+        assert policy.active_schedules == ["daily"]
+
+    def test_disable_last_schedule_disables_policy(self) -> None:
+        store = ConfigStore(path="/nonexistent/config.toml")
+        policy = SnapshotPolicy(subvolume="/", schedule_weekly=True, schedule_daily=False)
+        store.set_policy(policy)
+        store.toggle_schedule("/", "weekly", False)
+        assert policy.active_schedules == []
+        assert policy.enabled is False
+
+    def test_unknown_subvolume_returns_none(self) -> None:
+        store = ConfigStore(path="/nonexistent/config.toml")
+        assert store.toggle_schedule("/nope", "daily", True) is None
+
+    def test_global_trigger_is_not_a_policy_schedule(self) -> None:
+        store = ConfigStore(path="/nonexistent/config.toml")
+        policy = SnapshotPolicy(subvolume="/", schedule_daily=True)
+        store.set_policy(policy)
+        assert store.toggle_schedule("/", "pre-upgrade", True) is policy
+        assert policy.schedule_daily is True  # untouched
+
+
 class TestConfigStoreSaveLoad:
     def test_save_and_load_roundtrip(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

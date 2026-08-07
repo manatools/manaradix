@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-05 11:36+0200\n"
+"POT-Creation-Date: 2026-08-07 02:13+0200\n"
 "PO-Revision-Date: 2026-08-01 19:00+0200\n"
 "Last-Translator: Mageia Community <mageia-community@mageia.org>\n"
 "Language-Team: Italian <https://www.mageia.org>\n"
@@ -170,10 +170,12 @@ msgid "Activity status:"
 msgstr "Stato attività:"
 
 #: manaradix/module.py:837 manaradix/ui/pages/dashboard.py:475
+#: manaradix/ui/pages/triggers.py:294
 msgid "never"
 msgstr "mai"
 
 #: manaradix/module.py:839 manaradix/ui/pages/dashboard.py:477
+#: manaradix/ui/pages/triggers.py:297
 #, python-format
 msgid "%s (%s)"
 msgstr "%s (%s)"
@@ -268,8 +270,7 @@ msgid ""
 "Pre-upgrade snapshots are not available: the root filesystem is not btrfs."
 msgstr ""
 "Gli snapshot pre-aggiornamento non sono disponibili: il filesystem di root "
-"non è btrfs."
-"è btrfs."
+"non è btrfs.è btrfs."
 
 #: manaradix/core/setup_wizard.py:258
 #, python-format
@@ -342,14 +343,14 @@ msgstr "Snapshot non trovato: %s"
 msgid "Invalid snapshot type: %s"
 msgstr "Tipo di snapshot non valido: %s"
 
-#: manaradix/dbus/wire.py:401
+#: manaradix/dbus/wire.py:995
 msgid "error: 'manaradix dbus serve' must run as root (system service)."
 msgstr ""
 "errore: 'manaradix dbus serve' deve girare come root (servizio di "
 "sistema).errore: 'manaradix dbus serve' deve essere eseguito come root "
 "(servizio di sistema)."
 
-#: manaradix/dbus/wire.py:417
+#: manaradix/dbus/wire.py:1011
 msgid "error: the manaradix D-Bus service is already running."
 msgstr "errore: il servizio D-Bus di manaradix è già in esecuzione."
 
@@ -500,7 +501,7 @@ msgstr "Crea Snapshot"
 msgid "Start Scrub"
 msgstr "Avvia Scrub"
 
-#: manaradix/ui/pages/dashboard.py:499
+#: manaradix/ui/pages/dashboard.py:499 manaradix/ui/pages/triggers.py:224
 msgid "Refresh"
 msgstr "Aggiorna"
 
@@ -568,37 +569,37 @@ msgstr "Aggiungi Politica"
 msgid "Subvolume path"
 msgstr "Percorso subvolume"
 
-#: manaradix/ui/pages/policies.py:130
+#: manaradix/ui/pages/policies.py:132
 #, python-format
 msgid "On %s"
 msgstr "%s"
 
-#: manaradix/ui/pages/policies.py:152
+#: manaradix/ui/pages/policies.py:154
 #, python-format
 msgid "Edit Policy: %s"
 msgstr "Modifica Politica: %s"
 
-#: manaradix/ui/pages/policies.py:156 manaradix/ui/pages/setup.py:230
+#: manaradix/ui/pages/policies.py:158 manaradix/ui/pages/setup.py:230
 msgid "Enabled"
 msgstr "Abilitata"
 
-#: manaradix/ui/pages/policies.py:164
+#: manaradix/ui/pages/policies.py:166
 msgid "Apply Policy"
 msgstr "Applica Politica"
 
-#: manaradix/ui/pages/policies.py:169
+#: manaradix/ui/pages/policies.py:171
 msgid "Dry-Run Preview"
 msgstr "Anteprima Simulazione"
 
-#: manaradix/ui/pages/policies.py:174
+#: manaradix/ui/pages/policies.py:176
 msgid "Remove Policy"
 msgstr "Rimuovi Politica"
 
-#: manaradix/ui/pages/policies.py:190 manaradix/ui/pages/policies.py:195
+#: manaradix/ui/pages/policies.py:192 manaradix/ui/pages/policies.py:197
 msgid "systemd Units"
 msgstr "Unità systemd"
 
-#: manaradix/ui/pages/policies.py:191
+#: manaradix/ui/pages/policies.py:193
 msgid "No units installed."
 msgstr "Nessuna unità installata."
 
@@ -763,6 +764,7 @@ msgid "Skip"
 msgstr "Salta"
 
 #: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:64
+#: manaradix/ui/pages/triggers.py:210
 msgid "Actions"
 msgstr "Azioni"
 
@@ -883,6 +885,74 @@ msgstr "Nuova descrizione"
 #, python-format
 msgid "Snapshot not found on disk: %s"
 msgstr "Snapshot non trovato su disco: %s"
+
+#: manaradix/ui/pages/triggers.py:47
+msgid "systemd service (boot)"
+msgstr "Servizio systemd (all'avvio)"
+
+#: manaradix/ui/pages/triggers.py:48
+#, fuzzy
+msgid "systemd timer"
+msgstr "Unità systemd"
+
+#: manaradix/ui/pages/triggers.py:55
+msgid "Triggers"
+msgstr "Attivazioni"
+
+#: manaradix/ui/pages/triggers.py:156
+msgid "script missing"
+msgstr "script mancante"
+
+#: manaradix/ui/pages/triggers.py:158
+#, fuzzy
+msgid "enabled"
+msgstr "Abilitata"
+
+#: manaradix/ui/pages/triggers.py:158
+#, fuzzy
+msgid "disabled"
+msgstr "Disabilitata"
+
+#: manaradix/ui/pages/triggers.py:167
+msgid "rpm file trigger"
+msgstr "trigger di file rpm"
+
+#: manaradix/ui/pages/triggers.py:170
+msgid "next package update"
+msgstr "prossimo aggiornamento pacchetti"
+
+#: manaradix/ui/pages/triggers.py:191
+#, fuzzy
+msgid "No triggers are configured."
+msgstr "Nessuna attivazione configurata."
+
+#: manaradix/ui/pages/triggers.py:198
+msgid ""
+"Select a trigger and use Enable/Disable. Schedules and retention are edited "
+"on the Policies tab."
+msgstr ""
+"Seleziona un'attivazione e usa Attiva/Disattiva. Pianificazioni e "
+"conservazione si modificano nella scheda Politiche."
+
+#: manaradix/ui/pages/triggers.py:203
+#, fuzzy
+msgid "Configured Triggers"
+msgstr "Attivazioni configurate"
+
+#: manaradix/ui/pages/triggers.py:214
+#, fuzzy
+msgid "Enable Selected"
+msgstr "Attiva Selezionato"
+
+#: manaradix/ui/pages/triggers.py:219
+#, fuzzy
+msgid "Disable Selected"
+msgstr "Disattiva Selezionato"
+
+#: manaradix/ui/pages/triggers.py:304
+#, fuzzy
+msgid "next boot"
+msgstr "al prossimo avvio"
 
 #~ msgid "Overview"
 #~ msgstr "Panoramica"

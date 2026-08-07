@@ -14,6 +14,7 @@ from manaradix.core.activity_status import (
     _result_from_service_env,
     append_run_record,
     load_run_records,
+    merge_never,
     record_activity_run,
 )
 from manaradix.model.policy import RetentionPolicy, SnapshotPolicy
@@ -149,6 +150,24 @@ def _policy(subvolume="/", *schedules: str) -> SnapshotPolicy:
     )
 
 
+class TestMergeNever:
+    """merge_never(): downgrade "ok" with zero run evidence to "never"."""
+
+    def test_ok_without_evidence_is_never(self) -> None:
+        assert merge_never("ok", None, None) == "never"
+
+    def test_ok_with_last_trigger_stays_ok(self) -> None:
+        # A timer that fired has systemd evidence of the fire.
+        assert merge_never("ok", None, "1764698400") == "ok"
+
+    def test_ok_with_run_record_stays_ok(self) -> None:
+        assert merge_never("ok", "2026-08-04T10:00:00", None) == "ok"
+
+    def test_non_ok_states_untouched(self) -> None:
+        for state in ("never", "missed", "failed", "inactive", "unknown"):
+            assert merge_never(state, None, None) == state
+
+
 class TestActivityStatus:
     def _status(self, tmp_path, policies=None, engine_rows=None, snaps=None):
         engine = MagicMock()
@@ -178,6 +197,36 @@ class TestActivityStatus:
             ("/", "daily"), ("/", "weekly"), ("/home", "daily"),
         ]
         assert rows[1]["state"] == "missed"
+
+    def test_statuses_boot_ok_without_evidence_is_never(self, tmp_path) -> None:
+        # The boot tier has no systemd last-trigger signal: enabled but
+        # silent means it never ran (no record, no snapshot).
+        policy = _policy("/", "boot")
+        engine_rows = [
+            {"subvolume": "/", "schedule": "boot", "state": "ok",
+             "last_trigger": None, "next_trigger": None},
+        ]
+        status = self._status(tmp_path, [policy], engine_rows)
+        rows = status.statuses()
+        assert rows[0]["state"] == "never"
+        assert rows[0]["last_run_ts"] is None
+
+    def test_statuses_boot_ok_with_run_record_stays_ok(self, tmp_path) -> None:
+        path = str(tmp_path / "runs.jsonl")
+        append_run_record(
+            {"subvolume": "/", "schedule": "boot", "result": "success",
+             "ts": "2026-08-04T10:00:00"},
+            path=path,
+        )
+        policy = _policy("/", "boot")
+        engine_rows = [
+            {"subvolume": "/", "schedule": "boot", "state": "ok",
+             "last_trigger": None, "next_trigger": None},
+        ]
+        status = self._status(tmp_path, [policy], engine_rows)
+        rows = status.statuses()
+        assert rows[0]["state"] == "ok"
+        assert rows[0]["last_run_ts"] == "2026-08-04T10:00:00"
 
     def test_statuses_skips_disabled_policies(self, tmp_path) -> None:
         policy = _policy("/", "daily")

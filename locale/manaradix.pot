@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-05 11:36+0200\n"
+"POT-Creation-Date: 2026-08-07 02:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -163,10 +163,12 @@ msgid "Activity status:"
 msgstr ""
 
 #: manaradix/module.py:837 manaradix/ui/pages/dashboard.py:475
+#: manaradix/ui/pages/triggers.py:294
 msgid "never"
 msgstr ""
 
 #: manaradix/module.py:839 manaradix/ui/pages/dashboard.py:477
+#: manaradix/ui/pages/triggers.py:297
 #, python-format
 msgid "%s (%s)"
 msgstr ""
@@ -314,11 +316,11 @@ msgstr ""
 msgid "Invalid snapshot type: %s"
 msgstr ""
 
-#: manaradix/dbus/wire.py:401
+#: manaradix/dbus/wire.py:995
 msgid "error: 'manaradix dbus serve' must run as root (system service)."
 msgstr ""
 
-#: manaradix/dbus/wire.py:417
+#: manaradix/dbus/wire.py:1011
 msgid "error: the manaradix D-Bus service is already running."
 msgstr ""
 
@@ -458,7 +460,7 @@ msgstr ""
 msgid "Start Scrub"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:499
+#: manaradix/ui/pages/dashboard.py:499 manaradix/ui/pages/triggers.py:224
 msgid "Refresh"
 msgstr ""
 
@@ -526,37 +528,37 @@ msgstr ""
 msgid "Subvolume path"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:130
+#: manaradix/ui/pages/policies.py:132
 #, python-format
 msgid "On %s"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:152
+#: manaradix/ui/pages/policies.py:154
 #, python-format
 msgid "Edit Policy: %s"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:156 manaradix/ui/pages/setup.py:230
+#: manaradix/ui/pages/policies.py:158 manaradix/ui/pages/setup.py:230
 msgid "Enabled"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:164
+#: manaradix/ui/pages/policies.py:166
 msgid "Apply Policy"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:169
+#: manaradix/ui/pages/policies.py:171
 msgid "Dry-Run Preview"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:174
+#: manaradix/ui/pages/policies.py:176
 msgid "Remove Policy"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:190 manaradix/ui/pages/policies.py:195
+#: manaradix/ui/pages/policies.py:192 manaradix/ui/pages/policies.py:197
 msgid "systemd Units"
 msgstr ""
 
-#: manaradix/ui/pages/policies.py:191
+#: manaradix/ui/pages/policies.py:193
 msgid "No units installed."
 msgstr ""
 
@@ -715,6 +717,7 @@ msgid "Skip"
 msgstr ""
 
 #: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:64
+#: manaradix/ui/pages/triggers.py:210
 msgid "Actions"
 msgstr ""
 
@@ -834,4 +837,62 @@ msgstr ""
 #: manaradix/ui/pages/snapshots.py:205
 #, python-format
 msgid "Snapshot not found on disk: %s"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:47
+msgid "systemd service (boot)"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:48
+msgid "systemd timer"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:55
+msgid "Triggers"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:156
+msgid "script missing"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:158
+msgid "enabled"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:158
+msgid "disabled"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:167
+msgid "rpm file trigger"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:170
+msgid "next package update"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:191
+msgid "No triggers are configured."
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:198
+msgid ""
+"Select a trigger and use Enable/Disable. Schedules and retention are edited "
+"on the Policies tab."
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:203
+msgid "Configured Triggers"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:214
+msgid "Enable Selected"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:219
+msgid "Disable Selected"
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:304
+msgid "next boot"
 msgstr ""

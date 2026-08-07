@@ -219,11 +219,17 @@ class SettingsPage:
         except Exception as exc:
             logger.error("Failed to save settings: %s", exc)
 
-    def on_boot_from_snapshot_toggle(self) -> None:
-        """Toggle boot-from-snapshot and update GRUB if needed."""
-        self.app.config_store.boot_from_snapshot = (
-            not self.app.config_store.boot_from_snapshot
-        )
+    def on_boot_from_snapshot_toggle(self, value: bool | None = None) -> None:
+        """Toggle boot-from-snapshot and update GRUB if needed.
+
+        Args:
+            value: The checkbox's new state (handed by the renderer);
+                None keeps the old toggle semantics for callers without
+                a widget.
+        """
+        if value is None:
+            value = not self.app.config_store.boot_from_snapshot
+        self.app.config_store.boot_from_snapshot = bool(value)
         if self.app.config_store.boot_from_snapshot:
             try:
                 self.app.grub_integration.install_script()
@@ -231,16 +237,21 @@ class SettingsPage:
             except Exception as exc:
                 logger.error("Failed to enable GRUB integration: %s", exc)
 
-    def on_snapshot_before_upgrade_toggle(self) -> None:
+    def on_snapshot_before_upgrade_toggle(self, value: bool | None = None) -> None:
         """Toggle pre-upgrade snapshots.
 
         The rpm trigger is always installed with the package; the config
         flag is the whole activation.  The change is persisted by the
         Save Settings button, like the other global settings.
+
+        Args:
+            value: The checkbox's new state (handed by the renderer);
+                None keeps the old toggle semantics for callers without
+                a widget.
         """
-        self.app.config_store.snapshot_before_upgrade = (
-            not self.app.config_store.snapshot_before_upgrade
-        )
+        if value is None:
+            value = not self.app.config_store.snapshot_before_upgrade
+        self.app.config_store.snapshot_before_upgrade = bool(value)
 
     # -- Callbacks: compression ---------------------------------------------
 

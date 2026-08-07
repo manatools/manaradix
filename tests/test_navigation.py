@@ -13,12 +13,12 @@ def _ctx():
 
 
 class TestBuildNavigation:
-    def test_configured_system_has_five_pages_with_about_last(self) -> None:
+    def test_configured_system_has_six_pages_with_about_last(self) -> None:
         ctx = _ctx()
         with patch("manaradix.ui.navigation.needs_setup", return_value=False):
             pages = build_navigation(ctx)
         assert [p.page_id for p in pages] == [
-            "dashboard", "snapshots", "policies", "settings", "about",
+            "dashboard", "snapshots", "policies", "triggers", "settings", "about",
         ]
 
     def test_unconfigured_system_prepends_wizard(self) -> None:
@@ -27,7 +27,7 @@ class TestBuildNavigation:
             pages = build_navigation(ctx)
         assert pages[0].page_id == "setup"
         assert pages[-1].page_id == "about"
-        assert len(pages) == 6
+        assert len(pages) == 7
 
     def test_about_page_shows_author_and_license(self) -> None:
         ctx = _ctx()
