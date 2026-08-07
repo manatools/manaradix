@@ -49,7 +49,9 @@ _UNIT_NAME_RE = re.compile(r"[^a-zA-Z0-9_.:@-]+")
 # with ``--timestamp=unix`` ("n/a" when never fired / not scheduled).
 # ExecMainStartTimestamp is the last time the service's process was
 # started — None means the service has never executed, which is the
-# evidence that a recorded timer fire never became a run.
+# evidence that a recorded timer fire never became a run.  Result is
+# the outcome of the last execution ("success" also when the service
+# never ran — only meaningful paired with ExecMainStartTimestamp).
 _SHOW_TIMER_PROPS = (
     "ActiveState",
     "UnitFileState",
@@ -60,6 +62,7 @@ _SHOW_SERVICE_PROPS = (
     "ActiveState",
     "UnitFileState",
     "ExecMainStartTimestamp",
+    "Result",
 )
 
 # Rough fire cadence per calendar tier, used for "missed" staleness
@@ -381,21 +384,22 @@ class PolicyEngine:
         The derived ``state`` is one of:
 
         - ``unknown`` — unit files not installed (or systemd unreachable);
-        - ``failed`` — the service is in the failed state, or the timer
-          fired but the service never executed (the fire never became a
-          run — e.g. the CLI binary was missing);
+        - ``failed`` — the service ran and its last execution failed
+          (``last_exec`` / ``last_result`` say when and how);
         - ``inactive`` — installed but not enabled/active;
-        - ``never`` — active and enabled, but the timer has never fired
-          (freshly enabled, or the machine was always off at fire time) —
+        - ``never`` — no run has ever happened: the timer has never
+          fired, or a recorded fire never became a service execution —
           for the boot tier: the service has never executed at any boot;
         - ``missed`` — active, but the last fire is older than ~2.5× the
           tier cadence (the machine was likely off during fires);
         - ``ok`` — healthy: the timer has fired within the tier cadence
           and the service actually ran.
 
-        Returns a dict with ``subvolume``, ``schedule``, ``state`` and the
+        Returns a dict with ``subvolume``, ``schedule``, ``state``, the
         raw ``last_trigger`` / ``next_trigger`` epoch strings (None when
-        unknown).
+        unknown), and the service execution evidence ``last_exec``
+        (ExecMainStartTimestamp) with ``last_result`` (success/failed —
+        None when the service never executed).
         """
         service = self._service_name(subvolume, schedule)
         service_path = os.path.join(self._systemd_dir, service)
@@ -405,15 +409,35 @@ class PolicyEngine:
         if not os.path.isfile(service_path) or (
             timer is not None and not os.path.isfile(timer_path)
         ):
-            return {**base, "state": "unknown", "last_trigger": None, "next_trigger": None}
+            return {
+                **base, "state": "unknown", "last_trigger": None,
+                "next_trigger": None, "last_exec": None, "last_result": None,
+            }
 
         svc = self._systemctl_show(service, _SHOW_SERVICE_PROPS)
         if svc is None:
             # Files are installed but systemd does not know them (no
             # daemon-reload since install, or systemd unreachable).
-            return {**base, "state": "unknown", "last_trigger": None, "next_trigger": None}
+            return {
+                **base, "state": "unknown", "last_trigger": None,
+                "next_trigger": None, "last_exec": None, "last_result": None,
+            }
+        exec_ts = svc.get("ExecMainStartTimestamp")
+        svc_result = (svc.get("Result") or "").lower()
+        last_result = None
+        if exec_ts is not None:
+            last_result = (
+                "success"
+                if svc_result in ("success", "clean")
+                else ("failed" if svc_result else "unknown")
+            )
+        last_exec = exec_ts
         if svc.get("ActiveState") == "failed":
-            return {**base, "state": "failed", "last_trigger": None, "next_trigger": None}
+            return {
+                **base, "state": "failed", "last_trigger": None,
+                "next_trigger": None, "last_exec": last_exec,
+                "last_result": last_result,
+            }
 
         if timer is None:
             # Boot tier: enabled against multi-user.target; the oneshot
@@ -423,15 +447,23 @@ class PolicyEngine:
             enabled = svc.get("UnitFileState") in ("enabled", "enabled-runtime")
             if not enabled:
                 state = "inactive"
-            elif svc.get("ExecMainStartTimestamp") is None:
+            elif exec_ts is None:
                 state = "never"
             else:
                 state = "ok"
-            return {**base, "state": state, "last_trigger": None, "next_trigger": None}
+            return {
+                **base, "state": state, "last_trigger": None,
+                "next_trigger": None, "last_exec": last_exec,
+                "last_result": last_result,
+            }
 
         tdata = self._systemctl_show(timer, _SHOW_TIMER_PROPS)
         if tdata is None:
-            return {**base, "state": "unknown", "last_trigger": None, "next_trigger": None}
+            return {
+                **base, "state": "unknown", "last_trigger": None,
+                "next_trigger": None, "last_exec": last_exec,
+                "last_result": last_result,
+            }
         last_trigger = tdata.get("LastTriggerUSec")
         next_trigger = tdata.get("NextElapseUSecRealtime")
         active = tdata.get("ActiveState") == "active"
@@ -442,20 +474,19 @@ class PolicyEngine:
                 "state": "inactive",
                 "last_trigger": last_trigger,
                 "next_trigger": next_trigger,
+                "last_exec": last_exec,
+                "last_result": last_result,
             }
 
         last = self._parse_epoch(last_trigger)
         cadence = _CADENCE_SECONDS.get(schedule)
-        executed = svc.get("ExecMainStartTimestamp") is not None
-        if last is None:
-            # Active and enabled, but never fired: "ok" would be a lie —
-            # there is no evidence of a run at all.
+        executed = exec_ts is not None
+        if last is None or not executed:
+            # No run has ever happened: the timer never fired, or a
+            # recorded fire never became a service execution.  "ok"
+            # would be a lie — the raw last_trigger still records the
+            # missed fire in the latter case.
             state = "never"
-        elif not executed:
-            # The timer fired (last_trigger set) but systemd never
-            # executed the service — the fire never became a run (missing
-            # CLI binary, unit vanished at trigger time, ...).
-            state = "failed"
         elif cadence and (
             time.time() - last.timestamp() > _MISSED_FACTOR * cadence
         ):
@@ -467,6 +498,8 @@ class PolicyEngine:
             "state": state,
             "last_trigger": last_trigger,
             "next_trigger": next_trigger,
+            "last_exec": last_exec,
+            "last_result": last_result,
         }
 
     # ------------------------------------------------------------------

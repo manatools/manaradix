@@ -335,11 +335,13 @@ class TestUnitStatus:
         )
 
     @staticmethod
-    def _svc(active="inactive", ufs="enabled", exec_start="n/a") -> MagicMock:
+    def _svc(active="inactive", ufs="enabled", exec_start="n/a",
+             result="success") -> MagicMock:
         return TestUnitStatus._proc(
             f"ActiveState={active}",
             f"UnitFileState={ufs}",
             f"ExecMainStartTimestamp={exec_start}",
+            f"Result={result}",
         )
 
     @staticmethod
@@ -376,22 +378,31 @@ class TestUnitStatus:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "daily")
             mock_run.side_effect = [
-                self._svc(exec_start=str(now - 3600)),
+                self._svc(exec_start=str(now - 3600), result="success"),
                 self._timer(last=str(now - 3600), next_=str(now + 3600)),
             ]
             status = engine.unit_status("/", "daily")
         assert status["state"] == "ok"
         assert status["last_trigger"] == str(now - 3600)
         assert status["next_trigger"] == str(now + 3600)
+        assert status["last_exec"] == str(now - 3600)
+        assert status["last_result"] == "success"
 
     @patch("subprocess.run")
     def test_failed_service(self, mock_run: MagicMock) -> None:
+        now = int(time.time())
         with tempfile.TemporaryDirectory() as tmpdir:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "daily")
-            mock_run.side_effect = [self._svc(active="failed")]
+            mock_run.side_effect = [
+                self._svc(active="failed", exec_start=str(now - 3600),
+                          result="exit-code")
+            ]
             status = engine.unit_status("/", "daily")
         assert status["state"] == "failed"
+        # The failed run is evidence-backed: when it ran and how.
+        assert status["last_exec"] == str(now - 3600)
+        assert status["last_result"] == "failed"
         # Failure short-circuits: no timer query needed.
         assert mock_run.call_count == 1
 
@@ -419,10 +430,11 @@ class TestUnitStatus:
         assert status["next_trigger"] == str(now + 3600)
 
     @patch("subprocess.run")
-    def test_fired_without_execution_is_failed(self, mock_run: MagicMock) -> None:
+    def test_fired_without_execution_is_never(self, mock_run: MagicMock) -> None:
         # The timer fired (LastTriggerUSec set) but the service never
         # executed (ExecMainStartTimestamp "n/a") — the fire never became
-        # a run (e.g. the CLI binary is missing).  "ok" would be a lie.
+        # a run (e.g. the CLI binary was missing).  No run has ever
+        # happened, so the honest label is "never", not "failed".
         now = int(time.time())
         with tempfile.TemporaryDirectory() as tmpdir:
             engine = PolicyEngine(systemd_dir=tmpdir)
@@ -432,8 +444,10 @@ class TestUnitStatus:
                 self._timer(last=str(now - 3600), next_=str(now + 3600)),
             ]
             status = engine.unit_status("/", "daily")
-        assert status["state"] == "failed"
+        assert status["state"] == "never"
         assert status["last_trigger"] == str(now - 3600)
+        assert status["last_exec"] is None
+        assert status["last_result"] is None
 
     @patch("subprocess.run")
     def test_missed_when_last_fire_stale(self, mock_run: MagicMock) -> None:
@@ -444,7 +458,7 @@ class TestUnitStatus:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "daily")
             mock_run.side_effect = [
-                self._svc(exec_start=str(old)),
+                self._svc(exec_start=str(old), result="success"),
                 self._timer(last=str(old), next_=str(now + 3600)),
             ]
             status = engine.unit_status("/", "daily")
@@ -457,7 +471,7 @@ class TestUnitStatus:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "daily")
             mock_run.side_effect = [
-                self._svc(exec_start=str(now - 2 * 86400)),
+                self._svc(exec_start=str(now - 2 * 86400), result="success"),
                 self._timer(last=str(now - 2 * 86400), next_=str(now + 3600)),
             ]
             status = engine.unit_status("/", "daily")
@@ -489,9 +503,11 @@ class TestUnitStatus:
         with tempfile.TemporaryDirectory() as tmpdir:
             engine = PolicyEngine(systemd_dir=tmpdir)
             self._install(engine, "/", "boot")
-            mock_run.side_effect = [self._svc(active="failed")]
+            mock_run.side_effect = [self._svc(active="failed", exec_start="1786053742",
+                                      result="exit-code")]
             status = engine.unit_status("/", "boot")
         assert status["state"] == "failed"
+        assert status["last_result"] == "failed"
 
     @patch("subprocess.run")
     def test_boot_tier_not_enabled(self, mock_run: MagicMock) -> None:

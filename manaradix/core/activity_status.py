@@ -225,6 +225,60 @@ class ActivityStatus:
             }
         return None
 
+    def last_run_with_fallback(
+        self,
+        subvolume: str,
+        schedule: str,
+        status: Optional[dict] = None,
+    ) -> Optional[dict]:
+        """Newest run evidence, falling back to systemd's service state.
+
+        Prefers the run-record/snapshot evidence (see :meth:`last_run`).
+        When none exists — units without the record step, or a service
+        that failed before either record or snapshot could be written —
+        the service's own last execution (``last_exec`` /
+        ``last_result`` from ``unit_status``) is the next best evidence:
+        it proves a run happened and how it ended, so a failed tier does
+        not look like one that never ran.
+        """
+        last = self.last_run(subvolume, schedule)
+        if last is not None:
+            return last
+        if status is None:
+            try:
+                status = self.engine.unit_status(subvolume, schedule)
+            except Exception as exc:
+                logger.warning(
+                    "Could not read unit status for %s/%s: %s",
+                    subvolume, schedule, exc,
+                )
+                return None
+        exec_ts = (status or {}).get("last_exec")
+        if not exec_ts:
+            return None
+        return {
+            "ts": self._systemd_ts_to_iso(exec_ts),
+            "result": (status.get("last_result") or "unknown"),
+            "exit_status": None,
+            "source": "systemd",
+        }
+
+    def _systemd_ts_to_iso(self, value: str) -> str:
+        """Normalize a systemd timestamp (epoch or human local) to ISO.
+
+        Falls back to the raw string when the engine's parser is not
+        available (test doubles) or does not understand the value.
+        """
+        parse = getattr(self.engine, "_parse_epoch", None)
+        if callable(parse):
+            try:
+                parsed = parse(value)
+            except Exception:
+                parsed = None
+            if isinstance(parsed, datetime):
+                return parsed.isoformat()
+        return value
+
     # -- Aggregation --------------------------------------------------------
 
     def statuses(self) -> list[dict]:
@@ -232,9 +286,10 @@ class ActivityStatus:
 
         Row: ``{subvolume, schedule, state, last_trigger, next_trigger,
         last_run_ts, last_run_result}`` — the last-run fields come from
-        ``last_run()`` and may be None.  ``state`` of ``ok`` is downgraded
-        to ``never`` when no run evidence exists at all (see
-        :func:`merge_never`).
+        ``last_run_with_fallback()`` (records, then snapshot sidecars,
+        then systemd's own execution evidence) and may be None.
+        ``state`` of ``ok`` is downgraded to ``never`` when no run
+        evidence exists at all (see :func:`merge_never`).
         """
         try:
             policies = [p for p in self.config.list_policies() if p.enabled]
@@ -253,7 +308,9 @@ class ActivityStatus:
                         policy.subvolume, schedule, exc,
                     )
                     continue
-                last = self.last_run(policy.subvolume, schedule)
+                last = self.last_run_with_fallback(
+                    policy.subvolume, schedule, status
+                )
                 rows.append({
                     **status,
                     "state": merge_never(

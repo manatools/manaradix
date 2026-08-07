@@ -296,3 +296,55 @@ class TestActivityStatus:
         ]
         assert len(status.run_records(subvolume="/home")) == 1
         assert len(status.run_records(subvolume="/", limit=1)) == 1
+
+    def test_statuses_falls_back_to_systemd_exec_evidence(self, tmp_path) -> None:
+        # No records and no snapshots, but systemd knows the service ran
+        # and failed: the engine's execution evidence fills the last-run
+        # fields, so a "failed" tier carries the run time, not "never".
+        from manaradix.core.policy_engine import PolicyEngine
+
+        engine = MagicMock()
+        engine.unit_status.side_effect = [
+            {"subvolume": "/", "schedule": "daily", "state": "failed",
+             "last_trigger": None, "next_trigger": None,
+             "last_exec": "1786053742", "last_result": "failed"},
+        ]
+        engine._parse_epoch = PolicyEngine._parse_epoch
+        config = MagicMock()
+        config.list_policies.return_value = [_policy("/", "daily")]
+        status = ActivityStatus(
+            engine, MagicMock(), config,
+            records_path=str(tmp_path / "runs.jsonl"),
+        )
+        rows = status.statuses()
+        assert rows[0]["state"] == "failed"
+        assert rows[0]["last_run_ts"] == datetime.fromtimestamp(1786053742).isoformat()
+        assert rows[0]["last_run_result"] == "failed"
+
+    def test_statuses_prefers_record_over_systemd_evidence(self, tmp_path) -> None:
+        # The run record is authoritative even when systemd also has
+        # evidence (e.g. a later failed manual run).
+        from manaradix.core.policy_engine import PolicyEngine
+
+        path = str(tmp_path / "runs.jsonl")
+        append_run_record(
+            {"subvolume": "/", "schedule": "daily", "result": "success",
+             "ts": "2026-08-04T10:00:00"},
+            path=path,
+        )
+        engine = MagicMock()
+        engine.unit_status.side_effect = [
+            {"subvolume": "/", "schedule": "daily", "state": "failed",
+             "last_trigger": None, "next_trigger": None,
+             "last_exec": "1786053742", "last_result": "failed"},
+        ]
+        engine._parse_epoch = PolicyEngine._parse_epoch
+        config = MagicMock()
+        config.list_policies.return_value = [_policy("/", "daily")]
+        status = ActivityStatus(
+            engine, MagicMock(), config,
+            records_path=path,
+        )
+        rows = status.statuses()
+        assert rows[0]["last_run_ts"] == "2026-08-04T10:00:00"
+        assert rows[0]["last_run_result"] == "success"

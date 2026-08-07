@@ -131,7 +131,9 @@ class TriggersPage:
             status = {"state": "unknown", "last_trigger": None, "next_trigger": None}
         last = None
         try:
-            last = self._activity.last_run(subvolume, schedule)
+            last = self._activity.last_run_with_fallback(
+                subvolume, schedule, status
+            )
         except Exception as exc:
             logger.warning(
                 "Could not read last run for %s/%s: %s",

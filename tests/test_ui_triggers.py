@@ -241,3 +241,46 @@ class TestTriggerActions:
         page, _ = _make_page(tmp_path)
         page.on_select_trigger({"Subvolume": "/", "Schedule": "daily"})
         assert page._selected["Schedule"] == "daily"
+
+    def test_failed_row_shows_systemd_exec_evidence(self, tmp_path) -> None:
+        # No records and no snapshots, but systemd knows the service ran
+        # and failed: the row shows when, instead of "never" with no
+        # evidence.
+        from manaradix.core.policy_engine import PolicyEngine
+
+        page, app = _make_page(
+            tmp_path,
+            policies=[_policy("/", "daily")],
+            unit_rows={
+                ("/", "daily"): {
+                    "state": "failed",
+                    "last_trigger": None,
+                    "next_trigger": None,
+                    "last_exec": "1786053742",
+                    "last_result": "failed",
+                },
+            },
+        )
+        app.policy_engine._parse_epoch = PolicyEngine._parse_epoch
+        row = _row(page, "/", "daily")
+        assert row["State"] == "failed"
+        assert row["Last run"].endswith("(failed)")
+
+    def test_never_row_stays_never_without_evidence(self, tmp_path) -> None:
+        # A service that never executed shows "never", not "failed".
+        page, _ = _make_page(
+            tmp_path,
+            policies=[_policy("/", "weekly")],
+            unit_rows={
+                ("/", "weekly"): {
+                    "state": "never",
+                    "last_trigger": None,
+                    "next_trigger": None,
+                    "last_exec": None,
+                    "last_result": None,
+                },
+            },
+        )
+        row = _row(page, "/", "weekly")
+        assert row["State"] == "never"
+        assert row["Last run"] == "never"

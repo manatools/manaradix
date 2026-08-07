@@ -287,7 +287,7 @@ comes from three read-only, unprivileged sources:
 
 | Source | What it proves | Code |
 |--------|----------------|------|
-| `systemctl show` | the unit's live state (active/enabled, last/next trigger, failed) | `PolicyEngine.unit_status()` |
+| `systemctl show` | the unit's live state (active/enabled, last/next trigger) **plus the service's last-execution evidence** (`ExecMainStartTimestamp` — proves a run happened and when; `Result` — how it ended) | `PolicyEngine.unit_status()` |
 | run records | what actually happened at the end of each fire — **including failed ones** | `core/activity_status.py` |
 | snapshot sidecars | a fire produced a snapshot (evidence from before records existed) | `SnapshotManager.list_all()` |
 
@@ -325,10 +325,10 @@ show`, no privileges) returns the live state plus a derived `state`:
 
 | `state` | Meaning |
 |---------|---------|
-| `never` | installed, enabled and active, but the timer has never fired — or, for the boot tier, the service has never executed at any boot (freshly enabled, or the machine was always off at fire time) |
+| `never` | installed, enabled and active, but the timer has never fired, or a recorded fire never became a service execution (e.g. the CLI binary was missing); for the boot tier, the service has never executed at any boot (freshly enabled, or the machine was always off at fire time) |
 | `ok` | units installed, enabled and active; the timer has fired within ~2.5× the tier cadence **and the service actually ran** |
 | `missed` | timer active, but the last fire is older than ~2.5× the cadence — the machine was likely off during fires (hourly: 2.5 h, daily: 2.5 d, weekly: ~2.5 w, monthly: ~2.5 mo) |
-| `failed` | the service is in the failed state, **or the timer fired without the service ever executing** — the fire never became a run (e.g. the CLI binary was missing) |
+| `failed` | the service **ran and its last execution failed** — `ExecMainStartTimestamp` says when, `Result` (last_exec/last_result) says how (e.g. `exit-code` 203: the binary was missing) |
 | `inactive` | installed but not enabled/active (e.g. left over after a policy was disabled) |
 | `unknown` | unit files missing, or systemd does not know them (no `daemon-reload` since install, or systemd unreachable) |
 
@@ -340,9 +340,13 @@ applies on top.
 
 `ActivityStatus.statuses()` (core/activity_status.py) aggregates one row
 per **enabled** policy × active schedule, merging the unit state with the
-newest run evidence: the newest run record for the pair (which also covers
-failed fires), falling back to the newest snapshot tagged with the tier
-when there is no record yet.  The merge also downgrades an `ok` state to
+newest run evidence (`last_run_with_fallback()`): the newest run record
+for the pair (which also covers failed fires), falling back to the newest
+snapshot tagged with the tier, and — when neither exists, e.g. units
+without the record step or a service that failed before record or
+snapshot could be written — to the service's own execution evidence
+(`last_exec`/`last_result`, surfaced as `Last run: <time> (failed)`
+instead of a bare "never").  The merge also downgrades an `ok` state to
 `never` when **no run evidence exists at all** (`merge_never()`) — this is
 what makes the boot tier honest, since a boot oneshot has no systemd
 last-trigger signal and would otherwise report `ok` forever after being
