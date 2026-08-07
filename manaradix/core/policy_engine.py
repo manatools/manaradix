@@ -397,9 +397,11 @@ class PolicyEngine:
 
         Returns a dict with ``subvolume``, ``schedule``, ``state``, the
         raw ``last_trigger`` / ``next_trigger`` epoch strings (None when
-        unknown), and the service execution evidence ``last_exec``
-        (ExecMainStartTimestamp) with ``last_result`` (success/failed —
-        None when the service never executed).
+        unknown), and the service start-attempt evidence ``last_exec``
+        (ExecMainStartTimestamp, possibly ``@<epoch>``) with
+        ``last_result`` (success/failed — None when the service never
+        even attempted to start; note a start attempt is not a proven
+        run, see ActivityStatus.merge_never).
         """
         service = self._service_name(subvolume, schedule)
         service_path = os.path.join(self._systemd_dir, service)
@@ -647,14 +649,18 @@ class PolicyEngine:
     def _parse_epoch(value: Optional[str]) -> Optional[datetime]:
         """Parse a timestamp from ``systemctl show`` into a datetime.
 
-        Accepts a unix epoch string (older systemd honors
-        ``--timestamp=unix``) and the human-readable local format
-        (``Mon 2026-08-03 07:42:02 CEST``) that systemd 257+ always
-        emits — with a last-resort parse that drops an unrecognized
-        timezone abbreviation and treats the wall time as local.
+        Accepts a unix epoch string — optionally with systemd 258's
+        ``@`` prefix, which ``--timestamp=unix`` adds to service
+        properties (``@1786053742``) — and the human-readable local
+        format (``Mon 2026-08-03 07:42:02 CEST``) that systemd emits
+        for timer properties — with a last-resort parse that drops an
+        unrecognized timezone abbreviation and treats the wall time as
+        local.
         """
         if not value:
             return None
+        if value.startswith("@"):
+            value = value[1:]
         try:
             return datetime.fromtimestamp(int(value))
         except (ValueError, OSError):

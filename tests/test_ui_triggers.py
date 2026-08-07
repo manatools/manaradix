@@ -94,11 +94,13 @@ class TestCollectRows:
             policies=[_policy("/", "daily", "weekly"), _policy("/home", "daily")],
             unit_rows={
                 ("/", "daily"): {"state": "ok", "last_trigger": "1",
-                                 "next_trigger": "2"},
+                                 "next_trigger": "2",
+                                 "last_exec": "1786000000", "last_result": "success"},
                 ("/", "weekly"): {"state": "never", "last_trigger": None,
                                   "next_trigger": "2"},
                 ("/home", "daily"): {"state": "ok", "last_trigger": "1",
-                                     "next_trigger": "2"},
+                                     "next_trigger": "2",
+                                     "last_exec": "1786000000", "last_result": "success"},
             },
         )
         rows = page.build_model().sections[0]["fields"][0]["rows"]
@@ -107,7 +109,9 @@ class TestCollectRows:
             ("/", "weekly"), ("/home", "daily"),
         ]
         assert rows[0]["Mechanism"] == "systemd timer"
-        assert rows[0]["State"] == "ok"
+        # Only a start attempt (systemd evidence, no record/snapshot) —
+        # a fired timer with no proven run is "never", not "ok".
+        assert rows[0]["State"] == "never"
         assert rows[0]["Next run"] != "-"
         # The pre-upgrade row sorts in between; the weekly row follows.
         assert rows[2]["State"] == "never"
@@ -284,3 +288,27 @@ class TestTriggerActions:
         row = _row(page, "/", "weekly")
         assert row["State"] == "never"
         assert row["Last run"] == "never"
+
+    def test_start_attempt_row_shows_attempt_not_ok(self, tmp_path) -> None:
+        # ExecMainStartTimestamp set but no record/snapshot: a start
+        # attempt (203 or reset-failed placeholder), not a proven run.
+        from manaradix.core.policy_engine import PolicyEngine
+
+        page, app = _make_page(
+            tmp_path,
+            policies=[_policy("/", "daily")],
+            unit_rows={
+                ("/", "daily"): {
+                    "state": "ok",
+                    "last_trigger": "1786053742",
+                    "next_trigger": None,
+                    "last_exec": "@1786053742",
+                    "last_result": "success",
+                },
+            },
+        )
+        app.policy_engine._parse_epoch = PolicyEngine._parse_epoch
+        row = _row(page, "/", "daily")
+        assert row["State"] == "never"
+        assert row["Last run"].endswith("(attempt)")
+        assert row["Last run"].startswith("2026-08-07")

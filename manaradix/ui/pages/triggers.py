@@ -144,7 +144,7 @@ class TriggersPage:
             "Schedule": schedule,
             "Mechanism": _mechanism_for(schedule),
             "State": merge_never(
-                status["state"], last["ts"] if last else None,
+                status["state"], last,
                 status.get("last_trigger"),
             ),
             "Last run": self._fmt_run(last),

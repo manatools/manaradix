@@ -287,7 +287,7 @@ comes from three read-only, unprivileged sources:
 
 | Source | What it proves | Code |
 |--------|----------------|------|
-| `systemctl show` | the unit's live state (active/enabled, last/next trigger) **plus the service's last-execution evidence** (`ExecMainStartTimestamp` — proves a run happened and when; `Result` — how it ended) | `PolicyEngine.unit_status()` |
+| `systemctl show` | the unit's live state (active/enabled, last/next trigger) **plus the service's last start attempt** (`ExecMainStartTimestamp`, prefixed `@<epoch>` under `--timestamp=unix`; `Result`) — a **start attempt, not a proven run**: a missing binary (exit 203) still leaves the timestamp set, and `systemctl reset-failed` reverts `Result` to the `success` placeholder | `PolicyEngine.unit_status()` |
 | run records | what actually happened at the end of each fire — **including failed ones** | `core/activity_status.py` |
 | snapshot sidecars | a fire produced a snapshot (evidence from before records existed) | `SnapshotManager.list_all()` |
 
@@ -326,7 +326,7 @@ show`, no privileges) returns the live state plus a derived `state`:
 | `state` | Meaning |
 |---------|---------|
 | `never` | installed, enabled and active, but the timer has never fired, or a recorded fire never became a service execution (e.g. the CLI binary was missing); for the boot tier, the service has never executed at any boot (freshly enabled, or the machine was always off at fire time) |
-| `ok` | units installed, enabled and active; the timer has fired within ~2.5× the tier cadence **and the service actually ran** |
+| `ok` | units installed, enabled and active; the timer has fired within ~2.5× the tier cadence **and a run record or snapshot proves the service actually ran** (a bare start attempt with no such evidence is downgraded to `never`) |
 | `missed` | timer active, but the last fire is older than ~2.5× the cadence — the machine was likely off during fires (hourly: 2.5 h, daily: 2.5 d, weekly: ~2.5 w, monthly: ~2.5 mo) |
 | `failed` | the service **ran and its last execution failed** — `ExecMainStartTimestamp` says when, `Result` (last_exec/last_result) says how (e.g. `exit-code` 203: the binary was missing) |
 | `inactive` | installed but not enabled/active (e.g. left over after a policy was disabled) |
@@ -344,15 +344,20 @@ newest run evidence (`last_run_with_fallback()`): the newest run record
 for the pair (which also covers failed fires), falling back to the newest
 snapshot tagged with the tier, and — when neither exists, e.g. units
 without the record step or a service that failed before record or
-snapshot could be written — to the service's own execution evidence
-(`last_exec`/`last_result`, surfaced as `Last run: <time> (failed)`
-instead of a bare "never").  The merge also downgrades an `ok` state to
-`never` when **no run evidence exists at all** (`merge_never()`) — this is
-what makes the boot tier honest, since a boot oneshot has no systemd
-last-trigger signal and would otherwise report `ok` forever after being
-enabled.  Every input degrades gracefully — missing records file,
-unreadable config, or unreachable systemd produce fewer or "unknown" rows,
-never a crash.
+snapshot could be written — to the service's own start-attempt evidence
+(`last_exec`/`last_result`).  A failed start is surfaced as
+`Last run: <time> (failed)` instead of a bare "never"; a timestamp whose
+`Result` is the `success` placeholder (203 start failure, or `Result`
+reverted by `systemctl reset-failed`) is reported as `(attempt)` — a
+start happened, a proven run did not.  The merge also downgrades an `ok`
+state to `never` when the only evidence is such a start attempt or none
+at all (`merge_never()`) — this is what makes the boot tier and
+missing-binary setups honest: `ExecMainStartTimestamp` records the start
+attempt even when the binary does not exist (exit 203), and a boot
+oneshot has no systemd last-trigger signal, so without the downgrade
+both would report `ok` forever.  Every input degrades gracefully —
+missing records file, unreadable config, or unreachable systemd produce
+fewer or "unknown" rows, never a crash.
 
 ### 6.3 Surfaces
 

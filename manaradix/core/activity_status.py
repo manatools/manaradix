@@ -140,17 +140,21 @@ def record_activity_run(
     return record
 
 
-def merge_never(state: str, last_run_ts, last_trigger) -> str:
-    """Downgrade an ``ok`` state to ``never`` when there is no run evidence.
+def merge_never(state: str, last, last_trigger) -> str:
+    """Downgrade an ``ok`` state to ``never`` without proven run evidence.
 
-    The boot tier has no systemd last-trigger signal — its oneshot runs
-    at boot and then rests inactive — so an enabled boot service with
-    no run record and no snapshot would otherwise report ``ok`` forever.
-    The rule is harmless for timer tiers: the engine already reports
-    ``failed`` for a fire that never became a run, and an ``ok`` timer
-    tier always carries a ``last_trigger``.
+    ``ok`` requires evidence that a run actually happened.  The boot
+    tier has no systemd last-trigger signal — its oneshot runs at boot
+    and then rests inactive — so an enabled boot service with no run
+    record and no snapshot would otherwise report ``ok`` forever.  And
+    a service whose only evidence is a systemd start attempt
+    (``source == "systemd"``) has not proven it ran: a missing binary
+    leaves ``ExecMainStartTimestamp`` set (a 203 start attempt) and
+    ``Result`` reverts to the ``success`` placeholder after
+    ``systemctl reset-failed`` — neither is a run.  Only a run record
+    or a snapshot sidecar proves a run.
     """
-    if state == "ok" and last_run_ts is None and last_trigger is None:
+    if state == "ok" and (last is None or last.get("source") == "systemd"):
         return "never"
     return state
 
@@ -236,10 +240,13 @@ class ActivityStatus:
         Prefers the run-record/snapshot evidence (see :meth:`last_run`).
         When none exists — units without the record step, or a service
         that failed before either record or snapshot could be written —
-        the service's own last execution (``last_exec`` /
-        ``last_result`` from ``unit_status``) is the next best evidence:
-        it proves a run happened and how it ended, so a failed tier does
-        not look like one that never ran.
+        the service's own last start (``last_exec`` / ``last_result``
+        from ``unit_status``) is the next best evidence.  Note this is
+        a **start attempt**, not a proven run: a missing binary (203)
+        leaves ``ExecMainStartTimestamp`` set, so a failed tier shows
+        when it failed while a timestamp with a ``success``-looking
+        placeholder is reported as ``attempt`` — the state merge
+        (see :func:`merge_never`) downgrades such rows to ``never``.
         """
         last = self.last_run(subvolume, schedule)
         if last is not None:
@@ -256,9 +263,16 @@ class ActivityStatus:
         exec_ts = (status or {}).get("last_exec")
         if not exec_ts:
             return None
+        last_result = (status.get("last_result") or "unknown")
+        if last_result == "failed":
+            result = "failed"
+        else:
+            # success placeholder / unknown: a start happened, but no
+            # record or snapshot proves the service actually ran.
+            result = "attempt"
         return {
             "ts": self._systemd_ts_to_iso(exec_ts),
-            "result": (status.get("last_result") or "unknown"),
+            "result": result,
             "exit_status": None,
             "source": "systemd",
         }
@@ -287,9 +301,9 @@ class ActivityStatus:
         Row: ``{subvolume, schedule, state, last_trigger, next_trigger,
         last_run_ts, last_run_result}`` — the last-run fields come from
         ``last_run_with_fallback()`` (records, then snapshot sidecars,
-        then systemd's own execution evidence) and may be None.
-        ``state`` of ``ok`` is downgraded to ``never`` when no run
-        evidence exists at all (see :func:`merge_never`).
+        then systemd's own start-attempt evidence) and may be None.
+        ``state`` of ``ok`` is downgraded to ``never`` when no proven
+        run evidence exists (see :func:`merge_never`).
         """
         try:
             policies = [p for p in self.config.list_policies() if p.enabled]
@@ -315,7 +329,7 @@ class ActivityStatus:
                     **status,
                     "state": merge_never(
                         status["state"],
-                        last["ts"] if last else None,
+                        last,
                         status.get("last_trigger"),
                     ),
                     "last_run_ts": last["ts"] if last else None,

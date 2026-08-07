@@ -593,15 +593,19 @@ class TestCmdActivity:
         assert "No activities" in capsys.readouterr().out
 
     def test_status_prints_rows(self, capsys) -> None:
+        from manaradix.core.policy_engine import PolicyEngine
+
         ctx = MagicMock()
         ctx.config_store.list_policies.return_value = [SnapshotPolicy(
             subvolume="/", schedule_daily=True,
         )]
+        ctx.policy_engine._parse_epoch = PolicyEngine._parse_epoch
         with patch.object(
             ctx.policy_engine, "unit_status",
             return_value={
                 "subvolume": "/", "schedule": "daily", "state": "ok",
                 "last_trigger": "1", "next_trigger": "2",
+                "last_exec": "@1786053742", "last_result": "success",
             },
         ):
             exit_code = _cmd_activity_status(
@@ -609,7 +613,11 @@ class TestCmdActivity:
             )
         out = capsys.readouterr().out
         assert exit_code == 0
-        assert "ok" in out
+        # No record or snapshot: the start attempt downgrades to "never"
+        # and is shown as "(attempt)" with the parsed local time.
+        assert "never" in out
+        assert "(attempt)" in out
+        assert "2026-08-07" in out
 
     def test_status_filters(self) -> None:
         ctx = MagicMock()

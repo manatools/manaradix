@@ -538,6 +538,13 @@ class TestUnitStatus:
         assert engine._parse_epoch("n/a") is None
         assert engine._parse_epoch("garbage") is None
 
+    def test_parse_epoch_systemd_at_prefix(self) -> None:
+        # systemd 258 prefixes epoch values with "@" under
+        # --timestamp=unix (service properties only).
+        engine = PolicyEngine()
+        now = int(time.time())
+        assert engine._parse_epoch(f"@{now}") == datetime.fromtimestamp(now)
+
     def test_parse_epoch_human_local(self) -> None:
         # systemd 257+ ignores --timestamp=unix and emits local wall
         # time ("Mon 2026-08-03 07:42:02 CEST"); the weekday/timezone

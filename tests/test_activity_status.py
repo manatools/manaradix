@@ -151,17 +151,31 @@ def _policy(subvolume="/", *schedules: str) -> SnapshotPolicy:
 
 
 class TestMergeNever:
-    """merge_never(): downgrade "ok" with zero run evidence to "never"."""
+    """merge_never(): "ok" requires proven run evidence."""
 
     def test_ok_without_evidence_is_never(self) -> None:
         assert merge_never("ok", None, None) == "never"
+        # A timer that fired still has no *run* evidence — the fire
+        # never became a proven run.
+        assert merge_never("ok", None, "1764698400") == "never"
 
-    def test_ok_with_last_trigger_stays_ok(self) -> None:
-        # A timer that fired has systemd evidence of the fire.
-        assert merge_never("ok", None, "1764698400") == "ok"
+    def test_ok_with_record_stays_ok(self) -> None:
+        assert merge_never(
+            "ok", {"ts": "2026-08-04T10:00:00", "source": "record"}, None
+        ) == "ok"
 
-    def test_ok_with_run_record_stays_ok(self) -> None:
-        assert merge_never("ok", "2026-08-04T10:00:00", None) == "ok"
+    def test_ok_with_snapshot_stays_ok(self) -> None:
+        assert merge_never(
+            "ok", {"ts": "2026-08-04T10:00:00", "source": "snapshot"}, "1"
+        ) == "ok"
+
+    def test_ok_with_systemd_start_attempt_is_never(self) -> None:
+        # A 203 start attempt leaves ExecMainStartTimestamp set, and
+        # Result reverts to the "success" placeholder after
+        # systemctl reset-failed — neither proves a run.
+        assert merge_never(
+            "ok", {"ts": "2026-08-04T10:00:00", "source": "systemd"}, "1764698400"
+        ) == "never"
 
     def test_non_ok_states_untouched(self) -> None:
         for state in ("never", "missed", "failed", "inactive", "unknown"):
@@ -348,3 +362,27 @@ class TestActivityStatus:
         rows = status.statuses()
         assert rows[0]["last_run_ts"] == "2026-08-04T10:00:00"
         assert rows[0]["last_run_result"] == "success"
+
+    def test_statuses_start_attempt_downgrades_ok_to_never(self, tmp_path) -> None:
+        # The service "ran" per systemd (ExecMainStartTimestamp set) but
+        # no record or snapshot exists: a 203 start attempt or a
+        # reset-failed "success" placeholder — never a proven run.
+        from manaradix.core.policy_engine import PolicyEngine
+
+        engine = MagicMock()
+        engine.unit_status.side_effect = [
+            {"subvolume": "/", "schedule": "daily", "state": "ok",
+             "last_trigger": "1786053742", "next_trigger": None,
+             "last_exec": "@1786053742", "last_result": "success"},
+        ]
+        engine._parse_epoch = PolicyEngine._parse_epoch
+        config = MagicMock()
+        config.list_policies.return_value = [_policy("/", "daily")]
+        status = ActivityStatus(
+            engine, MagicMock(), config,
+            records_path=str(tmp_path / "runs.jsonl"),
+        )
+        rows = status.statuses()
+        assert rows[0]["state"] == "never"
+        assert rows[0]["last_run_ts"] == datetime.fromtimestamp(1786053742).isoformat()
+        assert rows[0]["last_run_result"] == "attempt"
