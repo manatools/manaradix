@@ -358,10 +358,19 @@ class AuiRenderer:
         # (scrollbars) when the window is smaller than the content.
         widget.setStretchable(YUIDimension.YD_HORIZ, True)
         self._shrink_vertical(widget)
+        # The page rebuilds after every dispatched callback, which
+        # destroys this table; marking the previously selected row
+        # selected before addItem restores the highlight in the fresh
+        # table (the backends apply YTableItem.selected() on insert).
+        selected_row = field.get("selected_row") or {}
         for row in rows:
             item = YTableItem()
             for column in columns:
                 item.addCell(str(row.get(column, "")))
+            if selected_row and all(
+                row.get(key) == value for key, value in selected_row.items()
+            ):
+                item.setSelected(True)
             widget.addItem(item)
 
         if field.get("id"):

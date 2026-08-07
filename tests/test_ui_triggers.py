@@ -246,6 +246,31 @@ class TestTriggerActions:
         page.on_select_trigger({"Subvolume": "/", "Schedule": "daily"})
         assert page._selected["Schedule"] == "daily"
 
+    def test_selection_survives_rebuild(self, tmp_path) -> None:
+        """The stored row is re-synced onto the freshly built rows and
+        handed back to the tree, so the re-render after a click restores
+        the highlight instead of wiping it."""
+        page, _ = _make_page(
+            tmp_path, policies=[_policy("/", "daily", "weekly")]
+        )
+        page.on_select_trigger(_row(page, "/", "daily"))
+        tree = page.build_model().sections[0]["fields"][0]
+        assert tree["selected_row"] is not None
+        assert tree["selected_row"]["Subvolume"] == "/"
+        assert tree["selected_row"]["Schedule"] == "daily"
+
+    def test_selection_cleared_when_trigger_vanishes(self, tmp_path) -> None:
+        """A trigger that disappears (last schedule disabled behind the
+        page's back) clears the stored selection: Enable/Disable must not
+        stay aimed at a dead row."""
+        page, app = _make_page(tmp_path, policies=[_policy("/", "daily")])
+        page.on_select_trigger(_row(page, "/", "daily"))
+        policy = app.config_store.get_policy("/")
+        policy.schedule_daily = False
+        app.config_store.save()
+        page.build_model()
+        assert page._selected is None
+
     def test_failed_row_shows_systemd_exec_evidence(self, tmp_path) -> None:
         # No records and no snapshots, but systemd knows the service ran
         # and failed: the row shows when, instead of "never" with no

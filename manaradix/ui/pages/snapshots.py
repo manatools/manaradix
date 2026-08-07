@@ -117,6 +117,10 @@ class SnapshotsPage:
                         ],
                         selectable=True,
                         on_select=self.on_select_snapshot,
+                        selected_row=(
+                            {"ID": self._selected_snapshot_id}
+                            if self._selected_snapshot_id else None
+                        ),
                     ),
                 ],
             },

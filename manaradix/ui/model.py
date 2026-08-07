@@ -97,6 +97,7 @@ class Widget:
         rows: list[dict[str, Any]] | None = None,
         selectable: bool = False,
         on_select: Callable[[dict[str, Any]], None] | None = None,
+        selected_row: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Multi-column table of rows; renders as a YUI ``YTable`` with a
         ``YTableHeader``.
@@ -109,6 +110,13 @@ class Widget:
                 row selection and ``on_select`` receives the row dict.
             on_select: Invoked with the selected row dict on selection,
                 or None.
+            selected_row: Column→value dict; when the table renders, the
+                row matching every key/value is pre-selected.  The page
+                rebuilds after every dispatched callback, so this is how
+                a selection survives a re-render (the native row
+                highlight would otherwise be wiped with the old widget).
+                Pass the row's natural key (e.g. ``{"ID": id}``), not the
+                full row, so the match stays stable across state changes.
 
         Returns:
             The widget descriptor dict (``widget`` kind ``"tree"``).
@@ -119,6 +127,7 @@ class Widget:
             "rows": list(rows or []),
             "selectable": selectable,
             "on_select": on_select,
+            "selected_row": selected_row,
         }
 
     @staticmethod

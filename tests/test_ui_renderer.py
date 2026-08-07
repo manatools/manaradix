@@ -411,6 +411,79 @@ class TestBuild:
         assert table.notify_enabled is True
         assert renderer._handlers["tbl"][0] == "tree"
 
+    def test_selected_row_marks_matching_item(self) -> None:
+        """A selectable table renders its previously selected row already
+        selected, so the post-callback page rebuild restores the highlight
+        instead of wiping it (the backends apply YTableItem.selected() on
+        insert)."""
+        class Page:
+            title = "P"
+
+            def build_model(self):
+                return PageModel(sections=[{
+                    "title": "S",
+                    "fields": [Widget.tree(
+                        id="t",
+                        rows=[{"ID": "s1", "Type": "manual"},
+                              {"ID": "s2", "Type": "timed"}],
+                        selectable=True,
+                        on_select=lambda row: None,
+                        selected_row={"ID": "s2"},
+                    )],
+                }])
+
+        renderer, factory = make_renderer([Page()], [YCancelEvent()])
+        renderer.run()
+        table = widgets_of(factory, "table")[0]
+        assert table._items[0].selected() is False
+        assert table._items[1].selected() is True
+        assert table.selectedItem().cell(0).label() == "s2"
+
+    def test_selected_row_subset_match(self) -> None:
+        """Matching uses the natural key only: other columns may change
+        between builds (state, timestamps) without losing the selection."""
+        class Page:
+            title = "P"
+
+            def build_model(self):
+                return PageModel(sections=[{
+                    "title": "S",
+                    "fields": [Widget.tree(
+                        id="t",
+                        rows=[{"Subvolume": "/", "State": "ok"},
+                              {"Subvolume": "/home", "State": "failed"}],
+                        selectable=True,
+                        on_select=lambda row: None,
+                        selected_row={"Subvolume": "/home"},
+                    )],
+                }])
+
+        renderer, factory = make_renderer([Page()], [YCancelEvent()])
+        renderer.run()
+        table = widgets_of(factory, "table")[0]
+        assert table.selectedItem().cell(0).label() == "/home"
+
+    def test_selected_row_no_match_selects_nothing(self) -> None:
+        class Page:
+            title = "P"
+
+            def build_model(self):
+                return PageModel(sections=[{
+                    "title": "S",
+                    "fields": [Widget.tree(
+                        id="t",
+                        rows=[{"ID": "s1"}],
+                        selectable=True,
+                        on_select=lambda row: None,
+                        selected_row={"ID": "gone"},
+                    )],
+                }])
+
+        renderer, factory = make_renderer([Page()], [YCancelEvent()])
+        renderer.run()
+        table = widgets_of(factory, "table")[0]
+        assert table.selectedItem() is None
+
     def test_not_selectable_registers_no_handler(self) -> None:
         class Page:
             title = "P"

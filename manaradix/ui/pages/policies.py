@@ -98,6 +98,10 @@ class PoliciesPage:
                     ],
                     selectable=True,
                     on_select=self.on_select_policy,
+                    selected_row=(
+                        {"Subvolume": self._selected_subvolume}
+                        if self._selected_subvolume else None
+                    ),
                 ),
             ],
         }

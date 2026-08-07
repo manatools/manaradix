@@ -117,7 +117,22 @@ class TriggersPage:
                 rows[pair] = self._trigger_row(*pair)
 
         rows[("/", "pre-upgrade")] = self._pre_upgrade_row()
-        return [rows[key] for key in sorted(rows)]
+        ordered = [rows[key] for key in sorted(rows)]
+        # Row dicts are rebuilt every render; re-sync the stored selection
+        # onto the fresh rows so the highlight restores after the page
+        # rebuilds (and a trigger that vanished clears the selection
+        # instead of leaving Enable/Disable aimed at a dead row).
+        if self._selected is not None:
+            self._selected = next(
+                (
+                    row
+                    for row in ordered
+                    if row["Subvolume"] == self._selected["Subvolume"]
+                    and row["Schedule"] == self._selected["Schedule"]
+                ),
+                None,
+            )
+        return ordered
 
     def _trigger_row(self, subvolume: str, schedule: str) -> dict:
         """One systemd-backed trigger row: live state + run evidence."""
@@ -184,6 +199,7 @@ class TriggersPage:
                     rows=rows,
                     selectable=True,
                     on_select=self.on_select_trigger,
+                    selected_row=self._selected,
                 )
             )
         else:
