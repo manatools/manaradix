@@ -90,9 +90,7 @@ install -D -m 0644 data/man/man5/manaradix-config.5 \
 install -d %{buildroot}%{_datadir}/manaradix/templates
 cp -a data/templates/*.toml %{buildroot}%{_datadir}/manaradix/templates/
 
-# --- Logo (SVG for the window icon, PNG raster for the About page) ---
-install -D -m 0644 data/images/manaradix.svg \
-    %{buildroot}%{_datadir}/manaradix/images/manaradix.svg
+# --- Logo (PNG raster, used for the About page and the window icon) ---
 install -D -m 0644 data/images/manaradix.png \
     %{buildroot}%{_datadir}/manaradix/images/manaradix.png
 
