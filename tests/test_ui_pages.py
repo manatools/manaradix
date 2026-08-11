@@ -248,6 +248,9 @@ class TestSettingsPreUpgradeToggle:
         """Without the script the trigger cannot fire: a failed install
         must not leave the flag on promising snapshots that cannot
         happen."""
+        # The host may already carry the RPM-installed script: force the
+        # missing-script path so the failing install is actually reached.
+        monkeypatch.setattr("manaradix.ui.pages.settings.is_installed", lambda: False)
         monkeypatch.setattr(
             "manaradix.ui.pages.settings.install_script",
             MagicMock(side_effect=PermissionError(13, "nope")),
