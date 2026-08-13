@@ -9,7 +9,7 @@
 
 Name:           manaradix
 Version:        0.1.2
-Release:        %mkrel 1
+Release:        %mkrel 2
 Summary:        Btrfs snapshot, subvolume, and filesystem management utility
 
 License:        GPLv2+
@@ -94,6 +94,10 @@ cp -a data/templates/*.toml %{buildroot}%{_datadir}/manaradix/templates/
 install -D -m 0644 data/images/manaradix.png \
     %{buildroot}%{_datadir}/manaradix/images/manaradix.png
 
+# --- Desktop menu icon (hicolor theme; the .desktop file says Icon=manaradix) ---
+install -d %{buildroot}%{_datadir}/icons/hicolor
+cp -a data/icons/hicolor/* %{buildroot}%{_datadir}/icons/hicolor/
+
 # --- Pre-upgrade snapshot trigger ---
 # rpm runs this once at the START of every transaction touching /usr or
 # /etc — before any file changes — so a snapshot of / can be taken ahead
@@ -128,6 +132,7 @@ msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
 %{python3_sitelib}/manaradix-%{version}*.dist-info/
 %{_datadir}/polkit-1/actions/org.mageia.manaradix.policy
 %{_datadir}/applications/manaradix.desktop
+%{_datadir}/icons/hicolor/
 %{_datadir}/manaradix/templates/
 %{_datadir}/manaradix/images/
 %{_libexecdir}/manaradix/pre-upgrade
@@ -139,6 +144,9 @@ msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
 # Polkit: reload policy definitions
 %{_bindir}/pkcheck --action-id org.mageia.manaradix.read \
     --process $$ 2>/dev/null || true
+
+# Desktop menu icon: refresh the icon theme cache (best effort)
+gtk-update-icon-cache %{_datadir}/icons/hicolor 2>/dev/null || :
 
 # D-Bus: pick up the new unit and the bus policy (system.d is read at
 # bus start/reload only; the unit is never enabled — activation comes
@@ -162,6 +170,7 @@ fi
 %postun
 # Runs on upgrade and erasure (the bus policy may already be gone).
 %{_bindir}/systemctl daemon-reload >/dev/null 2>&1 || true
+gtk-update-icon-cache %{_datadir}/icons/hicolor 2>/dev/null || :
 %{_bindir}/systemctl reload dbus >/dev/null 2>&1 || \
     %{_bindir}/systemctl reload dbus-broker >/dev/null 2>&1 || true
 
