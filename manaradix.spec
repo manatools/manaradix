@@ -8,8 +8,8 @@
 %global pypi_name manaradix
 
 Name:           manaradix
-Version:        0.1.2
-Release:        %mkrel 2
+Version:        0.1.3
+Release:        %mkrel 1
 Summary:        Btrfs snapshot, subvolume, and filesystem management utility
 
 License:        GPLv2+
@@ -80,6 +80,10 @@ install -D -m 0644 data/polkit/org.mageia.manaradix.policy \
 install -D -m 0644 data/desktop/manaradix.desktop \
     %{buildroot}%{_datadir}/applications/manaradix.desktop
 
+# --- Tray applet autostart (per-login user process, session bus) ---
+install -D -m 0644 data/desktop/manaradix-tray.desktop \
+    %{buildroot}%{_sysconfdir}/xdg/autostart/manaradix-tray.desktop
+
 # --- Man pages ---
 install -D -m 0644 data/man/man1/manaradix.1 \
     %{buildroot}%{_mandir}/man1/manaradix.1
@@ -120,6 +124,9 @@ install -D -m 0644 data/dbus/org.mageia.manaradix.conf \
 install -d %{buildroot}%{_datadir}/locale/it/LC_MESSAGES
 msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
     locale/it.po
+install -d %{buildroot}%{_datadir}/locale/zh_CN/LC_MESSAGES
+msgfmt -o %{buildroot}%{_datadir}/locale/zh_CN/LC_MESSAGES/manaradix.mo \
+    locale/zh_CN.po
 %find_lang %{name}
 
 %files -f %{name}.lang
@@ -132,6 +139,7 @@ msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
 %{python3_sitelib}/manaradix-%{version}*.dist-info/
 %{_datadir}/polkit-1/actions/org.mageia.manaradix.policy
 %{_datadir}/applications/manaradix.desktop
+%{_sysconfdir}/xdg/autostart/manaradix-tray.desktop
 %{_datadir}/icons/hicolor/
 %{_datadir}/manaradix/templates/
 %{_datadir}/manaradix/images/

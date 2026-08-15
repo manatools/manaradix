@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Manaradix Tray
+GenericName=Btrfs Snapshot Health Monitor
+Comment=Monitor disk space, device health, and snapshot retention from the system tray
+Icon=manaradix
+Exec=manaradix tray serve
+Terminal=false
+Categories=System;Utility;FileTools;
+Keywords=btrfs;snapshot;tray;notification;health;disk;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

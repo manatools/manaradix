@@ -102,11 +102,14 @@ class TestTemplateMetadata:
         assert not untranslated, f"untranslated template metadata: {untranslated}"
 
 
-def _translate(locale_dir: Path, message: str) -> str:
+def _translate(locale_dir: Path, message: str, language: str = "it") -> str:
     """Return the translation of *message* from a fresh interpreter."""
     env = {
         **os.environ,
-        "LANG": "it_IT.UTF-8",
+        # LANGUAGE wins over LANG in glibc's lookup order, so pin it too —
+        # otherwise a LANGUAGE=C parent shell breaks the lookup.
+        "LANGUAGE": f"{language}.UTF-8",
+        "LANG": f"{language}.UTF-8",
         "MANARADIX_LOCALE_DIR": str(locale_dir),
         "PYTHONIOENCODING": "utf-8",
     }
@@ -136,3 +139,40 @@ class TestTranslationLookup:
 
     def test_fallback_identity_without_mo(self, tmp_path) -> None:
         assert _translate(tmp_path, "No snapshots found.") == "No snapshots found."
+
+
+class TestZhCn:
+    """The basic Chinese translation compiles and covers the tray applet."""
+
+    @staticmethod
+    def _compile(tmp_path: Path) -> Path:
+        mo_dir = tmp_path / "zh_CN" / "LC_MESSAGES"
+        mo_dir.mkdir(parents=True)
+        subprocess.run(
+            ["msgfmt", "-o", str(mo_dir / "manaradix.mo"),
+             str(REPO_LOCALE / "zh_CN.po")],
+            check=True,
+        )
+        return tmp_path
+
+    def test_po_compiles_cleanly(self, tmp_path) -> None:
+        mo = tmp_path / "zh_CN.mo"
+        proc = subprocess.run(
+            ["msgfmt", "--check", "-o", str(mo),
+             str(REPO_LOCALE / "zh_CN.po")],
+            capture_output=True, text=True,
+        )
+        assert proc.returncode == 0, proc.stderr
+
+    def test_tray_strings_translated(self, tmp_path) -> None:
+        locale_dir = self._compile(tmp_path)
+        assert _translate(locale_dir, "Quit", "zh_CN") == "退出"
+        assert _translate(locale_dir, "Check now", "zh_CN") == "立即检查"
+        assert _translate(locale_dir, "Open manaradix", "zh_CN") == "打开 manaradix"
+
+    def test_health_strings_translated(self, tmp_path) -> None:
+        locale_dir = self._compile(tmp_path)
+        assert _translate(locale_dir, "No issues found", "zh_CN") == "未发现问题"
+        assert _translate(
+            locale_dir, "SMART health failing on %s", "zh_CN") \
+            == "%s SMART 健康状态异常"
