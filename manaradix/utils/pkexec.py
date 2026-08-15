@@ -57,6 +57,14 @@ _DAEMON_COMMANDS: set[tuple[str, str | None]] = {
     ("dbus", "status"),
 }
 
+# Session-scoped subcommands never re-exec via pkexec: the tray applet
+# is a per-login user process (session bus, SNI watcher, notification
+# daemon) — elevation would put it in a different, root-owned session.
+_SESSION_COMMANDS: set[tuple[str, str | None]] = {
+    ("tray", "serve"),
+    ("tray", "status"),
+}
+
 # Commands invoked by the generated systemd units: they run as root by
 # construction, so pkexec must never be involved — an unprivileged
 # manual call fails with a clear write error instead of an auth prompt.
@@ -103,6 +111,8 @@ def needs_elevation(command: str | None, subcommand: str | None) -> bool:
 
     key = (command, subcommand)
     if key in _DAEMON_COMMANDS or key in _UNIT_COMMANDS:
+        return False
+    if key in _SESSION_COMMANDS:
         return False
     if key in _READ_ONLY_COMMANDS:
         return False

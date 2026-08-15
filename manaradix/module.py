@@ -536,6 +536,28 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Report whether the D-Bus service is running",
     )
 
+    # -- tray ----------------------------------------------------------------
+    tray_parser = subparsers.add_parser(
+        "tray",
+        help="Tray applet: health checks, icon and notifications",
+        description="Manage the status-notifier tray applet: run it "
+        "(normally started by the autostart entry) or report whether "
+        "it is running.",
+    )
+    tray_subs = tray_parser.add_subparsers(
+        title="tray subcommands",
+        dest="tray_command",
+        metavar="ACTION",
+    )
+    tray_subs.add_parser(
+        "serve",
+        help="Run the tray applet in the user session",
+    )
+    tray_subs.add_parser(
+        "status",
+        help="Report whether the tray applet is running",
+    )
+
     return parser
 
 
@@ -905,6 +927,29 @@ def _cmd_dbus_status(ctx: AppContext, args: argparse.Namespace) -> int:
     return 2
 
 
+def _cmd_tray_serve(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``tray serve`` — run the tray applet (user session)."""
+    from manaradix.tray.app import TrayApp
+
+    return TrayApp(ctx.config_store).run()
+
+
+def _cmd_tray_status(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``tray status`` — is the tray applet running?"""
+    from manaradix.tray.app import tray_running
+
+    if tray_running():
+        print(_("The manaradix tray applet is running."))
+        return 0
+    print(
+        _(
+            "The manaradix tray applet is not running; "
+            "it starts automatically at login."
+        )
+    )
+    return 2
+
+
 def _cmd_snapshot_info(ctx: AppContext, args: argparse.Namespace) -> int:
     """Handle ``snapshot info``."""
     snap = ctx.snapshot_manager.get(args.snapshot_id, mount=args.mount)
@@ -937,6 +982,8 @@ _COMMAND_DISPATCH: dict[tuple[str, str], object] = {
     ("activity", "record"): _cmd_activity_record,
     ("dbus", "serve"): _cmd_dbus_serve,
     ("dbus", "status"): _cmd_dbus_status,
+    ("tray", "serve"): _cmd_tray_serve,
+    ("tray", "status"): _cmd_tray_status,
 }
 
 
@@ -990,6 +1037,7 @@ def main() -> None:
         or getattr(args, "setup_command", None)
         or getattr(args, "dbus_command", None)
         or getattr(args, "activity_command", None)
+        or getattr(args, "tray_command", None)
     )
     if needs_elevation(args.command, subcmd) and not is_root() and not already_reexecuted():
         logger.info(
@@ -1019,7 +1067,8 @@ def main() -> None:
         getattr(args, "snapshot_command", None)
         or getattr(args, "setup_command", None)
         or getattr(args, "dbus_command", None)
-        or getattr(args, "activity_command", None),
+        or getattr(args, "activity_command", None)
+        or getattr(args, "tray_command", None),
     )
     handler = _COMMAND_DISPATCH.get(dispatch_key)
 

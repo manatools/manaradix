@@ -30,9 +30,13 @@ def _asset_path(name: str) -> str | None:
 def logo_path() -> str | None:
     """Absolute path to the manaradix logo (SVG), or None when not shipped.
 
-    The SVG is used for the application/window icon.
+    The SVG is used for the application/window icon.  Falls back to the
+    PNG raster when the SVG is absent (the shipped package currently
+    installs only the PNG); the Qt icon resolver loads a PNG path the
+    same way.
     """
-    return _asset_path(_LOGO_NAME)
+    svg = _asset_path(_LOGO_NAME)
+    return svg if svg is not None else _asset_path(_LOGO_PNG_NAME)
 
 
 def logo_png_path() -> str | None:

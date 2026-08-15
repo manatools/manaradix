@@ -283,6 +283,11 @@ def apply_profile(
         "/" if plan["layout"]["root_is_btrfs"] else available[0]["subvolume"]
     )
 
+    available = [p for p in plan["policies"] if p["available"]]
+    store.default_subvolume = (
+        "/" if plan["layout"]["root_is_btrfs"] else available[0]["subvolume"]
+    )
+
     policies: list[SnapshotPolicy] = []
     for entry in available:
         policy = SnapshotPolicy(
@@ -298,6 +303,9 @@ def apply_profile(
         policies.append(policy)
 
     if not dry_run:
+        # Record the applied profile id so the tray applet can pick the
+        # matching retention-suggestion flavor (spec §16.5).
+        store.applied_profile = profile.id
         store.save()
         # The systemd units are the core of the setup; a failure here is
         # fatal (unlike the GRUB script below).

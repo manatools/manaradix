@@ -30,7 +30,7 @@ from manaradix.core.setup_wizard import (
     system_layout,
 )
 from manaradix.core.templates import load_profiles
-from manaradix.dbus import polkit
+from manaradix.dbus import polkit, udisks
 from manaradix.dbus.constants import METHOD_ACTIONS
 from manaradix.dbus.convert import (
     _b,
@@ -72,10 +72,12 @@ class ManaradixHandler:
         *,
         auth_check: Callable[[int, str], None] = polkit.check_authorization,
         pid_resolver: Callable[[Any, str], int] = polkit.sender_pid,
+        smart_probe_all: Callable[[list[str]], dict] = udisks.smart_probe_all,
     ) -> None:
         self._ctx = services
         self._auth_check = auth_check
         self._pid_resolver = pid_resolver
+        self._smart_probe_all = smart_probe_all
 
     # -- Dispatch -----------------------------------------------------------
 
@@ -271,6 +273,41 @@ class ManaradixHandler:
         return scrub_status_to_dbus(
             self._ctx.btrfs_ops.scrub_status(_s(kwargs.get("mount", "/")))
         )
+
+    def handle_GetDeviceStats(self, kwargs: dict) -> dict:
+        """Merged per-device health report: btrfs counters + SMART.
+
+        Aggregates ``btrfs device stats`` for every device of every
+        btrfs mount and attaches the UDisks2 SMART report of the
+        backing whole disk (flat ``smart_*`` keys, absent when SMART is
+        unavailable — never an error).  One request gives the applet a
+        complete health picture per spec §16.4.1.
+
+        Args:
+            kwargs: Method arguments (unused).
+
+        Returns:
+            One dict per device, with the five btrfs error counters and
+            optional ``smart_*`` fields.
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+        """
+        mounts = self._ctx.btrfs_ops.btrfs_mounts()
+        by_device: dict[str, dict] = {}
+        for mount in sorted({m["target"] for m in mounts}):
+            for stats in self._ctx.btrfs_ops.device_stats(mount):
+                by_device[stats["device"]] = stats
+        for device, stats in by_device.items():
+            report = self._smart_probe_all([device]).get(
+                udisks.whole_disk(device)
+            )
+            if report is None:
+                continue
+            stats["smart_available"] = True
+            for key, value in report.items():
+                stats[f"smart_{key}"] = value
+        return {"devices": list(by_device.values())}
 
     def handle_GetCompression(self, kwargs: dict) -> str:
         """Get the compression algorithm of a subvolume.

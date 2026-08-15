@@ -117,6 +117,19 @@ class TestNeedsElevation:
         # construction — pkexec must never be involved.
         assert needs_elevation("activity", "record") is False
 
+    # -- Tray subcommands ---------------------------------------------------
+
+    def test_tray_serve_is_session_scoped(self) -> None:
+        # The applet is a per-login user process on the session bus;
+        # pkexec would put it in a root-owned session.
+        assert needs_elevation("tray", "serve") is False
+
+    def test_tray_status_is_session_scoped(self) -> None:
+        assert needs_elevation("tray", "status") is False
+
+    def test_unknown_tray_subcommand_defaults_to_elevated(self) -> None:
+        assert needs_elevation("tray", "bogus") is True
+
 
 # ---------------------------------------------------------------------------
 # reexec_with_pkexec

@@ -199,3 +199,81 @@ class TestConfigStoreProperties:
         assert store.snapshot_dir == ".snaps"
         assert store.boot_from_snapshot is True
         assert store.snapshot_before_upgrade is True
+
+
+class TestAppliedProfile:
+    def test_default_empty(self) -> None:
+        store = ConfigStore(path="/nonexistent/config.toml")
+        assert store.applied_profile == ""
+
+    def test_setter(self) -> None:
+        store = ConfigStore(path="/nonexistent/config.toml")
+        store.applied_profile = "server"
+        assert store.applied_profile == "server"
+
+    def test_roundtrip(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = os.path.join(tmpdir, "config.toml")
+            store = ConfigStore(path=config_path)
+            store.applied_profile = "kiosk"
+            store.save()
+            store2 = ConfigStore(path=config_path)
+            store2.load()
+            assert store2.applied_profile == "kiosk"
+
+
+class TestTraySettings:
+    def test_defaults(self) -> None:
+        store = ConfigStore(path="/nonexistent/config.toml")
+        tray = store.tray
+        assert tray.enabled is True
+        assert tray.autostart is True
+        assert tray.hide_when_ok is True
+        assert tray.quiet_hours == ""
+        assert tray.space_warn_pct == 85
+        assert tray.space_critical_pct == 95
+        assert tray.space_interval_min == 10
+        assert tray.device_interval_min == 60
+        assert tray.retention_interval_min == 1440
+        assert tray.scrub_interval_min == 60
+
+    def test_roundtrip(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = os.path.join(tmpdir, "config.toml")
+            store = ConfigStore(path=config_path)
+            store.tray.enabled = False
+            store.tray.quiet_hours = "22:30-07:00"
+            store.tray.space_warn_pct = 80
+            store.tray.space_critical_pct = 92
+            store.tray.space_interval_min = 5
+            store.tray.device_interval_min = 30
+            store.tray.retention_interval_min = 720
+            store.tray.scrub_interval_min = 90
+            store.save()
+
+            store2 = ConfigStore(path=config_path)
+            store2.load()
+            assert store2.tray.enabled is False
+            assert store2.tray.quiet_hours == "22:30-07:00"
+            assert store2.tray.space_warn_pct == 80
+            assert store2.tray.space_critical_pct == 92
+            assert store2.tray.space_interval_min == 5
+            assert store2.tray.device_interval_min == 30
+            assert store2.tray.retention_interval_min == 720
+            assert store2.tray.scrub_interval_min == 90
+
+    def test_missing_section_keeps_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = os.path.join(tmpdir, "config.toml")
+            with open(config_path, "w") as fh:
+                fh.write('[global]\ndefault_subvolume = "/"\n')
+            store = ConfigStore(path=config_path)
+            store.load()
+            assert store.tray.enabled is True
+            assert store.tray.space_warn_pct == 85
+
+    def test_to_dict_includes_tray(self) -> None:
+        store = ConfigStore(path="/nonexistent/config.toml")
+        data = store.to_dict()
+        assert data["tray"]["space_warn_pct"] == 85
+        assert data["global"]["applied_profile"] == ""

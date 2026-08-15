@@ -230,6 +230,23 @@ class ManaradixClient:
         """
         return self._call("ScrubStatus", mount)
 
+    def get_device_stats(self) -> list[dict]:
+        """Merged per-device health report (btrfs counters + SMART).
+
+        Returns:
+            One dict per device with the five btrfs error counters and
+            optional ``smart_*`` fields (absent when UDisks2/SMART is
+            unavailable, never an error).
+
+        Raises:
+            AuthorizationError: The caller lacks the read polkit action.
+            OperationError: The btrfs query failed.
+            DaemonUnavailableError: The service is not running.
+
+        Requires the read polkit action.
+        """
+        return self._call("GetDeviceStats")
+
     def get_compression(self, path: str) -> str:
         """Get the compression algorithm of a subvolume.
 

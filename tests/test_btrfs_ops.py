@@ -710,3 +710,139 @@ class TestFilesystemUsageCache:
         ops.filesystem_usage("/mnt/data")
         ops.filesystem_usage("/")
         assert mock_run.call_count == 2
+
+
+class TestScrubStatus:
+    """scrub_status() parsing — detailed and per-device output."""
+
+    DETAILED = """\
+scrub status for 2a1d0f6e-abc
+\tScrub started:    Wed Aug  7 09:00:00 2026
+\tStatus:           finished
+\tDuration:         0:10:35
+\tTotal to scrub:   1.00GiB
+\tRate:             1.61GiB/s
+\tError summary:    no errors found
+"""
+
+    PER_DEVICE = """\
+scrub status for 2a1d0f6e-abc
+\tscrub device /dev/sda2 (id 1) done
+\tscrub started at Wed Aug  7 09:00:00 2026 and was finished after 0:10:35
+\tdata_extents_scrubbed: 100
+\ttree_extents_scrubbed: 1000
+\tread_errors: 2
+\tcsum_errors: 3
+"""
+
+    @patch("subprocess.run")
+    def test_parses_counters_and_started(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "scrub", "status", "-d", "/"],
+            returncode=0,
+            stdout=self.PER_DEVICE,
+            stderr="",
+        )
+        status = BtrfsOps().scrub_status("/")
+        assert status.data_extents_scrubbed == 100
+        assert status.errors == 3  # parser keeps the last error counter line
+        assert status.running is False
+        assert status.last_started == "2026-08-07T09:00:00"
+
+    @patch("subprocess.run")
+    def test_parses_detailed_format(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "scrub", "status", "-d", "/"],
+            returncode=0,
+            stdout=self.DETAILED,
+            stderr="",
+        )
+        status = BtrfsOps().scrub_status("/")
+        assert status.data_extents_scrubbed == 0
+        assert status.errors == 0
+        assert status.last_started == "2026-08-07T09:00:00"
+
+    @patch("subprocess.run")
+    def test_running_scrub(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "scrub", "status", "-d", "/"],
+            returncode=0,
+            stdout="scrub status for 2a1d0f6e-abc\n\tStatus: running\n",
+            stderr="",
+        )
+        status = BtrfsOps().scrub_status("/")
+        assert status.running is True
+        assert status.last_started is None
+
+    @patch("subprocess.run")
+    def test_btrfs_failure_returns_defaults(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(1, "btrfs", stderr="boom")
+        status = BtrfsOps().scrub_status("/")
+        assert status == type(status)()
+
+    @patch("subprocess.run")
+    def test_zero_padded_day_parses(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "scrub", "status", "-d", "/"],
+            returncode=0,
+            stdout="scrub status for 2a1d0f6e-abc\n"
+                   "\tscrub started at Wed Aug 07 09:00:00 2026\n",
+            stderr="",
+        )
+        status = BtrfsOps().scrub_status("/")
+        assert status.last_started == "2026-08-07T09:00:00"
+
+
+class TestDeviceStats:
+    """device_stats() parsing of ``btrfs device stats``."""
+
+    OUTPUT = """\
+[/dev/sda2].write_io_errs   0
+[/dev/sda2].read_io_errs    0
+[/dev/sda2].flush_io_errs   0
+[/dev/sda2].corruption_errs 1
+[/dev/sda2].generation_errs 0
+[/dev/sdb1].write_io_errs   7
+[/dev/sdb1].read_io_errs    2
+[/dev/sdb1].flush_io_errs   0
+[/dev/sdb1].corruption_errs 0
+[/dev/sdb1].generation_errs 0
+"""
+
+    @patch("subprocess.run")
+    def test_parses_multi_device(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "device", "stats", "/"],
+            returncode=0,
+            stdout=self.OUTPUT,
+            stderr="",
+        )
+        stats = BtrfsOps().device_stats("/")
+        assert len(stats) == 2
+        assert stats[0] == {
+            "device": "/dev/sda2",
+            "write_io_errs": 0,
+            "read_io_errs": 0,
+            "flush_io_errs": 0,
+            "corruption_errs": 1,
+            "generation_errs": 0,
+        }
+        assert stats[1]["device"] == "/dev/sdb1"
+        assert stats[1]["write_io_errs"] == 7
+
+    @patch("subprocess.run")
+    def test_no_output(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "device", "stats", "/"],
+            returncode=0,
+            stdout="",
+            stderr="",
+        )
+        assert BtrfsOps().device_stats("/") == []
+
+    @patch("subprocess.run")
+    def test_failure_returns_empty(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            1, "btrfs", stderr="ERROR: can't access '/': not a btrfs filesystem"
+        )
+        assert BtrfsOps().device_stats("/") == []

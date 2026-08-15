@@ -77,11 +77,16 @@ def balance_status_to_dbus(status) -> dict:
 
 
 def scrub_status_to_dbus(status) -> dict:
-    """Serialize a scrub status dataclass (extents / errors / running)."""
+    """Serialize a scrub status dataclass (extents / errors / running).
+
+    ``last_started`` is included when the dataclass carries it (ISO
+    timestamp, None when never scrubbed or unparseable).
+    """
     return {
         "data_extents_scrubbed": int(status.data_extents_scrubbed),
         "errors": int(status.errors),
         "running": bool(status.running),
+        "last_started": getattr(status, "last_started", None),
     }
 
 
@@ -102,6 +107,7 @@ def policy_to_dbus(policy: SnapshotPolicy) -> dict:
             "keep_weekly": ret.keep_weekly,
             "keep_monthly": ret.keep_monthly,
             "keep_boot": ret.keep_boot,
+            "keep_pre_upgrade": ret.keep_pre_upgrade,
         },
     }
 
@@ -147,6 +153,7 @@ def policy_from_args(**kwargs) -> SnapshotPolicy:
         keep_weekly=_i(kwargs.get("keep_weekly", 4)),
         keep_monthly=_i(kwargs.get("keep_monthly", 3)),
         keep_boot=_i(kwargs.get("keep_boot", 5)),
+        keep_pre_upgrade=_i(kwargs.get("keep_pre_upgrade", 3)),
     )
     return SnapshotPolicy(
         subvolume=_s(kwargs["subvolume"]),

@@ -182,3 +182,15 @@ class TestDaemonRunning:
         bus = MagicMock()
         bus.call_blocking.side_effect = RuntimeError("no bus")
         assert ManaradixClient(bus=bus).daemon_running() is False
+
+
+class TestGetDeviceStatsClient:
+    def test_no_args_and_list_return(self) -> None:
+        client, proxy = make_client()
+        proxy.GetDeviceStats.return_value = [{"device": "/dev/sda",
+                                              "write_io_errs": 0}]
+        result = client.get_device_stats()
+        assert result[0]["device"] == "/dev/sda"
+        proxy.GetDeviceStats.assert_called_once_with(
+            dbus_interface=DBUS_INTERFACE, timeout=30.0
+        )

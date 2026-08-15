@@ -333,6 +333,7 @@ class TestApplyProfile:
         assert ctx.config_store.snapshot_dir == ".snapshots"
         assert ctx.config_store.boot_from_snapshot is True
         assert ctx.config_store.snapshot_before_upgrade is True
+        assert ctx.config_store.applied_profile == "desktop"
         assert ctx.config_store.set_policy.call_count == 2
         ctx.config_store.save.assert_called_once()
         assert ctx.policy_engine.apply_policy.call_count == 2

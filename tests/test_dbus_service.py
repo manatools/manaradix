@@ -430,3 +430,68 @@ class TestReadDelegation:
         assert handler.dispatch("GrubIsInstalled", {}, ":1.5") is True
         ctx.grub_integration.list_snapshot_entries.return_value = ["entry"]
         assert handler.dispatch("GrubListEntries", {}, ":1.5") == ["entry"]
+
+
+class TestGetDeviceStats:
+    """handle_GetDeviceStats: btrfs counters merged with UDisks2 SMART."""
+
+    def _handler(self, smart_map=None):
+        ctx = MagicMock()
+        ctx.btrfs_ops.btrfs_mounts.return_value = [
+            {"target": "/", "source": "/dev/sda2", "uuid": "u1"},
+            {"target": "/", "source": "/dev/sda2", "uuid": "u1"},  # dup target
+            {"target": "/data", "source": "/dev/sda2", "uuid": "u1"},
+        ]
+        ctx.btrfs_ops.device_stats.side_effect = lambda mount: (
+            [{"device": "/dev/sda2", "write_io_errs": 0, "read_io_errs": 1,
+              "flush_io_errs": 0, "corruption_errs": 0, "generation_errs": 0}]
+            if mount == "/"
+            else [{"device": "/dev/sdb1", "write_io_errs": 0, "read_io_errs": 0,
+                   "flush_io_errs": 0, "corruption_errs": 0,
+                   "generation_errs": 0}]
+        )
+        return ManaradixHandler(
+            ctx,
+            auth_check=lambda pid, action: None,
+            pid_resolver=lambda connection, sender: 4242,
+            smart_probe_all=lambda devices: smart_map or {},
+        )
+
+    def test_merges_stats_and_smart(self) -> None:
+        handler = self._handler(
+            smart_map={
+                "/dev/sda": {"failing": False, "temperature": 38.0,
+                             "reallocated_sectors": 100,
+                             "pending_sectors": 100,
+                             "uncorrectable_errors": 100},
+            }
+        )
+        result = handler.dispatch("GetDeviceStats", {}, ":1.7")
+        devices = {d["device"]: d for d in result["devices"]}
+        assert set(devices) == {"/dev/sda2", "/dev/sdb1"}
+        # SMART attaches to the whole disk backing the partition.
+        assert devices["/dev/sda2"]["smart_available"] is True
+        assert devices["/dev/sda2"]["smart_failing"] is False
+        assert devices["/dev/sda2"]["smart_temperature"] == 38.0
+        assert not any(k.startswith("smart_") for k in devices["/dev/sdb1"])
+
+    def test_no_smart_leaves_plain_counters(self) -> None:
+        handler = self._handler()
+        result = handler.dispatch("GetDeviceStats", {}, ":1.7")
+        assert len(result["devices"]) == 2
+        for device in result["devices"]:
+            assert not any(k.startswith("smart_") for k in device)
+
+    def test_no_mounts_returns_empty(self) -> None:
+        handler = self._handler()
+        handler._ctx.btrfs_ops.btrfs_mounts.return_value = []
+        result = handler.dispatch("GetDeviceStats", {}, ":1.7")
+        assert result == {"devices": []}
+
+    def test_requires_read_tier(self) -> None:
+        handler = self._handler()
+        handler._ctx.btrfs_ops.btrfs_mounts.return_value = []
+        auth_calls = []
+        handler._auth_check = lambda pid, action: auth_calls.append(action)
+        handler.dispatch("GetDeviceStats", {}, ":1.7")
+        assert auth_calls == [ACTION_READ]

@@ -76,7 +76,15 @@ class TestStatusToDbus:
                             "running": False})()
         )
         assert data == {"data_extents_scrubbed": 99, "errors": 0,
-                        "running": False}
+                        "running": False, "last_started": None}
+
+    def test_scrub_status_with_last_started(self) -> None:
+        data = convert.scrub_status_to_dbus(
+            type("SS", (), {"data_extents_scrubbed": 1, "errors": 0,
+                            "running": False,
+                            "last_started": "2026-08-07T09:00:00"})()
+        )
+        assert data["last_started"] == "2026-08-07T09:00:00"
 
 
 class TestPolicyToDbus:
@@ -97,7 +105,7 @@ class TestPolicyToDbus:
         assert data["schedule_boot"] is True
         assert data["retention"] == {
             "keep_hourly": 2, "keep_daily": 3, "keep_weekly": 4,
-            "keep_monthly": 5, "keep_boot": 6,
+            "keep_monthly": 5, "keep_boot": 6, "keep_pre_upgrade": 3,
         }
 
     def test_roundtrip(self) -> None:

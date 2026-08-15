@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Optional
 
 import tomlkit
@@ -20,14 +21,32 @@ from manaradix.model.policy import (
 
 logger = logging.getLogger(__name__)
 
-# Default content written when no config file exists.
-_DEFAULT_CONFIG = """\
-[global]
-default_subvolume = "/"
-snapshot_dir = ".snapshots"
-boot_from_snapshot = false
-snapshot_before_upgrade = false
-"""
+
+@dataclass
+class TraySettings:
+    """The ``[tray]`` section: the notification-area applet behavior.
+
+    All checks can be tuned per-check (thresholds in percent of used
+    space, intervals in minutes); ``quiet_hours`` is an optional
+    ``"HH:MM-HH:MM"`` window (start > end crosses midnight, empty
+    string disables it).  The applet reads this section only — it is
+    session-bound and never writes the system config.
+    """
+
+    enabled: bool = True
+    autostart: bool = True
+    hide_when_ok: bool = True
+    quiet_hours: str = ""
+    space_enabled: bool = True
+    device_enabled: bool = True
+    retention_enabled: bool = True
+    scrub_enabled: bool = True
+    space_warn_pct: int = 85
+    space_critical_pct: int = 95
+    space_interval_min: int = 10
+    device_interval_min: int = 60
+    retention_interval_min: int = 1440
+    scrub_interval_min: int = 60
 
 
 class ConfigError(Exception):
@@ -59,6 +78,10 @@ class ConfigStore:
         self._snapshot_dir: str = ".snapshots"
         self._boot_from_snapshot: bool = False
         self._snapshot_before_upgrade: bool = False
+        self._applied_profile: str = ""
+
+        # Tray applet settings ([tray] section)
+        self._tray = TraySettings()
 
         # Per-subvolume policies, keyed by subvolume path
         self._policies: dict[str, SnapshotPolicy] = {}
@@ -143,6 +166,44 @@ class ConfigStore:
                 package updates.
         """
         self._snapshot_before_upgrade = value
+
+    @property
+    def applied_profile(self) -> str:
+        """The ``[global] applied_profile`` value: the id of the setup
+        profile most recently applied by the setup wizard ("" when never
+        applied).
+
+        The tray applet uses it to pick the retention-suggestion
+        flavor (desktop / kiosk / server); when absent it falls back to
+        :func:`manaradix.core.health.infer_profile`.
+
+        Returns:
+            The applied profile id (default "").
+        """
+        return self._applied_profile
+
+    @applied_profile.setter
+    def applied_profile(self, value: str) -> None:
+        """Set the ``[global] applied_profile`` value.
+
+        Args:
+            value: The profile id applied by the setup wizard.
+        """
+        self._applied_profile = value
+
+    @property
+    def tray(self) -> TraySettings:
+        """The ``[tray]`` section: the notification-area applet settings."""
+        return self._tray
+
+    @tray.setter
+    def tray(self, settings: TraySettings) -> None:
+        """Replace the whole ``[tray]`` settings object.
+
+        Args:
+            settings: The new tray settings.
+        """
+        self._tray = settings
 
     # ------------------------------------------------------------------
     # Policy accessors
@@ -242,6 +303,65 @@ class ConfigStore:
                     "snapshot_before_upgrade", self._snapshot_before_upgrade
                 )
             )
+            self._applied_profile = str(
+                global_section.get("applied_profile", self._applied_profile)
+            )
+
+        # Tray section
+        tray_section = doc.get("tray", {})
+        if isinstance(tray_section, dict):
+            self._tray = TraySettings(
+                enabled=bool(tray_section.get("enabled", self._tray.enabled)),
+                autostart=bool(tray_section.get("autostart", self._tray.autostart)),
+                hide_when_ok=bool(
+                    tray_section.get("hide_when_ok", self._tray.hide_when_ok)
+                ),
+                space_enabled=bool(
+                    tray_section.get("space_enabled", self._tray.space_enabled)
+                ),
+                device_enabled=bool(
+                    tray_section.get("device_enabled", self._tray.device_enabled)
+                ),
+                retention_enabled=bool(
+                    tray_section.get(
+                        "retention_enabled", self._tray.retention_enabled
+                    )
+                ),
+                scrub_enabled=bool(
+                    tray_section.get("scrub_enabled", self._tray.scrub_enabled)
+                ),
+                quiet_hours=str(
+                    tray_section.get("quiet_hours", self._tray.quiet_hours)
+                ),
+                space_warn_pct=int(
+                    tray_section.get("space_warn_pct", self._tray.space_warn_pct)
+                ),
+                space_critical_pct=int(
+                    tray_section.get(
+                        "space_critical_pct", self._tray.space_critical_pct
+                    )
+                ),
+                space_interval_min=int(
+                    tray_section.get(
+                        "space_interval_min", self._tray.space_interval_min
+                    )
+                ),
+                device_interval_min=int(
+                    tray_section.get(
+                        "device_interval_min", self._tray.device_interval_min
+                    )
+                ),
+                retention_interval_min=int(
+                    tray_section.get(
+                        "retention_interval_min", self._tray.retention_interval_min
+                    )
+                ),
+                scrub_interval_min=int(
+                    tray_section.get(
+                        "scrub_interval_min", self._tray.scrub_interval_min
+                    )
+                ),
+            )
 
         # Policies section
         policies_section = doc.get("policies", {})
@@ -286,7 +406,26 @@ class ConfigStore:
         global_table.add("snapshot_dir", self._snapshot_dir)
         global_table.add("boot_from_snapshot", self._boot_from_snapshot)
         global_table.add("snapshot_before_upgrade", self._snapshot_before_upgrade)
+        global_table.add("applied_profile", self._applied_profile)
         doc.add("global", global_table)
+
+        # Tray section
+        tray_table = tomlkit.table()
+        tray_table.add("enabled", self._tray.enabled)
+        tray_table.add("autostart", self._tray.autostart)
+        tray_table.add("hide_when_ok", self._tray.hide_when_ok)
+        tray_table.add("space_enabled", self._tray.space_enabled)
+        tray_table.add("device_enabled", self._tray.device_enabled)
+        tray_table.add("retention_enabled", self._tray.retention_enabled)
+        tray_table.add("scrub_enabled", self._tray.scrub_enabled)
+        tray_table.add("quiet_hours", self._tray.quiet_hours)
+        tray_table.add("space_warn_pct", self._tray.space_warn_pct)
+        tray_table.add("space_critical_pct", self._tray.space_critical_pct)
+        tray_table.add("space_interval_min", self._tray.space_interval_min)
+        tray_table.add("device_interval_min", self._tray.device_interval_min)
+        tray_table.add("retention_interval_min", self._tray.retention_interval_min)
+        tray_table.add("scrub_interval_min", self._tray.scrub_interval_min)
+        doc.add("tray", tray_table)
 
         # Policies section
         if self._policies:
@@ -330,6 +469,23 @@ class ConfigStore:
                 "snapshot_dir": self._snapshot_dir,
                 "boot_from_snapshot": self._boot_from_snapshot,
                 "snapshot_before_upgrade": self._snapshot_before_upgrade,
+                "applied_profile": self._applied_profile,
+            },
+            "tray": {
+                "enabled": self._tray.enabled,
+                "autostart": self._tray.autostart,
+                "hide_when_ok": self._tray.hide_when_ok,
+                "space_enabled": self._tray.space_enabled,
+                "device_enabled": self._tray.device_enabled,
+                "retention_enabled": self._tray.retention_enabled,
+                "scrub_enabled": self._tray.scrub_enabled,
+                "quiet_hours": self._tray.quiet_hours,
+                "space_warn_pct": self._tray.space_warn_pct,
+                "space_critical_pct": self._tray.space_critical_pct,
+                "space_interval_min": self._tray.space_interval_min,
+                "device_interval_min": self._tray.device_interval_min,
+                "retention_interval_min": self._tray.retention_interval_min,
+                "scrub_interval_min": self._tray.scrub_interval_min,
             },
             "policies": {
                 subvol: {

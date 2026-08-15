@@ -1,6 +1,6 @@
 """D-Bus wire layer: the ``dbus.service.Object`` and the daemon entry point.
 
-:class:`ManaradixService` registers the 41 methods defined by
+:class:`ManaradixService` registers the 42 methods defined by
 :data:`~manaradix.dbus.constants.METHOD_ACTIONS` on the system bus and
 delegates to :class:`~manaradix.dbus.service.ManaradixHandler`; the
 handler's typed errors are translated into D-Bus error names
@@ -227,6 +227,23 @@ class ManaradixService(dbus.service.Object):
         Requires the read polkit action.
         """
         return self._dispatch("ScrubStatus", {"mount": mount}, sender)
+
+    @dbus.service.method(DBUS_INTERFACE, out_signature="aa{sv}",
+                         sender_keyword="sender")
+    def GetDeviceStats(self, sender=None) -> list[dict]:
+        """Merged per-device health report (btrfs counters + SMART).
+
+        Returns:
+            One dict per device with the five btrfs error counters and
+            optional ``smart_*`` fields (absent when UDisks2/SMART is
+            unavailable, never an error).
+
+        Raises:
+            org.mageia.manaradix.Error.Failed: The btrfs query failed.
+
+        Requires the read polkit action.
+        """
+        return self._dispatch("GetDeviceStats", {}, sender)
 
     @dbus.service.method(DBUS_INTERFACE, in_signature="s", out_signature="s",
                          sender_keyword="sender")

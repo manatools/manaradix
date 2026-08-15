@@ -24,6 +24,16 @@ from manaradix.model.subvolume import Subvolume
 
 logger = logging.getLogger(__name__)
 
+#: "Scrub started: Wed Aug  7 09:00:00 2026" (detailed output) and
+#: "scrub started at Wed Aug  7 09:00:00 2026 and was finished after
+#: 00:10:35" (per-device ``-d`` output); ctime() dates are
+#: locale-independent.
+_SCRUB_STARTED_RE = re.compile(
+    r"scrub\s+started(?:\s+at|\s*:)?\s+"
+    r"([A-Za-z]{3}\s+[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+\d{4})",
+    re.IGNORECASE,
+)
+
 
 # ---------------------------------------------------------------------------
 # Exceptions
@@ -62,11 +72,19 @@ class BalanceStatus:
 
 @dataclass
 class ScrubStatus:
-    """Status of an ongoing or completed scrub operation."""
+    """Status of an ongoing or completed scrub operation.
+
+    ``last_started`` is the ISO-8601 timestamp of when the most recent
+    scrub run began, when the CLI output carries it (both the detailed
+    and the per-device output spell the date in ``ctime()`` format,
+    which is locale-independent).  ``None`` when no run was recorded or
+    the line could not be parsed.
+    """
 
     data_extents_scrubbed: int = 0
     errors: int = 0
     running: bool = False
+    last_started: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -610,6 +628,7 @@ class BtrfsOps:
 
         data_extents = errors = 0
         running = "running" in output.lower()
+        last_started = None
         for line in output.splitlines():
             if "data_extents_scrubbed" in line:
                 m = re.search(r"(\d+)", line)
@@ -619,15 +638,55 @@ class BtrfsOps:
                 m = re.search(r"(\d+)", line)
                 if m:
                     errors = int(m.group(1))
+        m = _SCRUB_STARTED_RE.search(output)
+        if m:
+            # ctime() style date: "Wed Aug  7 09:00:00 2026"; collapsing
+            # whitespace normalises the space-padded day so %d parses it.
+            started = datetime.strptime(
+                " ".join(m.group(1).split()), "%a %b %d %H:%M:%S %Y"
+            )
+            last_started = started.isoformat()
         return ScrubStatus(
             data_extents_scrubbed=data_extents,
             errors=errors,
             running=running,
+            last_started=last_started,
         )
 
     def scrub_cancel(self, mount: str = "/", *, dry_run: bool = False) -> None:
         """Cancel a running scrub operation."""
         self._run(["scrub", "cancel", mount], dry_run=dry_run)
+
+    def device_stats(self, mount: str = "/") -> list[dict]:
+        """Error counters per device of the filesystem holding *mount*.
+
+        Wraps ``btrfs device stats <mount>``; each returned dict has
+        ``device`` plus the five counters (write/read/flush IO errors,
+        corruption and generation errors).  A failed call (e.g. the
+        kernel lacks device-stats support) yields an empty list, like
+        :meth:`scrub_status`.
+        """
+        try:
+            result = self._run(["device", "stats", mount], check=False)
+            output = result.stdout
+        except BtrfsError:
+            return []
+
+        stats: list[dict] = []
+        current: dict = {}
+        for line in output.splitlines():
+            m = re.match(r"^\[([^\]]+)\]\.(\w+)\s+(\d+)\s*$", line)
+            if not m:
+                continue
+            device, counter, value = m.group(1), m.group(2), int(m.group(3))
+            if current.get("device") != device:
+                if current:
+                    stats.append(current)
+                current = {"device": device}
+            current[counter] = value
+        if current:
+            stats.append(current)
+        return stats
 
     def defragment(
         self,

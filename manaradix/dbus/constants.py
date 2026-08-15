@@ -38,6 +38,7 @@ METHOD_ACTIONS: dict[str, str] = {
     "BtrfsMounts": ACTION_READ,
     "BalanceStatus": ACTION_READ,
     "ScrubStatus": ACTION_READ,
+    "GetDeviceStats": ACTION_READ,
     "GetCompression": ACTION_READ,
     "ListPolicies": ACTION_READ,
     "GetConfig": ACTION_READ,
