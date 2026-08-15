@@ -68,10 +68,11 @@ User-visible strings are marked with `_()` for gettext translation.
 # Generate / update the template
 xgettext --language=Python --keyword=_ --from-code=UTF-8 \
     --output=locale/manaradix.pot \
-    --package-name=manaradix --package-version=0.1.2 \
+    --package-name=manaradix --package-version=0.1.3 \
     manaradix/module.py manaradix/utils/pkexec.py manaradix/i18n.py \
-    manaradix/core/*.py manaradix/dbus/*.py manaradix/ui/renderer.py \
-    manaradix/ui/navigation.py manaradix/ui/pages/*.py
+    manaradix/core/*.py manaradix/dbus/*.py manaradix/tray/*.py \
+    manaradix/ui/renderer.py manaradix/ui/navigation.py \
+    manaradix/ui/pages/*.py
 
 # Create a new translation (example: Spanish)
 msginit --locale=es --input=locale/manaradix.pot \
@@ -87,8 +88,11 @@ msgfmt locale/it.po -o locale/it/LC_MESSAGES/manaradix.mo
 LANG=it_IT.UTF-8 MANARADIX_LOCALE_DIR=./locale manaradix snapshot list
 ```
 
-An Italian translation ships at `locale/it.po`; other languages are
-welcome. System-installed `.mo` files go to
+Italian and Chinese (simplified) translations ship at `locale/it.po` and
+`locale/zh_CN.po`; other languages are welcome.  The test suite enforces
+that every pot entry is translated in the .po files, that they compile
+cleanly (`msgfmt --check`), and spot-checks actual lookups from compiled
+.mo files (`tests/test_i18n.py`).  System-installed `.mo` files go to
 `/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo`, compiled and
 installed by the RPM spec (`msgfmt` + `%find_lang`).
 

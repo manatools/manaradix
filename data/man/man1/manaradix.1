@@ -1,4 +1,4 @@
-.TH MANARADIX 1 "2026-08-05" "manaradix 0.1.1" "User Commands"
+.TH MANARADIX 1 "2026-08-14" "manaradix 0.1.3" "User Commands"
 .SH NAME
 manaradix \- Btrfs snapshot, subvolume, and filesystem management utility for Mageia
 .SH SYNOPSIS
@@ -24,9 +24,15 @@ service units:
 .B setup
 (status, apply, list-profiles),
 .B activity
-(status, record), and
+(status, record),
 .B dbus
-(serve, status).
+(serve, status), and
+.B tray
+(serve, status) \-\- the notification-area applet, a user-session
+process that watches filesystem health and snapshot retention and
+notifies about problems (see
+.BR manaradix-config (5),
+.IR "[tray]" ).
 
 All destructive operations support
 .BR \-\-dry\-run .
@@ -156,6 +162,26 @@ Report whether the service is running, without activating it (checks
 the bus name owner).  Prints
 .B running
 and exits 0, or prints a hint and exits 2.
+.SS tray
+Notification-area applet (user session, session bus).
+.TP
+.B manaradix tray serve
+
+Run the tray applet in the foreground.  Starts automatically at login
+from
+.IR /etc/xdg/autostart/manaradix-tray.desktop .
+Exits 0 immediately when the applet is disabled in the configuration,
+when no StatusNotifierWatcher is present (no tray-capable desktop), or
+when another instance already owns
+.IR org.mageia.manaradix.Tray .
+Checks run on a worker thread and report through the D-Bus daemon; the
+applet itself never elevates.  Shuts down cleanly on SIGTERM/SIGINT.
+.TP
+.B manaradix tray status
+
+Report whether the applet is running, without activating it (checks the
+session-bus name owner).  Prints a confirmation and exits 0, or prints
+a hint and exits 2.
 .SH EXIT STATUS
 .TP
 .B 0
@@ -168,8 +194,10 @@ root, bus name taken), GUI startup failure.
 .TP
 .B 2
 .B dbus status
-when the service is not running.  (argparse usage errors also exit 2;
-\fB\-\-help\fR exits 0.)
+or
+.B tray status
+when the respective service is not running.  (argparse usage errors
+also exit 2; \fB\-\-help\fR exits 0.)
 .SH ENVIRONMENT
 .TP
 .B MUI_BACKEND
@@ -197,4 +225,5 @@ Administrator template overrides and extras.
 .BR btrfs (8),
 .BR systemd.timer (5),
 .BR pkexec (1),
-.BR polkit (8)
+.BR polkit (8),
+.BR dbus-daemon (1)

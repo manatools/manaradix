@@ -35,6 +35,13 @@ Run `manaradix` as your user. On a stock Mageia btrfs install the GUI opens
 on the **Setup Wizard** tab proposing a profile for this system — see
 [Quick start](quickstart.md) and [Setup profiles](profiles.md).
 
+The **tray applet** (`manaradix tray serve`) starts automatically at
+your next login via `/etc/xdg/autostart/manaradix-tray.desktop`; it
+keeps the tray clean while everything is fine and notifies about disk
+space, device errors, and snapshots due for pruning (see
+[Tray applet](tray-applet.md)).  Check it with
+`manaradix tray status`.
+
 ## From source (development)
 
 See [Development](development.md) for the virtualenv workflow.

@@ -1,4 +1,4 @@
-.TH MANARADIX-CONFIG 5 "2026-08-05" "manaradix 0.1.1" "File Formats"
+.TH MANARADIX-CONFIG 5 "2026-08-14" "manaradix 0.1.3" "File Formats"
 .SH NAME
 manaradix-config \- configuration file for manaradix
 .SH DESCRIPTION
@@ -75,6 +75,65 @@ Integer (default: 5).
 .TP
 .B keep_pre_upgrade
 Integer (default: 3).
+.SH TRAY APPLET
+The
+.B [tray]
+table configures the notification-area applet
+.RB ( "manaradix tray serve" ).
+It is read-only for the applet: the applet never writes the system
+config.  Keys:
+.TP
+.B enabled
+Boolean.  Master switch; when false the applet exits immediately
+(default: true).
+.TP
+.B autostart
+Boolean.  Whether the applet starts at login from the autostart file
+(default: true).
+.TP
+.B hide_when_ok
+Boolean.  Hide the tray icon entirely while no problems exist
+(default: true).
+.TP
+.B quiet_hours
+String.  \fB"HH:MM-HH:MM"\fR window in which notifications (but not the
+icon state) are suppressed; start > end crosses midnight, an empty
+string disables quiet hours (default: "").
+.TP
+.B space_enabled
+Boolean.  Check free space of every Btrfs filesystem (default: true).
+.TP
+.B device_enabled
+Boolean.  Check the btrfs error counters and (via UDisks2, when
+available) the SMART health of the underlying drives (default: true).
+.TP
+.B retention_enabled
+Boolean.  Suggest pruning snapshots that are past their retention tier
+budget (default: true).
+.TP
+.B scrub_enabled
+Boolean.  Remind when no scrub is recorded for a filesystem
+(default: true).
+.TP
+.B space_warn_pct
+Integer.  Used-space percentage that triggers the warn notification
+(default: 85).
+.TP
+.B space_critical_pct
+Integer.  Used-space percentage that triggers the critical notification
+(default: 95).
+.TP
+.B space_interval_min
+Integer.  Space check interval in minutes (default: 10).
+.TP
+.B device_interval_min
+Integer.  Device check interval in minutes (default: 60).
+.TP
+.B retention_interval_min
+Integer.  Retention check interval in minutes (default: 1440).
+.TP
+.B scrub_interval_min
+Integer.  Scrub check interval in minutes (default: 60).
 .SH SETUP PROFILES
 Rather than hand-editing this file, the setup wizard
 .RB ( "manaradix setup" )
@@ -118,8 +177,20 @@ keep_pre_upgrade = 3
 [policies."/home"]
 enabled = true
 schedule_daily = true
+
+[tray]
+enabled = true
+hide_when_ok = true
+quiet_hours = "22:00-07:00"
+space_warn_pct = 85
+space_critical_pct = 95
+space_interval_min = 10
+device_interval_min = 60
+retention_interval_min = 1440
+scrub_interval_min = 60
 .fi
 .SH SEE ALSO
 .BR manaradix (1),
 .BR btrfs (8),
-.BR systemd.timer (5)
+.BR systemd.timer (5),
+.BR udisks (8)

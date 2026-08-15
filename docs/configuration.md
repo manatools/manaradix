@@ -37,6 +37,29 @@ One table per subvolume (the key is the subvolume path, quoted):
 | `keep_boot` | int | `5` | Boot snapshots to retain |
 | `keep_pre_upgrade` | int | `3` | Pre-upgrade snapshots to retain |
 
+## `[tray]`
+
+The notification-area applet (see [tray-applet.md](tray-applet.md))
+reads this table; it is session-bound and never writes the system
+config.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `true` | Master switch; when false the applet exits immediately |
+| `autostart` | bool | `true` | Start at login from the autostart file |
+| `hide_when_ok` | bool | `true` | Hide the tray icon while no problems exist |
+| `quiet_hours` | string | `""` | `"HH:MM-HH:MM"` window suppressing notifications (start > end crosses midnight) |
+| `space_enabled` | bool | `true` | Check free space of every btrfs filesystem |
+| `device_enabled` | bool | `true` | Check btrfs error counters + UDisks2 SMART health |
+| `retention_enabled` | bool | `true` | Suggest pruning snapshots past their tier budget |
+| `scrub_enabled` | bool | `true` | Remind when no scrub is recorded for a filesystem |
+| `space_warn_pct` | int | `85` | Used-space percentage for the warn notification |
+| `space_critical_pct` | int | `95` | Used-space percentage for the critical notification |
+| `space_interval_min` | int | `10` | Space check interval (minutes) |
+| `device_interval_min` | int | `60` | Device check interval (minutes) |
+| `retention_interval_min` | int | `1440` | Retention check interval (minutes) |
+| `scrub_interval_min` | int | `60` | Scrub check interval (minutes) |
+
 ## Example
 
 ```toml
@@ -65,6 +88,17 @@ keep_pre_upgrade = 3
 [policies."/home"]
 enabled = true
 schedule_daily = true
+
+[tray]
+enabled = true
+hide_when_ok = true
+quiet_hours = "22:00-07:00"
+space_warn_pct = 85
+space_critical_pct = 95
+space_interval_min = 10
+device_interval_min = 60
+retention_interval_min = 1440
+scrub_interval_min = 60
 ```
 
 ## Snapshot types

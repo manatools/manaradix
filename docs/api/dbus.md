@@ -54,6 +54,7 @@ documented in the Python API reference
 | `ListSetupProfiles` | Available setup profiles |
 | `GrubIsInstalled` | Whether the GRUB script is installed |
 | `GrubListEntries` | Snapshot entries in the GRUB script |
+| `GetDeviceStats` | Merged per-device health report: the five btrfs error counters plus `smart_*` fields when UDisks2 provides SMART data (used by the tray applet) |
 
 ### Tier 2 — manage snapshots (`auth_admin_keep`)
 

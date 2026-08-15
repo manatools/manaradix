@@ -43,6 +43,10 @@ The Qt frontend. The same pages render in GTK and ncurses.
 - **D-Bus service** — a bus-activated system service exposing the same
   operations programmatically, gated by polkit. See
   [D-Bus interface](api/dbus.md).
+- **Tray applet** — a notification-area watchdog (same package,
+  autostarts at login) that notifies about low disk space, btrfs error
+  counters and SMART health, and snapshots due for pruning. See
+  [Tray applet](tray-applet.md).
 - **Three frontends** — Qt, GTK, and ncurses from a single declarative UI
   layer (`manatools.aui`).
 

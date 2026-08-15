@@ -26,6 +26,7 @@ manaradix [GLOBAL OPTIONS] <command> <subcommand> [OPTIONS]
 | `setup` | `status`, `apply`, `list-profiles` | First-run setup wizard |
 | `activity` | `status`, `record` | Automated snapshot run status and records |
 | `dbus` | `serve`, `status` | System D-Bus service daemon and status |
+| `tray` | `serve`, `status` | Notification-area applet (user session) and status |
 
 ## snapshot create
 
@@ -138,6 +139,18 @@ manaradix dbus status
 | `dbus serve` | Run the system D-Bus service in the foreground (root only; normally started on demand by bus activation via the systemd unit). Exits 1 if not root or if the bus name is already taken; shuts down cleanly on SIGTERM |
 | `dbus status` | Report whether the service is running — **never** activates it (uses `NameHasOwner`). Prints `running` and exits 0, or prints a hint and exits 2 |
 
+## tray serve / status
+
+The notification-area applet, a **user-session** process (session bus,
+StatusNotifierItem).  It autostarts at login from
+`/etc/xdg/autostart/manaradix-tray.desktop`; see
+[tray-applet.md](tray-applet.md).
+
+| Command | Effect |
+|---|---|
+| `tray serve` | Run the applet in the foreground. Exits 0 immediately when the applet is disabled in the config, when no StatusNotifierWatcher exists (no tray-capable desktop), or when another instance owns `org.mageia.manaradix.Tray`. Checks run on a worker thread and read through the D-Bus daemon; the applet never elevates. Shuts down cleanly on SIGTERM/SIGINT |
+| `tray status` | Report whether the applet is running — **never** activates it (uses `NameHasOwner`). Prints a confirmation and exits 0, or prints a hint and exits 2 |
+
 ## Exit codes
 
 | Code | Meaning |
@@ -156,7 +169,9 @@ The CLI re-executes privileged operations via `pkexec`:
 - **Always elevated**: `snapshot create`, `snapshot delete`,
   `snapshot prune`, `setup apply`, and GUI mode (no subcommand)
 - **Exempt**: `dbus serve` (refuses non-root itself), `dbus status`
-  (read-only), `activity record` (runs as root via systemd)
+  (read-only), `activity record` (runs as root via systemd), `tray
+  serve`/`tray status` (user-session process — elevation would put it
+  in a root-owned session)
 - Unknown subcommands default to elevated
 
 The `MANARADIX_PKEXEC` environment variable guards against elevation

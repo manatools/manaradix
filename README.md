@@ -46,8 +46,12 @@ urpmi manaradix
 (or Rpmdrake / GNOME Software once the package is available for your
 release). The package installs the CLI/GUI launcher, man pages
 (`man manaradix`, `man 5 manaradix-config`), polkit rules, the setup
-profiles, and the bus-activated D-Bus service. See
-[docs/install.md](docs/install.md) for details and post-install steps.
+profiles, the bus-activated D-Bus service, and the tray applet (a
+notification-area watchdog that autostarts at login and reports low
+disk space, device errors, and snapshots due for pruning). See
+[docs/install.md](docs/install.md) and
+[docs/tray-applet.md](docs/tray-applet.md) for details and
+post-install steps.
 
 ## Development Setup
 
@@ -72,7 +76,7 @@ pip install -e ".[dev]"
 # Verify the install
 manaradix --help
 
-# Run the test suite (208 tests)
+# Run the test suite (799 tests, 8 skipped)
 pytest
 
 # Run a single test file
@@ -444,6 +448,31 @@ Files shipped: `data/systemd/manaradix-dbus.service` (unit),
 `data/dbus/org.mageia.manaradix.conf` (bus policy: anyone may call,
 polkit gates each method).
 
+## Tray Applet
+
+A notification-area watchdog for the user session (`manaradix tray
+serve`, autostarted at login via
+`/etc/xdg/autostart/manaradix-tray.desktop`).  It reads the system
+D-Bus service — including `GetDeviceStats`, which merges the btrfs
+error counters with UDisks2 SMART data when available — and:
+
+- notifies when a Btrfs filesystem drops below the configured free-space
+  thresholds (warn 85 % / critical 95 % used, both configurable);
+- notifies on btrfs error counters and failing SMART health;
+- suggests pruning snapshots that are already past their retention tier
+  budget (the same numbers `snapshot prune` uses);
+- reminds when no scrub is recorded for a filesystem;
+- hides entirely while everything is fine (`hide_when_ok`), respects
+  quiet hours, and is a read-only observer — it never modifies anything
+  itself.
+
+All checks are individually switchable in the `[tray]` section of
+`/etc/manaradix/config.toml`.  The applet ships **in the same package**
+and is never elevated (user-session process, `_SESSION_COMMANDS` in
+`manaradix/utils/pkexec.py`).  See
+[docs/tray-applet.md](docs/tray-applet.md) and
+[docs/activity-tray-applet.md](docs/activity-tray-applet.md).
+
 ## Project Structure
 
 ```
@@ -455,7 +484,7 @@ manaradix/
 ├── CLAUDE.md                       # Contributor orientation
 ├── data/
 │   ├── polkit/                     # Polkit policy XML
-│   ├── desktop/                    # .desktop launcher
+│   ├── desktop/                    # .desktop launcher + tray autostart
 │   ├── systemd/                    # manaradix-dbus.service unit
 │   ├── dbus/                       # Bus activation + bus policy files
 │   ├── libexec/                    # manaradix-pre-upgrade rpm trigger
@@ -478,6 +507,8 @@ manaradix/
 │   │   ├── setup_wizard.py         # First-run detection + profile apply
 │   │   ├── templates.py            # Setup profile loader/validator
 │   │   ├── activity_status.py      # Automated snapshot run records
+│   │   ├── health.py               # Merged health report (btrfs + SMART)
+│   │   ├── health_sources.py       # btrfs device stats + UDisks2 SMART
 │   │   └── assets.py               # Logo path resolution
 │   ├── dbus/                       # System D-Bus service + client
 │   │   ├── constants.py            # Interface + method→polkit-action map
@@ -487,6 +518,13 @@ manaradix/
 │   │   ├── service.py              # Per-method logic (auth + delegation)
 │   │   ├── wire.py                 # dbus.service.Object + serve_main()
 │   │   └── client.py               # Python client library
+│   ├── tray/                       # Notification-area applet (SNI)
+│   │   ├── app.py                  # TrayApp wiring + worker thread
+│   │   ├── checks.py               # space/devices/retention/scrub checks
+│   │   ├── status_icon.py          # StatusNotifierItem icon
+│   │   ├── dbus_menu.py            # DBusMenu model (open/check/quit)
+│   │   ├── notifier.py             # Freedesktop notifications
+│   │   └── scheduler.py            # Finding tracking + nag cadence
 │   ├── ui/                         # Declarative UI (toolkit-agnostic)
 │   │   ├── navigation.py
 │   │   ├── model.py                # PageModel / Widget descriptor factories
@@ -500,7 +538,7 @@ manaradix/
 │   │       └── about.py            # About: author, license
 │   └── utils/
 │       └── pkexec.py               # pkexec re-exec for privileged ops
-└── tests/                          # 18 test files, 561 tests
+└── tests/                          # 36 test files, 799 tests
 ```
 
 ## Architecture Principles
@@ -518,10 +556,11 @@ User-visible strings are marked with `_()` for gettext translation.
 # Generate / update the template
 xgettext --language=Python --keyword=_ --from-code=UTF-8 \
     --output=locale/manaradix.pot \
-    --package-name=manaradix --package-version=0.1.2 \
+    --package-name=manaradix --package-version=0.1.3 \
     manaradix/module.py manaradix/utils/pkexec.py manaradix/i18n.py \
-    manaradix/core/*.py manaradix/dbus/*.py manaradix/ui/renderer.py \
-    manaradix/ui/navigation.py manaradix/ui/pages/*.py
+    manaradix/core/*.py manaradix/dbus/*.py manaradix/tray/*.py \
+    manaradix/ui/renderer.py manaradix/ui/navigation.py \
+    manaradix/ui/pages/*.py
 
 # Create a new translation (example: Spanish)
 msginit --locale=es --input=locale/manaradix.pot \
@@ -537,10 +576,11 @@ msgfmt locale/it.po -o locale/it/LC_MESSAGES/manaradix.mo
 LANG=it_IT.UTF-8 MANARADIX_LOCALE_DIR=./locale manaradix snapshot list
 ```
 
-An Italian translation ships at `locale/it.po`; other languages are welcome.
-The translation template is at `locale/manaradix.pot`.  System-installed
-``.mo`` files go to ``/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo``,
-compiled and installed by the RPM spec (``msgfmt`` + ``%find_lang``).
+Italian and Chinese (simplified) translations ship at `locale/it.po` and
+`locale/zh_CN.po`; other languages are welcome.  The translation template
+is at `locale/manaradix.pot`.  System-installed ``.mo`` files go to
+``/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo``, compiled and
+installed by the RPM spec (``msgfmt`` + ``%find_lang``).
 
 ## Documentation
 
