@@ -8,7 +8,7 @@
 %global pypi_name manaradix
 
 Name:           manaradix
-Version:        0.1.3
+Version:        0.2.0
 Release:        %mkrel 1
 Summary:        Btrfs snapshot, subvolume, and filesystem management utility
 

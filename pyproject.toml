@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "manaradix"
-version = "0.1.3"
+version = "0.2.0"
 description = "Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
 readme = "README.md"
 license = {text = "GPLv2+"}
