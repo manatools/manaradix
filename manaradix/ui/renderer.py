@@ -119,13 +119,16 @@ class AuiRenderer:
         # main heading so its policy is applied with the rest after open.
         self._pin_vertical(heading)
 
+        # Size the window to the largest tab BEFORE showing it.  Rendering
+        # every page while the window is visible paints each tab in turn
+        # (the backend calls processEvents() inside showChild), so the
+        # final page swap can leave a stale frame — e.g. the About tab —
+        # on screen until an input event forces a repaint.
+        self._startup_fit_to_largest(factory)
+
         dialog.open()
         self._opened = True
         self._apply_pinned_policies()
-        # Open at a size that fits the largest tab, so switching tabs
-        # never resizes the window (the Qt backend starts at the first
-        # page's minimum and only grows).
-        self._startup_fit_to_largest(factory)
         try:
             while True:
                 event = dialog.waitForEvent(0)
@@ -584,6 +587,11 @@ class AuiRenderer:
         until a wider tab is visited.  Rendering every page once up front
         (core data is cached, so this is cheap) and resizing to the
         largest hint opens a window that already fits every tab.
+
+        Must be called before ``dialog.open()``: the backends paint during
+        ``showChild``, so rendering every page on a visible window flashes
+        each tab in turn and can leave a stale frame on screen until the
+        next input event.
         """
         if len(self._pages) <= 1:
             return
