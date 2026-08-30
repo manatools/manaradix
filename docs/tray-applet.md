@@ -13,6 +13,9 @@ surfaces problems exactly when they need attention.
 - **Quick GUI access** — a single click on the tray icon opens the
   manaradix GUI (the menu's *Open manaradix* item and the notification
   buttons do the same).
+- **About** — the menu's *About* item shows a notification with the
+  running version, a one-line description, and the project website
+  (clicking the notification opens the GUI).
 - **Disk space monitoring** — notifies when a Btrfs filesystem drops
   below the warn threshold (default 85 % used) and again, more urgently,
   below the critical threshold (default 95 %).
@@ -168,7 +171,7 @@ being notified at the next check.
 | `manaradix/tray/app.py` | `TrayApp` wiring: SNI name claim, worker thread, drain queue, timers, icon/tooltip/notify |
 | `manaradix/tray/checks.py` | `build_check_registry()`: the four `CheckSpec`s (space/devices/retention/scrub) |
 | `manaradix/tray/status_icon.py` | StatusNotifierItem object (icon, tooltip, context-menu signals) |
-| `manaradix/tray/dbus_menu.py` | `MenuModel`: canonical DBusMenu GetLayout/Get/Event → open/check/quit |
+| `manaradix/tray/dbus_menu.py` | `MenuModel`: canonical DBusMenu GetLayout/Get/Event → open/check/about/quit |
 | `manaradix/tray/notifier.py` | Freedesktop notifications with actions |
 | `manaradix/tray/scheduler.py` | `FindingTracker`: new/upgrade/gone rules + per-finding nag cadence |
 | `manaradix/core/health.py` | `HealthReport` merging btrfs counters + SMART fields |

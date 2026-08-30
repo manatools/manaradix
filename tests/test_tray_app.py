@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+from manaradix import __version__
 from manaradix.core.config_store import ConfigStore
 from manaradix.core.health import HealthFinding
 from manaradix.tray.app import (
@@ -341,6 +342,24 @@ class TestActions:
         app = _app()
         app._on_menu_action("quit")
         assert app._loop.quit_called is True
+
+    def test_menu_about_shows_version_notification(self):
+        app = _app()
+        app._on_menu_action("about")
+        assert len(app._notifier.calls) == 1
+        call = app._notifier.calls[0]
+        assert call["summary"] == f"Manaradix {__version__}"
+        assert "github.com/mageia/manaradix" in call["body"]
+        assert call["actions"] == ["open", call["actions"][1]]
+
+    def test_menu_about_notification_failure_swallowed(self):
+        app = _app()
+
+        def _boom(*_args, **_kwargs):
+            raise RuntimeError("no notification daemon")
+
+        app._notifier.notify = _boom
+        app._on_menu_action("about")  # must not raise
 
     def test_notification_action_opens_and_closes(self):
         app = _app()

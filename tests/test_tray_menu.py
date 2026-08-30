@@ -6,6 +6,7 @@ import pytest
 
 from manaradix.tray.dbus_menu import (
     DbusMenu,
+    ID_ABOUT,
     ID_CHECK_NOW,
     ID_OPEN,
     ID_QUIT,
@@ -19,7 +20,7 @@ class TestBuildMenu:
     def test_layout_order(self):
         items = build_menu()
         ids = [item_id for item_id, _props in items]
-        assert ids == [ID_OPEN, ID_CHECK_NOW, ID_SEPARATOR, ID_QUIT]
+        assert ids == [ID_OPEN, ID_CHECK_NOW, ID_ABOUT, ID_SEPARATOR, ID_QUIT]
 
     def test_separator_props(self):
         props = dict(build_menu()).get(ID_SEPARATOR)
@@ -29,13 +30,16 @@ class TestBuildMenu:
         items = build_menu()
         open_props = [props for i, props in items if i == ID_OPEN][0]
         assert open_props["label"]  # translated, so non-empty
+        about_props = [props for i, props in items if i == ID_ABOUT][0]
+        assert about_props["label"]  # translated, so non-empty
 
     def test_label_overrides(self):
         items = build_menu(open_label="Apri", check_label="Controlla",
-                           quit_label="Esci")
+                           about_label="Informazioni", quit_label="Esci")
         props = {i: p for i, p in items}
         assert props[ID_OPEN]["label"] == "Apri"
         assert props[ID_CHECK_NOW]["label"] == "Controlla"
+        assert props[ID_ABOUT]["label"] == "Informazioni"
         assert props[ID_QUIT]["label"] == "Esci"
 
 
@@ -43,7 +47,7 @@ class TestMenuModel:
     def test_layout_flat(self):
         model = MenuModel(on_action=lambda action: None)
         assert [i for i, _p in model.layout()] == [
-            ID_OPEN, ID_CHECK_NOW, ID_SEPARATOR, ID_QUIT]
+            ID_OPEN, ID_CHECK_NOW, ID_ABOUT, ID_SEPARATOR, ID_QUIT]
 
     def test_get_known_and_unknown(self):
         model = MenuModel(on_action=lambda action: None)
@@ -55,8 +59,9 @@ class TestMenuModel:
         model = MenuModel(on_action=dispatched.append)
         assert model.event(ID_OPEN, "clicked") is True
         assert model.event(ID_CHECK_NOW, "clicked") is True
+        assert model.event(ID_ABOUT, "clicked") is True
         assert model.event(ID_QUIT, "clicked") is True
-        assert dispatched == ["open", "check", "quit"]
+        assert dispatched == ["open", "check", "about", "quit"]
 
     def test_event_non_clicked_ignored(self):
         dispatched = []

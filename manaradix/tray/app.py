@@ -29,6 +29,7 @@ import subprocess
 import threading
 from typing import Callable, Optional
 
+from manaradix import __version__
 from manaradix.core.config_store import ConfigStore
 from manaradix.core.health import SEVERITY_ORDER, in_quiet_hours
 from manaradix.dbus.client import ManaradixClient  # noqa: F401  (type hint)
@@ -386,8 +387,23 @@ class TrayApp:
         elif action == "check":
             for spec in self._specs:
                 self._enqueue(spec)
+        elif action == "about":
+            self._show_about()
         elif action == "quit":
             self._shutdown()
+
+    def _show_about(self) -> None:
+        """Show an About notification: version, description, website."""
+        try:
+            self._notifier.notify(
+                f"Manaradix {__version__}",
+                _("Btrfs snapshot, subvolume, and filesystem "
+                  "management utility for Mageia")
+                + "\nhttps://github.com/mageia/manaradix",
+                actions=["open", _("Open manaradix")],
+            )
+        except Exception as exc:
+            logger.warning("Could not show the About notification: %s", exc)
 
     def _on_notification_action(self, action_key: str, notification_id: int) -> None:
         if action_key == "open":

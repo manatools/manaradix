@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-14 15:45+0200\n"
+"POT-Creation-Date: 2026-08-30 11:03+0200\n"
 "PO-Revision-Date: 2026-08-01 19:00+0200\n"
 "Last-Translator: Mageia Community <mageia-community@mageia.org>\n"
 "Language-Team: Italian <https://www.mageia.org>\n"
@@ -87,17 +87,19 @@ msgstr "Configurazione non necessaria: esistono già snapshot o politiche."
 
 #: manaradix/module.py:770
 msgid "Setup needed, but no btrfs filesystem was found on this system."
-msgstr "Configurazione necessaria, ma nessun filesystem btrfs è stato trovato su questo sistema."
-"Configurazione necessaria, ma nessun filesystem btrfs trovato su questo "
-"sistema.Configurazione necessaria, ma su questo sistema non è stato trovato "
-"alcun filesystem btrfs."
+msgstr ""
+"Configurazione necessaria, ma nessun filesystem btrfs è stato trovato su "
+"questo sistema.Configurazione necessaria, ma nessun filesystem btrfs trovato "
+"su questo sistema.Configurazione necessaria, ma su questo sistema non è "
+"stato trovato alcun filesystem btrfs."
 
 #: manaradix/module.py:775
 msgid "Setup needed: no snapshots and no snapshot policies are configured."
-msgstr "Configurazione necessaria: nessuno snapshot e nessuna policy di snapshot è configurata."
-"Configurazione necessaria: nessuno snapshot e nessuna policy di snapshot "
-"configurati.Configurazione necessaria: non sono configurati snapshot né "
-"criteri di snapshot."
+msgstr ""
+"Configurazione necessaria: nessuno snapshot e nessuna policy di snapshot è "
+"configurata.Configurazione necessaria: nessuno snapshot e nessuna policy di "
+"snapshot configurati.Configurazione necessaria: non sono configurati "
+"snapshot né criteri di snapshot."
 
 #: manaradix/module.py:776
 #, python-format
@@ -279,7 +281,9 @@ msgstr "%(percent)d%% di %(total)s usati, %(free)s liberi"
 
 #: manaradix/core/health.py:191
 msgid "Free some space, or let the retention profile prune old snapshots."
-msgstr "Libera spazio o lascia che il profilo di conservazione elimini i vecchi snapshot."
+msgstr ""
+"Libera spazio o lascia che il profilo di conservazione elimini i vecchi "
+"snapshot."
 
 #: manaradix/core/health.py:224
 #, python-format
@@ -297,9 +301,11 @@ msgstr ""
 
 #: manaradix/core/health.py:230
 msgid "Check the device and restore from the newest good snapshot."
-msgstr "Controlla il dispositivo e ripristina dallo snapshot valido più recente."
+msgstr ""
+"Controlla il dispositivo e ripristina dallo snapshot valido più recente."
 
 #: manaradix/core/health.py:240
+#, python-format
 msgid "IO errors on %s"
 msgstr "Errori di I/O su %s"
 
@@ -322,7 +328,8 @@ msgstr "Salute SMART in errore su %s"
 
 #: manaradix/core/health.py:259
 msgid "The drive reports an imminent failure.  Back up your data now."
-msgstr "Il disco segnala un guasto imminente.  Esegui subito un backup dei dati."
+msgstr ""
+"Il disco segnala un guasto imminente.  Esegui subito un backup dei dati."
 
 #: manaradix/core/health.py:261
 msgid "Replace the drive as soon as possible."
@@ -377,8 +384,8 @@ msgid ""
 "No scrub run is recorded.  Regular scrubs catch bit-rot on long-lived "
 "servers."
 msgstr ""
-"Nessuna esecuzione di scrub registrata.  Gli scrub regolari rilevano la "
-"bit-rot sui server di lunga durata."
+"Nessuna esecuzione di scrub registrata.  Gli scrub regolari rilevano la bit-"
+"rot sui server di lunga durata."
 
 #: manaradix/core/health.py:338
 msgid "Run a scrub now and schedule it regularly."
@@ -419,7 +426,9 @@ msgstr "Troppi snapshot su %s (kiosk)"
 #: manaradix/core/health.py:462
 #, python-format
 msgid "Kiosk profiles keep at most %(max)d snapshots; %(count)d exist."
-msgstr "I profili kiosk mantengono al massimo %(max)d snapshot; ne esistono %(count)d."
+msgstr ""
+"I profili kiosk mantengono al massimo %(max)d snapshot; ne esistono "
+"%(count)d."
 
 #: manaradix/core/health.py:465
 msgid "Delete the oldest snapshots and keep the last good state."
@@ -454,10 +463,11 @@ msgstr "Elimina i più vecchi o estendi la policy di conservazione."
 
 #: manaradix/core/setup_wizard.py:179 manaradix/core/setup_wizard.py:205
 msgid "Boot snapshots are not available: the root filesystem is not btrfs."
-msgstr "Gli snapshot di avvio non sono disponibili: il filesystem di root non è btrfs."
+msgstr ""
 "Gli snapshot di avvio non sono disponibili: il filesystem di root non è "
 "btrfs.Gli snapshot di avvio non sono disponibili: il filesystem di root non "
-"è btrfs."
+"è btrfs.Gli snapshot di avvio non sono disponibili: il filesystem di root "
+"non è btrfs."
 
 #: manaradix/core/setup_wizard.py:185 manaradix/ui/pages/setup.py:208
 #: manaradix/ui/pages/setup.py:232
@@ -552,8 +562,9 @@ msgstr "Tipo di snapshot non valido: %s"
 
 #: manaradix/dbus/wire.py:1012
 msgid "error: 'manaradix dbus serve' must run as root (system service)."
-msgstr "errore: 'manaradix dbus serve' deve essere eseguito come root (servizio di sistema)."
-"errore: 'manaradix dbus serve' deve girare come root (servizio di "
+msgstr ""
+"errore: 'manaradix dbus serve' deve essere eseguito come root (servizio di "
+"sistema).errore: 'manaradix dbus serve' deve girare come root (servizio di "
 "sistema).errore: 'manaradix dbus serve' deve essere eseguito come root "
 "(servizio di sistema)."
 
@@ -561,7 +572,46 @@ msgstr "errore: 'manaradix dbus serve' deve essere eseguito come root (servizio 
 msgid "error: the manaradix D-Bus service is already running."
 msgstr "errore: il servizio D-Bus di manaradix è già in esecuzione."
 
-#: manaradix/ui/renderer.py:340
+#: manaradix/tray/app.py:358
+#, python-format
+msgid "Manaradix: %d issue(s)"
+msgstr "Manaradix: %d problema/i"
+
+#: manaradix/tray/app.py:362
+msgid "Manaradix"
+msgstr "Manaradix"
+
+#: manaradix/tray/app.py:362
+msgid "No issues found"
+msgstr "Nessun problema trovato"
+
+#: manaradix/tray/app.py:377 manaradix/tray/app.py:403
+#: manaradix/tray/dbus_menu.py:43
+msgid "Open manaradix"
+msgstr "Apri manaradix"
+
+#: manaradix/tray/app.py:400 manaradix/ui/pages/about.py:69
+msgid "Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
+msgstr ""
+"Utilità di gestione di snapshot, subvolume e filesystem Btrfs per "
+"MageiaUtilità di gestione di snapshot, subvolumi e filesystem btrfs per "
+"MageiaUtilità di gestione di snapshot, subvolume e filesystem Btrfs per "
+"Mageia"
+
+#: manaradix/tray/dbus_menu.py:49
+msgid "Check now"
+msgstr "Controlla ora"
+
+#: manaradix/tray/dbus_menu.py:54 manaradix/ui/pages/about.py:38
+#: manaradix/ui/pages/about.py:63
+msgid "About"
+msgstr "Informazioni"
+
+#: manaradix/tray/dbus_menu.py:65
+msgid "Quit"
+msgstr "Esci"
+
+#: manaradix/ui/renderer.py:343
 msgid "(no data)"
 msgstr "(nessun dato)"
 
@@ -576,17 +626,6 @@ msgstr ""
 "termini della GNU General Public License come pubblicata dalla Free Software "
 "Foundation, versione 2 della Licenza, o (a tua scelta) qualsiasi versione "
 "successiva."
-
-#: manaradix/ui/pages/about.py:38 manaradix/ui/pages/about.py:63
-msgid "About"
-msgstr "Informazioni"
-
-#: manaradix/ui/pages/about.py:69
-msgid "Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
-msgstr "Utilità di gestione di snapshot, subvolume e filesystem Btrfs per Mageia"
-"Utilità di gestione di snapshot, subvolumi e filesystem btrfs per "
-"MageiaUtilità di gestione di snapshot, subvolume e filesystem Btrfs per "
-"Mageia"
 
 #: manaradix/ui/pages/about.py:75
 #, python-format
@@ -1160,31 +1199,6 @@ msgstr "Disattiva Selezionato"
 #, fuzzy
 msgid "next boot"
 msgstr "al prossimo avvio"
-
-#: manaradix/tray/app.py:357
-#, python-format
-msgid "Manaradix: %d issue(s)"
-msgstr "Manaradix: %d problema/i"
-
-#: manaradix/tray/app.py:361
-msgid "Manaradix"
-msgstr "Manaradix"
-
-#: manaradix/tray/app.py:361
-msgid "No issues found"
-msgstr "Nessun problema trovato"
-
-#: manaradix/tray/app.py:376 manaradix/tray/dbus_menu.py:40
-msgid "Open manaradix"
-msgstr "Apri manaradix"
-
-#: manaradix/tray/dbus_menu.py:46
-msgid "Check now"
-msgstr "Controlla ora"
-
-#: manaradix/tray/dbus_menu.py:56
-msgid "Quit"
-msgstr "Esci"
 
 #~ msgid "Overview"
 #~ msgstr "Panoramica"

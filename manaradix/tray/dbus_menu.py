@@ -20,15 +20,18 @@ ID_OPEN = 1
 ID_CHECK_NOW = 2
 ID_SEPARATOR = 3
 ID_QUIT = 4
+ID_ABOUT = 5
 
 
 def build_menu(open_label: str = None, check_label: str = None,
+               about_label: str = None,
                quit_label: str = None) -> list[tuple[int, dict]]:
     """The menu tree as ``(item_id, properties)`` pairs.
 
     Args:
         open_label: Label for the Open action (default: translated).
         check_label: Label for the Check now action.
+        about_label: Label for the About action (default: translated).
         quit_label: Label for the Quit action.
 
     Returns:
@@ -44,6 +47,12 @@ def build_menu(open_label: str = None, check_label: str = None,
         }),
         (ID_CHECK_NOW, {
             "label": check_label or _("Check now"),
+            "enabled": True,
+            "visible": True,
+        }),
+        (ID_ABOUT, {
+            "label": about_label or _("About"),
+            "icon-name": "help-about",
             "enabled": True,
             "visible": True,
         }),
@@ -65,7 +74,7 @@ class MenuModel:
 
     Args:
         on_action: Callable taking the action name — ``"open"``,
-            ``"check"`` or ``"quit"``.
+            ``"check"``, ``"about"`` or ``"quit"``.
     """
 
     def __init__(self, on_action) -> None:
@@ -91,6 +100,7 @@ class MenuModel:
         actions = {
             ID_OPEN: "open",
             ID_CHECK_NOW: "check",
+            ID_ABOUT: "about",
             ID_QUIT: "quit",
         }
         action = actions.get(item_id)
