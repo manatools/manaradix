@@ -76,7 +76,8 @@ class TestStatusToDbus:
                             "running": False})()
         )
         assert data == {"data_extents_scrubbed": 99, "errors": 0,
-                        "running": False, "last_started": None}
+                        "running": False}
+        assert "last_started" not in data  # None is not encodable in a{sv}
 
     def test_scrub_status_with_last_started(self) -> None:
         data = convert.scrub_status_to_dbus(

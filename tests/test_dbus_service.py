@@ -467,7 +467,7 @@ class TestGetDeviceStats:
             }
         )
         result = handler.dispatch("GetDeviceStats", {}, ":1.7")
-        devices = {d["device"]: d for d in result["devices"]}
+        devices = {d["device"]: d for d in result}
         assert set(devices) == {"/dev/sda2", "/dev/sdb1"}
         # SMART attaches to the whole disk backing the partition.
         assert devices["/dev/sda2"]["smart_available"] is True
@@ -478,15 +478,15 @@ class TestGetDeviceStats:
     def test_no_smart_leaves_plain_counters(self) -> None:
         handler = self._handler()
         result = handler.dispatch("GetDeviceStats", {}, ":1.7")
-        assert len(result["devices"]) == 2
-        for device in result["devices"]:
+        assert len(result) == 2
+        for device in result:
             assert not any(k.startswith("smart_") for k in device)
 
     def test_no_mounts_returns_empty(self) -> None:
         handler = self._handler()
         handler._ctx.btrfs_ops.btrfs_mounts.return_value = []
         result = handler.dispatch("GetDeviceStats", {}, ":1.7")
-        assert result == {"devices": []}
+        assert result == []
 
     def test_requires_read_tier(self) -> None:
         handler = self._handler()

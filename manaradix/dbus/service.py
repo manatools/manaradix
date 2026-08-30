@@ -307,7 +307,7 @@ class ManaradixHandler:
             stats["smart_available"] = True
             for key, value in report.items():
                 stats[f"smart_{key}"] = value
-        return {"devices": list(by_device.values())}
+        return list(by_device.values())
 
     def handle_GetCompression(self, kwargs: dict) -> str:
         """Get the compression algorithm of a subvolume.

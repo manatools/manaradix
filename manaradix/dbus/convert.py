@@ -79,15 +79,18 @@ def balance_status_to_dbus(status) -> dict:
 def scrub_status_to_dbus(status) -> dict:
     """Serialize a scrub status dataclass (extents / errors / running).
 
-    ``last_started`` is included when the dataclass carries it (ISO
-    timestamp, None when never scrubbed or unparseable).
+    ``last_started`` is included only when known (ISO timestamp); a
+    ``None`` would not be encodable in the ``a{sv}`` reply.
     """
-    return {
+    ret = {
         "data_extents_scrubbed": int(status.data_extents_scrubbed),
         "errors": int(status.errors),
         "running": bool(status.running),
-        "last_started": getattr(status, "last_started", None),
     }
+    last_started = getattr(status, "last_started", None)
+    if last_started is not None:
+        ret["last_started"] = last_started
+    return ret
 
 
 def policy_to_dbus(policy: SnapshotPolicy) -> dict:
