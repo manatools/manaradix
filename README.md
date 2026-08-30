@@ -462,7 +462,9 @@ error counters with UDisks2 SMART data when available — and:
 - suggests pruning snapshots that are already past their retention tier
   budget (the same numbers `snapshot prune` uses);
 - reminds when no scrub is recorded for a filesystem;
-- hides entirely while everything is fine (`hide_when_ok`), respects
+- stays visible and clickable even when everything is fine (set
+  `hide_when_ok = true` in `[tray]` to hide the healthy icon instead),
+  respects
   quiet hours, and is a read-only observer — it never modifies anything
   itself.
 

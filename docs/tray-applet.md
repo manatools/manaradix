@@ -71,10 +71,11 @@ user session
 - Each check batch gets a **fresh client connection** — the applet never
   holds the D-Bus daemon open permanently, it is bus-activated on demand.
 - The icon is **two-state**: a healthy manaradix icon while nothing is
-  wrong, an attention-grabbing variant while problems exist.  With
-  `hide_when_ok` (default) the icon disappears entirely when everything
-  is fine — the tray stays clean, and the applet surfaces only when it
-  has something to say.
+  wrong, an attention variant while problems exist.  By default the
+  icon stays visible and clickable even when everything is fine (quick
+  GUI access is the applet's first job); set `hide_when_ok = true` to
+  get the hide-until-problem behavior instead (Plasma parks the healthy
+  icon in the hidden tray overflow).
 - **Quiet hours** (`quiet_hours = "22:00-07:00"`) suppress notifications
   (but not the icon state) during the configured window.
 
@@ -114,7 +115,7 @@ Settings page does not (yet) edit it — edit the file as root.
 [tray]
 enabled = true          # master switch; false stops the applet
 autostart = true
-hide_when_ok = true     # hide the icon while no problems exist
+hide_when_ok = false   # true: healthy state hides the icon in the tray overflow
 quiet_hours = ""        # "HH:MM-HH:MM", start > end crosses midnight
 
 space_enabled = true
@@ -180,7 +181,7 @@ being notified at the next check.
 - **Read-only observer.**  The applet never creates, deletes, or
   restores anything.  Retention *suggestions* describe what `prune`
   would do; the user acts through the GUI.
-- **Hide until it matters.**  `hide_when_ok` + the silent exit without a
+- **Quiet by default, present when needed.**  `hide_when_ok` + the silent exit without a
   StatusNotifierWatcher mean a healthy system shows no extra tray icon.
 - **Fail open.**  A check that cannot run (daemon down, UDisks2 absent,
   no SMART) contributes no findings — a missing source is never treated

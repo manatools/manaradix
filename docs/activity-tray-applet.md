@@ -64,8 +64,10 @@ the protocol Plasma, GNOME, and Xfce trays all speak — with a
 behaviours keep it unobtrusive:
 
 - **Two-state icon.**  Healthy → the manaradix logo; problems → an
-  attention state.  With `hide_when_ok` (default) the icon is hidden
-  entirely while nothing is wrong.
+  attention state.  By default the icon stays visible and clickable
+  even when healthy (quick GUI access is requirement #1);
+  `hide_when_ok = true` restores the hide-until-problem behavior, with
+  the healthy icon parked in the tray overflow.
 - **Silent start.**  No StatusNotifierWatcher (no tray-capable desktop)?
   Exit 0 without a word.  It starts at login; a desktop that can't show
   it just never sees it.
@@ -148,5 +150,5 @@ manaradix tray status    # is it running? (autostart starts it at login)
 
 Edit `[tray]` in `/etc/manaradix/config.toml` to tune thresholds,
 intervals, quiet hours, or to disable individual checks.  The icon
-appears in the tray when a check finds something — or run
-`manaradix tray serve` in a terminal to watch it live.
+lives in the tray from login (visible by default, even when healthy) —
+or run `manaradix tray serve` in a terminal to watch it live.

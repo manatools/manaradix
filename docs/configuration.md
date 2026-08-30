@@ -47,7 +47,7 @@ config.
 |---|---|---|---|
 | `enabled` | bool | `true` | Master switch; when false the applet exits immediately |
 | `autostart` | bool | `true` | Start at login from the autostart file |
-| `hide_when_ok` | bool | `true` | Hide the tray icon while no problems exist |
+| `hide_when_ok` | bool | `false` | When true, the healthy state is passive (Plasma hides it in the tray overflow); by default the icon stays visible and clickable |
 | `quiet_hours` | string | `""` | `"HH:MM-HH:MM"` window suppressing notifications (start > end crosses midnight) |
 | `space_enabled` | bool | `true` | Check free space of every btrfs filesystem |
 | `device_enabled` | bool | `true` | Check btrfs error counters + UDisks2 SMART health |
@@ -91,7 +91,7 @@ schedule_daily = true
 
 [tray]
 enabled = true
-hide_when_ok = true
+hide_when_ok = false
 quiet_hours = "22:00-07:00"
 space_warn_pct = 85
 space_critical_pct = 95
