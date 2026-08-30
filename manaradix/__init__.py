@@ -2,6 +2,6 @@
 
 from manaradix.i18n import init_i18n
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 init_i18n()
