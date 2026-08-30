@@ -44,16 +44,33 @@ def statvfs_usages(mounts: Iterable[str]) -> list[dict]:
     return usages
 
 
+def _plain(value):
+    """Recursively unwrap dbus types into plain Python values.
+
+    Only ``dbus.Variant`` needs special handling — every other dbus type
+    subclasses its native counterpart (dbus.String subclasses str,
+    dbus.Dictionary subclasses dict, dbus.Array subclasses list, ...).
+    The check is by class name so this module never imports dbus.
+    """
+    if type(value).__name__ == "Variant":
+        return _plain(value.value)
+    if isinstance(value, dict):
+        return {k: _plain(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_plain(v) for v in value]
+    return value
+
+
 def device_stats_via_client(client) -> list[dict]:
     """Per-device btrfs + SMART health records from the D-Bus daemon."""
-    return list(client.get_device_stats())
+    return [_plain(record) for record in client.get_device_stats()]
 
 
 def snapshots_via_client(client) -> list[dict]:
     """All snapshots as daemon-shaped dicts (``ListSnapshots``)."""
-    return list(client.list_snapshots().get("snapshots", []))
+    return [_plain(record) for record in client.list_snapshots()]
 
 
 def scrub_status_via_client(client) -> dict:
-    """Scrub status of the root mount as a dict."""
-    return dict(client.scrub_status("/"))
+    """Scrub status of the root mount as a plain dict."""
+    return _plain(dict(client.scrub_status("/")))

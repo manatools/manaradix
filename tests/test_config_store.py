@@ -228,7 +228,7 @@ class TestTraySettings:
         tray = store.tray
         assert tray.enabled is True
         assert tray.autostart is True
-        assert tray.hide_when_ok is True
+        assert tray.hide_when_ok is False
         assert tray.quiet_hours == ""
         assert tray.space_warn_pct == 85
         assert tray.space_critical_pct == 95

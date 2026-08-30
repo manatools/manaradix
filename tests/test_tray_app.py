@@ -67,12 +67,14 @@ class _RecordingLoop:
 
 
 class _TimerRecorder:
+    """GLib-style scheduler: ``call(interval, callback)``."""
+
     def __init__(self) -> None:
         self.calls = []
         self._next = 1
 
-    def __call__(self, callback, interval):
-        self.calls.append((self._next, callback, interval))
+    def __call__(self, interval, callback):
+        self.calls.append((self._next, interval, callback))
         handle = self._next
         self._next += 1
         return handle
@@ -86,7 +88,7 @@ class _NoopClient:
         return []
 
     def list_snapshots(self):
-        return {"snapshots": []}
+        return []
 
     def scrub_status(self, mount):
         return {}
@@ -134,7 +136,7 @@ def _store(**overrides):
     tray = MagicMock()
     tray.enabled = True
     tray.autostart = True
-    tray.hide_when_ok = True
+    tray.hide_when_ok = False
     tray.quiet_hours = ""
     tray.space_enabled = True
     tray.device_enabled = True
@@ -204,13 +206,13 @@ class TestScheduling:
         assert len(specs) == 4
         # every enabled check enqueued immediately + a drain timer
         timeout_calls = [c for c in app._timeout.calls
-                         if getattr(c[1], "__name__", None) != "_drain"]
+                         if getattr(c[2], "__name__", None) != "_drain"]
         assert len(timeout_calls) == 4
-        intervals = {c[2] for c in timeout_calls}
+        intervals = {c[1] for c in timeout_calls}
         assert intervals == {10 * 60, 60 * 60, 1440 * 60}
         # drain scheduled on the millisecond timer
-        assert any(getattr(c[1], "__name__", None) == "_drain"
-                   and c[2] == DRAIN_INTERVAL_MS
+        assert any(getattr(c[2], "__name__", None) == "_drain"
+                   and c[1] == DRAIN_INTERVAL_MS
                    for c in app._timeout_ms.calls)
 
     def test_disabled_check_not_enqueued(self):
@@ -220,7 +222,7 @@ class TestScheduling:
         specs = {s.name: s for s in app._specs}
         assert specs["space"].enabled is False
         timeout_calls = [c for c in app._timeout.calls
-                         if getattr(c[1], "__name__", None) != "_drain"]
+                         if getattr(c[2], "__name__", None) != "_drain"]
         assert len(timeout_calls) == 3
 
     def test_enqueue_generation_counters(self):
@@ -235,7 +237,7 @@ class TestScheduling:
         app = _app()
         spec = _spec()
         app._enqueue(spec)  # gen 1
-        app._queue.put(("result", "space", 1, [_finding("space", "space:/")]))
+        app._results_queue.put(("result", "space", 1, [_finding("space", "space:/")]))
         app._enqueue(spec)  # gen 2 supersedes gen 1
         app._drain()
         # gen 1 result dropped; gen 2 has no result yet
@@ -244,16 +246,16 @@ class TestScheduling:
     def test_drain_applies_current_generation(self):
         app = _app()
         app._enqueue(spec := _spec())
-        app._queue.put(("result", "space", 1, [_finding("space", "space:/")]))
+        app._results_queue.put(("result", "space", 1, [_finding("space", "space:/")]))
         app._drain()
         assert "space" in app._results
 
 
 class TestHandleResults:
-    def test_no_findings_passive_and_clean(self):
+    def test_no_findings_active_and_clean(self):
         app = _app()
         app._handle_results("space", [])
-        assert app._icon.status == SNI_STATUS_PASSIVE
+        assert app._icon.status == SNI_STATUS_ACTIVE
         assert app._notifier.calls == []
         assert app._results == {}
 
@@ -283,7 +285,7 @@ class TestHandleResults:
         app = _app()
         app._handle_results("space", [_finding("space", "space:/")])
         app._handle_results("space", [])
-        assert app._icon.status == SNI_STATUS_PASSIVE
+        assert app._icon.status == SNI_STATUS_ACTIVE
 
     def test_quiet_hours_suppresses_notification(self, monkeypatch):
         monkeypatch.setattr("manaradix.tray.app.in_quiet_hours",
@@ -292,12 +294,21 @@ class TestHandleResults:
         app._handle_results("space", [_finding("space", "space:/")])
         assert app._notifier.calls == []
 
-    def test_hide_when_ok_off_keeps_notifying_but_clearing_is_silent(self):
+    def test_hide_when_ok_false_stays_visible_when_healthy(self):
         store = _store(hide_when_ok=False)
         app = _app(store)
         app._handle_results("space", [_finding("space", "space:/")])
         app._handle_results("space", [])
-        # icon goes passive; clearing is not a notification
+        # the icon stays active (visible, clickable) when healthy
+        assert app._icon.status == SNI_STATUS_ACTIVE
+        assert len(app._notifier.calls) == 1
+
+    def test_hide_when_ok_true_goes_passive_when_healthy(self):
+        store = _store(hide_when_ok=True)
+        app = _app(store)
+        app._handle_results("space", [_finding("space", "space:/")])
+        app._handle_results("space", [])
+        # hide-until-problem: healthy state parks the item in the overflow
         assert app._icon.status == SNI_STATUS_PASSIVE
         assert len(app._notifier.calls) == 1
 
@@ -363,7 +374,7 @@ class TestWorker:
         app._queue.put(("space", 1, _spec(run=run)))
         app._queue.put(None)
         app._worker_main()
-        assert app._queue.get() == ("result", "space", 1, [])
+        assert app._results_queue.get() == ("result", "space", 1, [])
 
     def test_worker_stop_breaks_loop(self):
         app = _app()

@@ -95,11 +95,12 @@ class TrayApp:
         tracker: A :class:`FindingTracker`.
         loop: An object with ``run()`` / ``quit()`` (default: a GLib
             mainloop).
-        timeout: Schedules a callback in *interval* seconds on the main
-            loop; returns a handle.  Default ``GLib.timeout_add_seconds``.
-        timeout_ms: Schedules a callback in *interval* milliseconds on
-            the main loop (used for the 100 ms queue drain); default
-            ``GLib.timeout_add``.
+        timeout: Schedules a callback with GLib semantics
+            ``timeout(interval_seconds, callback)``; returns a handle.
+            Default ``GLib.timeout_add_seconds``.
+        timeout_ms: Schedules a callback with GLib semantics
+            ``timeout(interval_ms, callback)`` (used for the 100 ms
+            queue drain); default ``GLib.timeout_add``.
         source_remove: Cancels a scheduled callback by handle.
         open_gui: Opens the manaradix GUI.
         export_icon: Export the SNI/menu objects on the bus (disable in
@@ -138,7 +139,8 @@ class TrayApp:
         self._open_gui = open_gui
         self._export_icon = export_icon
 
-        self._queue: queue.Queue = queue.Queue()
+        self._queue: queue.Queue = queue.Queue()          # jobs → worker
+        self._results_queue: queue.Queue = queue.Queue()  # results → drain
         self._gens: dict[str, int] = {}
         self._results: dict[str, list] = {}
         self._timer_ids: list = []
@@ -183,10 +185,10 @@ class TrayApp:
         for spec in self._specs:
             if spec.enabled:
                 self._timer_ids.append(
-                    self._timeout(self._interval_cb(spec),
-                                  spec.interval_min * 60)
+                    self._timeout(spec.interval_min * 60,
+                                  self._interval_cb(spec))
                 )
-        self._timer_ids.append(self._timeout_ms(self._drain, DRAIN_INTERVAL_MS))
+        self._timer_ids.append(self._timeout_ms(DRAIN_INTERVAL_MS, self._drain))
 
         if hasattr(signal, "SIGTERM"):
             signal.signal(signal.SIGTERM, self._shutdown)
@@ -208,7 +210,7 @@ class TrayApp:
         if self._bus is not None:
             self._loop = self._loop or _FakeLoop()
             if self._timeout is None:
-                self._timeout = lambda cb, interval: _NoopTimer(cb)
+                self._timeout = lambda interval, cb: _NoopTimer(cb)
             if self._timeout_ms is None:
                 self._timeout_ms = self._timeout
             self._source_remove = self._source_remove or _noop
@@ -318,25 +320,22 @@ class TrayApp:
             try:
                 client = self._client_factory()
                 findings = spec.run(TraySources(client))
-                self._queue.put(("result", name, gen, findings))
+                self._results_queue.put(("result", name, gen, findings))
             except Exception as exc:
                 logger.warning("Check %s failed: %s", name, exc)
-                self._queue.put(("result", name, gen, []))
+                self._results_queue.put(("result", name, gen, []))
 
     def _drain(self) -> bool:
         """Main loop: apply queued results, update icon + notifications."""
         while True:
             try:
-                job = self._queue.get_nowait()
+                job = self._results_queue.get_nowait()
             except queue.Empty:
                 break
-            if job is None:
-                continue
-            if job[0] == "result":
-                _kind, name, gen, findings = job
-                if gen < self._gens.get(name, 0):
-                    continue  # superseded by a newer run
-                self._handle_results(name, findings)
+            _kind, name, gen, findings = job
+            if gen < self._gens.get(name, 0):
+                continue  # superseded by a newer run
+            self._handle_results(name, findings)
         return True  # keep the timer alive
 
     def _handle_results(self, name: str, findings: list) -> None:
@@ -347,7 +346,8 @@ class TrayApp:
             self._results.pop(name, None)
         merged = [finding for lst in self._results.values() for finding in lst]
 
-        status, icon_name = icon_state(merged)
+        status, icon_name = icon_state(
+            merged, hide_when_ok=self._tray.hide_when_ok)
         self._icon.set_status(status)
         self._icon.set_icon(icon_name)
 

@@ -26,7 +26,7 @@ class _FakeClient:
         return self._devices
 
     def list_snapshots(self):
-        return {"snapshots": self._snapshots}
+        return list(self._snapshots)
 
     def scrub_status(self, mount):
         return self._scrub

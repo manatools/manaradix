@@ -25,8 +25,13 @@ def _finding(severity: str, finding_id: str = "space:/") -> HealthFinding:
 
 
 class TestIconState:
-    def test_no_findings_passive(self):
-        assert icon_state([]) == (SNI_STATUS_PASSIVE, ICON_NORMAL)
+    def test_no_findings_active_by_default(self):
+        # default: the icon stays visible and clickable when healthy
+        assert icon_state([]) == (SNI_STATUS_ACTIVE, ICON_NORMAL)
+
+    def test_no_findings_passive_with_hide_when_ok(self):
+        assert icon_state([], hide_when_ok=True) == (
+            SNI_STATUS_PASSIVE, ICON_NORMAL)
 
     def test_warning_active(self):
         assert icon_state([_finding("warning")]) == (
@@ -96,3 +101,43 @@ class TestStatusIcon:
         icon = StatusIcon(service_name="org.kde.StatusNotifierItem-1-1")
         icon.export(MagicMock(), watcher=False)
         assert icon._object is not None
+
+    def test_export_claims_the_service_name(self):
+        icon = StatusIcon(service_name="org.kde.StatusNotifierItem-1-1")
+        bus = MagicMock()
+        icon.export(bus, watcher=False)
+        import dbus.bus
+        bus.request_name.assert_called_once_with(
+            "org.kde.StatusNotifierItem-1-1",
+            dbus.bus.NAME_FLAG_DO_NOT_QUEUE)
+
+    def test_export_real_dbus_decorator_signatures(self):
+        """Regression: dbus-python validates ``in_signature`` against the
+        positional parameters at decoration time; a mismatch raises
+        ValueError while the object class is being defined (0.2.0 shipped
+        a GetLayout crash of exactly this kind).  Real decorators only run
+        with python3-dbus installed."""
+        pytest.importorskip("dbus")
+        icon = StatusIcon(service_name="org.kde.StatusNotifierItem-1-1")
+        icon.export(MagicMock(), watcher=False)  # must not raise
+
+    def test_exported_properties_track_state_changes(self):
+        """Regression: the setters used to emit the New* signals without
+        updating the exported property dict, so hosts re-reading the
+        property after the signal always saw the export-time snapshot."""
+        pytest.importorskip("dbus")
+        icon = StatusIcon(service_name="org.kde.StatusNotifierItem-1-1")
+        icon.export(MagicMock(), watcher=False)
+
+        def get(prop):
+            return icon._object.Get("org.kde.StatusNotifierItem", prop)
+
+        assert get("Status") == SNI_STATUS_PASSIVE
+        icon.set_status(SNI_STATUS_ACTIVE)
+        assert get("Status") == SNI_STATUS_ACTIVE
+        icon.set_icon(ICON_ATTENTION)
+        assert get("IconName") == ICON_ATTENTION
+        icon.set_tooltip("Manaradix: 1 issue(s)", "space problem")
+        _name, _pixmap, title, body = get("ToolTip")
+        assert title == "Manaradix: 1 issue(s)"
+        assert body == "space problem"

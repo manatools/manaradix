@@ -44,13 +44,16 @@ def icon_available(name: str) -> bool:
     return False
 
 
-def icon_state(findings) -> tuple[str, str]:
+def icon_state(findings, *, hide_when_ok: bool = False) -> tuple[str, str]:
     """(SNI status, icon name) for a merged list of findings.
 
-    No findings → passive with the normal icon; warnings → active;
-    any critical finding → NeedsAttention, using the attention icon
-    when one is shipped (the current art is black line work that fades
-    on dark themes — spec §16.8).
+    No findings → active with the normal icon by default (the icon
+    stays visible and clickable for quick GUI access); with
+    ``hide_when_ok`` the healthy state is passive instead, which Plasma
+    renders in the hidden overflow.  Warnings → active; any critical
+    finding → NeedsAttention, using the attention icon when one is
+    shipped (the current art is black line work that fades on dark
+    themes — spec §16.8).
     """
     severities = {finding.severity for finding in findings}
     if "critical" in severities:
@@ -60,7 +63,9 @@ def icon_state(findings) -> tuple[str, str]:
         )
     if severities:
         return SNI_STATUS_ACTIVE, ICON_NORMAL
-    return SNI_STATUS_PASSIVE, ICON_NORMAL
+    if hide_when_ok:
+        return SNI_STATUS_PASSIVE, ICON_NORMAL
+    return SNI_STATUS_ACTIVE, ICON_NORMAL
 
 
 def _tooltip_struct(title: str, body: str):
@@ -133,6 +138,9 @@ class StatusIcon(object):
             return
         self._status = status
         if self._object is not None:
+            # update the readable property, then announce the change —
+            # hosts re-read the property when the signal arrives
+            self._object._set_prop("Status", status)
             self._object.NewStatus(status)
 
     def set_icon(self, icon_name: str) -> None:
@@ -141,6 +149,7 @@ class StatusIcon(object):
             return
         self._icon_name = icon_name
         if self._object is not None:
+            self._object._set_prop("IconName", icon_name)
             self._object.NewIcon()
 
     def set_tooltip(self, title: str, body: str = "") -> None:
@@ -150,6 +159,8 @@ class StatusIcon(object):
         self._tooltip_title = title
         self._tooltip_body = body
         if self._object is not None:
+            self._object._set_prop("ToolTip",
+                                   _tooltip_struct(title, body))
             self._object.NewToolTip()
 
     # -- Bus wiring ----------------------------------------------------------
@@ -164,6 +175,22 @@ class StatusIcon(object):
         """
         import dbus
         import dbus.service
+
+        # Claim the service name the item registers under.  dbus-python
+        # does not do this for us: without the claim the watcher accepts
+        # the registration but plasmashell cannot reach the item (no
+        # icon).  KDE clients use the same org.kde.StatusNotifierItem-
+        # PID-instance convention.
+        try:
+            import dbus.bus
+
+            bus.request_name(self.service_name,
+                             dbus.bus.NAME_FLAG_DO_NOT_QUEUE)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Could not claim the SNI service name %s: %s",
+                self.service_name, exc)
 
         class _SniObject(dbus.service.Object):
             """The exported SNI object: properties, signals, methods."""
@@ -187,6 +214,10 @@ class StatusIcon(object):
                     "ItemIsMenu": dbus.Boolean(False),
                     "Menu": _menu_struct(icon.service_name),
                 }
+
+            def _set_prop(self, name: str, value) -> None:
+                """Keep the readable property in sync with the state."""
+                self._props[name] = value
 
             @dbus.service.method(
                 "org.freedesktop.DBus.Properties", in_signature="ss",

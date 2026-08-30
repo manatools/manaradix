@@ -1,6 +1,11 @@
 """Tests for the dbusmenu context menu (pure model)."""
 
+from unittest.mock import MagicMock
+
+import pytest
+
 from manaradix.tray.dbus_menu import (
+    DbusMenu,
     ID_CHECK_NOW,
     ID_OPEN,
     ID_QUIT,
@@ -64,3 +69,17 @@ class TestMenuModel:
         model = MenuModel(on_action=dispatched.append)
         assert model.event(9999, "clicked") is False
         assert dispatched == []
+
+
+class TestExport:
+    def test_real_dbus_decorator_signatures(self):
+        """Regression: dbus-python validates ``in_signature`` against the
+        positional parameters at decoration time; 0.2.0 shipped a
+        GetLayout with ``ias`` (2 complete types) for a 3-parameter
+        method, so the applet crashed at startup on any real bus.  Real
+        decorators only run with python3-dbus installed."""
+        pytest.importorskip("dbus")
+        menu = DbusMenu(
+            MagicMock(), MenuModel(on_action=lambda action: None),
+            service_name="org.kde.StatusNotifierItem-1-1")
+        assert menu._object is not None

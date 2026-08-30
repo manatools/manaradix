@@ -42,8 +42,8 @@ class TestClientHelpers:
 
     def test_snapshots_via_client(self) -> None:
         class FakeClient:
-            def list_snapshots(self) -> dict:
-                return {"snapshots": [{"id": "1"}, {"id": "2"}]}
+            def list_snapshots(self) -> list:
+                return [{"id": "1"}, {"id": "2"}]
 
         assert [s["id"] for s in health_sources.snapshots_via_client(FakeClient())] == ["1", "2"]
 

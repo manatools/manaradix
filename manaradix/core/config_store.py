@@ -35,7 +35,11 @@ class TraySettings:
 
     enabled: bool = True
     autostart: bool = True
-    hide_when_ok: bool = True
+    # False (default): the icon stays visible and clickable even when
+    # everything is fine — quick GUI access is the applet's first job.
+    # True restores the hide-until-problem behavior (Plasma renders
+    # the passive state in the hidden tray overflow).
+    hide_when_ok: bool = False
     quiet_hours: str = ""
     space_enabled: bool = True
     device_enabled: bool = True

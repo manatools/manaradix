@@ -149,7 +149,7 @@ class DbusMenu(object):
                 return self._props
 
             @dbus.service.method(
-                MENU_IFACE, in_signature="ias", out_signature="ia(ia{sv})")
+                MENU_IFACE, in_signature="iias", out_signature="ia(ia{sv})")
             def GetLayout(self, parent_id: int, recursion_depth: int,
                           property_names: list) -> tuple:
                 layout = self._menu._model.layout(recursion_depth)
