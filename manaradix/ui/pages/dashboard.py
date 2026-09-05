@@ -74,6 +74,7 @@ class DashboardPage:
         self._snapshots = self._list_snapshots()
         self._filesystems = self._list_filesystems()
         sections = [
+            self._quick_actions_section(),
             self._disks_section(),
             self._filesystems_section(),
             self._internal_stats_section(),
@@ -81,17 +82,16 @@ class DashboardPage:
             self._recent_snapshots_section(),
             self._active_policies_section(),
             self._activity_status_section(),
-            self._quick_actions_section(),
         ]
         return PageModel(
             sections=[s for s in sections if s is not None],
             columns=2,
             rows=[
+                ["quick"],
                 ["disks"],
                 ["filesystems"],
                 ["internal", ["snapshot_usage", "recent"]],
-                ["policies", "quick"],
-                ["activity"],
+                ["policies", "activity"],
             ],
         )
 
