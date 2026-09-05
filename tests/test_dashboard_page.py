@@ -348,6 +348,7 @@ class TestSnapshotUsageSection:
         page = make_page(
             ops, snapshots=[MagicMock(), MagicMock(), MagicMock()],
         )
+        page.on_measure_snapshot_usage()
         section = page._snapshot_usage_section()
         row = section["fields"][0]["rows"][0]
         assert row == {
@@ -363,6 +364,7 @@ class TestSnapshotUsageSection:
         ops.filesystem_du.return_value = {}
         ops.filesystem_usage.return_value = usage()
         page = make_page(ops, snapshots=[])
+        page.on_measure_snapshot_usage()
         row = page._snapshot_usage_section()["fields"][0]["rows"][0]
         assert row == {
             "Snapshots": 0,
@@ -371,11 +373,36 @@ class TestSnapshotUsageSection:
             "% of device": "-",
         }
 
+    def test_not_measured_until_button_pressed(self) -> None:
+        """The slow ``btrfs filesystem du`` never runs on page build."""
+        ops = MagicMock()
+        ops.snapshot_dir = ".snapshots"
+        ops.filesystem_usage.return_value = usage()
+        page = make_page(ops, snapshots=[MagicMock()])
+        section = page._snapshot_usage_section()
+        ops.filesystem_du.assert_not_called()
+        assert section["fields"][0]["rows"][0] == {
+            "Snapshots": 1,
+            "Total": "-",
+            "Exclusive": "-",
+            "% of device": "-",
+        }
+        assert section["fields"][1]["id"] == "btn_measure_snapshot_usage"
+
+    def test_measure_error_is_swallowed(self) -> None:
+        ops = MagicMock()
+        ops.snapshot_dir = ".snapshots"
+        ops.filesystem_du.side_effect = RuntimeError("timed out")
+        ops.filesystem_usage.return_value = usage()
+        page = make_page(ops, snapshots=[])
+        page.on_measure_snapshot_usage()
+        assert page._snapshot_du == {}
+
     def test_absolute_snapshot_dir(self) -> None:
         ops = MagicMock()
         ops.snapshot_dir = "/mnt/data/.my-snaps"
         ops.filesystem_du.return_value = {}
         ops.filesystem_usage.return_value = usage()
         page = make_page(ops, snapshots=[])
-        page._snapshot_usage_section()
+        page.on_measure_snapshot_usage()
         ops.filesystem_du.assert_called_once_with("/mnt/data/.my-snaps")
