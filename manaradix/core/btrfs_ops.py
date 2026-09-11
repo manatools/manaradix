@@ -361,7 +361,11 @@ class BtrfsOps:
             os.makedirs(os.path.dirname(dest), exist_ok=True)
         self._run(args, dry_run=dry_run)
 
-        ts = dest.rstrip("/").rsplit("/", 1)[-1]
+        # The unique snapshot id is the timestamp directory it lives in
+        # (``<snapshot_dir>/<timestamp>/<subvol-name>``), not the final
+        # path component — that is the subvolume name, shared by every
+        # snapshot of the same subvolume ("root", "home", ...).
+        ts = os.path.basename(os.path.dirname(dest.rstrip("/")))
         snap_type = SnapshotType.READ_ONLY if read_only else SnapshotType.MANUAL
         return Snapshot(
             id=ts,
@@ -436,8 +440,13 @@ class BtrfsOps:
             # itself is what btrfs operations act on.
             subvol = data.get("subvolume", "")
             subvol_name = subvol.strip("/").replace("/", "_") or "root"
+            # The id is the timestamp directory name, not the sidecar's
+            # ``id`` field: the directory name is what the filesystem
+            # guarantees unique (and what GRUB and the fallback listing
+            # use), while older sidecars wrote the subvolume name there,
+            # making every snapshot of the same subvolume share one id.
             return Snapshot(
-                id=data.get("id", ""),
+                id=os.path.basename(snap_dir.rstrip("/")),
                 subvolume=subvol,
                 path=os.path.join(snap_dir, subvol_name),
                 date=datetime.fromisoformat(data["date"]),

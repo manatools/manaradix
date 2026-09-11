@@ -135,6 +135,24 @@ class TestCreateSnapshot:
         ops.create_snapshot("/", "/dest/root", dry_run=True)
         mock_mkdir.assert_not_called()
 
+    @patch("subprocess.run")
+    @patch("os.makedirs")
+    def test_create_id_is_timestamp_dir_not_subvol_name(
+        self, mock_mkdir: MagicMock, mock_run: MagicMock
+    ) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs", "subvolume", "snapshot", "-r", "/", "/.snapshots/2026-08-02_10-00-00/root"],
+            returncode=0,
+            stdout="",
+            stderr="",
+        )
+        ops = BtrfsOps()
+        snap = ops.create_snapshot("/", "/.snapshots/2026-08-02_10-00-00/root")
+        # The id must be the unique timestamp directory, not "root" — the
+        # subvolume name is shared by every snapshot of the same subvolume
+        # and would make rows collide in the UI.
+        assert snap.id == "2026-08-02_10-00-00"
+
 
 class TestSnapshotInfo:
     def test_sidecar_lives_next_to_snapshot(self, tmp_path) -> None:
@@ -174,6 +192,10 @@ class TestSnapshotInfo:
         listed = ops.list_snapshots(str(tmp_path))
         assert len(listed) == 1
         assert listed[0].path == str(subvol)
+        # The id is the timestamp directory name, never the sidecar's
+        # ``id`` field (older sidecars stored the subvolume name there,
+        # which collides across snapshots of the same subvolume).
+        assert listed[0].id == ts
 
     def test_sidecar_read_joins_named_subvolume(self, tmp_path) -> None:
         ops = BtrfsOps()
@@ -193,6 +215,9 @@ class TestSnapshotInfo:
         snap = ops._read_snapshot_info(str(info), str(snap_dir))
         assert snap is not None
         assert snap.path == str(snap_dir / "home")
+        # The id comes from the timestamp directory, not the sidecar's
+        # ``id`` field (here "home", the subvolume name).
+        assert snap.id == "2026-08-02_10-00-00"
 
 
 class TestListSubvolumes:
