@@ -1,10 +1,15 @@
 """Tests for the dbusmenu context menu (pure model)."""
 
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
-from manaradix.tray.dbus_menu import (
+dbus = pytest.importorskip("dbus", reason="python3-dbus")
+
+REPO_ROOT = str(Path(__file__).resolve().parent.parent)
+
+from manaradix.tray.dbus_menu import (  # noqa: E402
     DbusMenu,
     ID_ABOUT,
     ID_CHECK_NOW,
@@ -128,9 +133,15 @@ class TestExport:
             service_name="org.kde.StatusNotifierItem-1-1")
         obj = menu._object
 
-        _revision, items = obj.GetLayout(0, -1, [])
-        assert [int(i) for i, _props in items] == [
+        revision, root = obj.GetLayout(0, -1, [])
+        assert int(revision) >= 1
+        _root_id, _root_props, children = root
+        assert [int(child[0]) for child in children] == [
             ID_OPEN, ID_CHECK_NOW, ID_ABOUT, ID_SEPARATOR, ID_QUIT]
+        # a non-root parent returns that item, childless
+        _rev, node = obj.GetLayout(ID_OPEN, -1, [])
+        assert int(node[0]) == ID_OPEN
+        assert list(node[2]) == []
 
         group = obj.GetGroupProperties([], [])
         assert [int(i) for i, _props in group] == [
@@ -139,3 +150,60 @@ class TestExport:
         assert [int(i) for i, _props in subset] == [ID_ABOUT]
 
         assert bool(obj.AboutToShow(0)) is False  # static layout
+
+    def test_getlayout_reply_shape(self):
+        """Regression: libdbusmenu-qt (plasma) demarshals GetLayout
+        strictly against the canonical dbusmenu shape — revision as
+        uint32 and the layout as ONE VARIANT wrapping ``(i, a{sv}, av)``
+        with every child VARIANT-wrapped.  The flat
+        ``(i, a(ia{sv}))`` reply shipped until 0.2.2-2 failed the cast,
+        the importer never built a menu, and every click logged
+        "Could not find DBusMenu interface, falling back to calling
+        ContextMenu()" — the icon was dead on a left click.
+
+        dbus-python applies the variant wrapping at marshalling time
+        (out_signature ``uv`` + ``signature="v"`` arrays), so the shape
+        is asserted through a real bus round trip in a subprocess: the
+        in-process call bypasses the wire and shows variant_level 0.
+        """
+        pytest.importorskip("dbus")
+        import subprocess
+        import sys
+        import time
+
+        server = subprocess.Popen(
+            [sys.executable, "-c", (
+                "import sys; sys.path.insert(0, %r)\n"
+                "import dbus\n"
+                "from dbus.mainloop.glib import DBusGMainLoop\n"
+                "DBusGMainLoop(set_as_default=True)\n"
+                "from gi.repository import GLib\n"
+                "bus = dbus.SessionBus()\n"
+                "bus.request_name('test.manaradix.menushape', "
+                "dbus.bus.NAME_FLAG_DO_NOT_QUEUE)\n"
+                "from manaradix.tray.dbus_menu import DbusMenu, MenuModel\n"
+                "DbusMenu(bus, MenuModel(on_action=lambda a: None), "
+                "service_name='test.manaradix.menushape')\n"
+                "GLib.MainLoop().run()\n"
+            ) % REPO_ROOT],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            time.sleep(2.0)
+            from dbus.mainloop.glib import DBusGMainLoop
+
+            DBusGMainLoop(set_as_default=True)
+            bus = dbus.SessionBus()
+            revision, layout = bus.call_blocking(
+                "test.manaradix.menushape", "/MenuBar",
+                MENU_IFACE, "GetLayout", "iias", [0, -1, []])
+            assert isinstance(revision, dbus.UInt32)
+            assert layout.variant_level == 1  # exported as a variant
+            assert isinstance(layout, dbus.Struct)
+            item_id, _props, children = layout
+            assert int(item_id) == 0
+            assert all(child.variant_level == 1 for child in children)
+            assert [int(child[0]) for child in children] == [
+                ID_OPEN, ID_CHECK_NOW, ID_ABOUT, ID_SEPARATOR, ID_QUIT]
+        finally:
+            server.terminate()
+            server.wait(timeout=10)

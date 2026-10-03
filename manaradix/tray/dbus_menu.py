@@ -22,6 +22,27 @@ ID_SEPARATOR = 3
 ID_QUIT = 4
 ID_ABOUT = 5
 
+#: Layout revision announced by :meth:`GetLayout` and the
+#: ``LayoutUpdated`` signal; static menu, so it never changes.
+REVISION = 1
+
+
+def _layout_item(item_id, props: dict, children) -> object:
+    """One canonical dbusmenu layout node: ``(i, a{sv}, av)``.
+
+    Imported lazily so :mod:`manaradix.tray.dbus_menu` stays importable
+    without python3-dbus (the pure :class:`MenuModel` does not need it).
+    """
+    import dbus
+
+    return dbus.Struct(
+        (dbus.Int32(item_id),
+         dbus.Dictionary(
+             {dbus.String(k): v for k, v in props.items()},
+             signature="sv"),
+         dbus.Array(children, signature="v")),
+        signature="ia{sv}av")
+
 
 def build_menu(open_label: str = None, check_label: str = None,
                about_label: str = None,
@@ -172,14 +193,35 @@ class DbusMenu(object):
                 }
 
             @dbus.service.method(
-                MENU_IFACE, in_signature="iias", out_signature="ia(ia{sv})")
+                MENU_IFACE, in_signature="iias", out_signature="uv")
             def GetLayout(self, parent_id: int, recursion_depth: int,
                           property_names: list) -> tuple:
-                layout = self._menu._model.layout(recursion_depth)
-                return dbus.Int32(1), dbus.Array(
-                    [(dbus.Int32(item_id), props)
-                     for item_id, props in layout],
-                    signature="(ia{sv})")
+                """Canonical layout: ``(revision, variant(root item))``.
+
+                The layout variant wraps the struct ``(id, props, av)``
+                where *av* is an array of VARIANTS, each holding a child
+                item of the same shape.  libdbusmenu-qt (plasma) demarshals
+                strictly against this shape — a flat
+                ``(i, a(ia{sv}))`` reply fails the cast, the importer
+                never builds a menu, and the host falls back to
+                ``ContextMenu()`` (regression:
+                ``test_getlayout_reply_shape``).
+                """
+                items = self._menu._model.layout(recursion_depth)
+                if int(parent_id) != 0:
+                    # a non-root parent has no children in this flat menu
+                    for item_id, props in items:
+                        if int(item_id) == int(parent_id):
+                            return dbus.UInt32(REVISION), _layout_item(
+                                item_id, props, [])
+                    return dbus.UInt32(REVISION), _layout_item(0, {}, [])
+                children = dbus.Array(
+                    [_layout_item(item_id, props, [])
+                     for item_id, props in items],
+                    signature="v")
+                root_props = {"children-display": dbus.String("submenu")}
+                return dbus.UInt32(REVISION), _layout_item(
+                    0, root_props, children)
 
             @dbus.service.method(
                 MENU_IFACE, in_signature="ias", out_signature="a{sv}")
@@ -193,7 +235,14 @@ class DbusMenu(object):
                 ids = [int(i) for i in item_ids] or [
                     item_id for item_id, _props in self._menu._model.layout()]
                 return dbus.Array(
-                    [(dbus.Int32(i), self._menu._model.get(i)) for i in ids],
+                    [dbus.Struct(
+                        (dbus.Int32(i),
+                         dbus.Dictionary(
+                             {dbus.String(k): v
+                              for k, v in self._menu._model.get(i).items()},
+                             signature="sv")),
+                        signature="ia{sv}")
+                     for i in ids],
                     signature="(ia{sv})")
 
             @dbus.service.method(MENU_IFACE, in_signature="i",
@@ -213,6 +262,11 @@ class DbusMenu(object):
 
             @dbus.service.signal(MENU_IFACE, signature="ui")
             def LayoutUpdated(self, revision: int, parent_id: int) -> None:
+                return None
+
+            @dbus.service.signal(MENU_IFACE, signature="ib")
+            def ItemPropertyUpdated(self, item_id: int,
+                                    properties_changed: bool) -> None:
                 return None
 
         self._object = _MenuObject(self)
