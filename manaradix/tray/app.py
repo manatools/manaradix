@@ -15,7 +15,9 @@ timer; generation counters discard stale results.  The applet:
 4. runs the enabled health checks on their configured intervals,
    updates the icon state (passive / active / needs-attention) and
    notifies on transitions (see :mod:`manaradix.tray.scheduler`);
-5. opens the GUI on icon/menu/notification activation;
+5. shows its menu when the icon is clicked (``ItemIsMenu``) and opens
+   the GUI from the menu's *Open manaradix* item or a notification
+   action;
 6. shuts down cleanly on SIGINT/SIGTERM.
 """
 
@@ -274,11 +276,16 @@ class TrayApp:
 
     def _setup_components(self) -> None:
         if self._icon is None:
+            # ItemIsMenu: a click on the icon pops the dbusmenu (Open
+            # manaradix / Check now / About / Quit) instead of launching
+            # the GUI straight away — the GUI is one menu item, not the
+            # only thing the icon can do.  No Activate/SecondaryActivate
+            # callbacks are wired for the same reason; a host that
+            # ignores ItemIsMenu simply does nothing on a plain click
+            # and still shows the menu on right-click.
             self._icon = StatusIcon(
                 service_name=f"org.kde.StatusNotifierItem-{os.getpid()}-1",
-                on_activate=self._open_gui,
-                on_secondary=self._open_gui,
-                on_context_menu=self._open_gui,
+                item_is_menu=True,
             )
         if self._menu_model is None:
             self._menu_model = MenuModel(self._on_menu_action)

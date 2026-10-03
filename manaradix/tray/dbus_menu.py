@@ -129,16 +129,16 @@ class DbusMenu(object):
     def _export(self, bus) -> None:
         import dbus.service
 
-        class _MenuObject(dbus.service.Object):
-            def __init__(self, menu: DbusMenu) -> None:
-                super().__init__(bus, MENU_PATH)
-                self._menu = menu
-                self._props = {
-                    "version": dbus.Int32(3),
-                    "text-direction": dbus.String("ltr"),
-                    "status": dbus.String("normal"),
-                    "icon-theme-path": dbus.String(""),
-                }
+        # Both interfaces name a method ``Get``, and dbus-python resolves
+        # an incoming call by *Python attribute name*: two ``Get`` defs in
+        # one class body would leave only the last one, so
+        # Properties.Get on /MenuBar would answer UnknownMethod.  The
+        # Properties pair therefore lives in a base class — the MRO walk
+        # in dbus.service._method_lookup skips the derived (dbusmenu)
+        # ``Get`` when the requested interface does not match and finds
+        # the base one.
+        class _PropsObject(dbus.service.Object):
+            """Properties surface for the menu (base of _MenuObject)."""
 
             @dbus.service.method(
                 "org.freedesktop.DBus.Properties", in_signature="ss",
@@ -158,6 +158,19 @@ class DbusMenu(object):
                     return {}
                 return self._props
 
+        class _MenuObject(_PropsObject):
+            """The com.canonical.dbusmenu surface."""
+
+            def __init__(self, menu: DbusMenu) -> None:
+                super().__init__(bus, MENU_PATH)
+                self._menu = menu
+                self._props = {
+                    "version": dbus.Int32(3),
+                    "text-direction": dbus.String("ltr"),
+                    "status": dbus.String("normal"),
+                    "icon-theme-path": dbus.String(""),
+                }
+
             @dbus.service.method(
                 MENU_IFACE, in_signature="iias", out_signature="ia(ia{sv})")
             def GetLayout(self, parent_id: int, recursion_depth: int,
@@ -173,10 +186,33 @@ class DbusMenu(object):
             def Get(self, item_id: int, property_names: list):
                 return self._menu._model.get(item_id)
 
+            @dbus.service.method(
+                MENU_IFACE, in_signature="aias", out_signature="a(ia{sv})")
+            def GetGroupProperties(self, item_ids: list,
+                                   property_names: list) -> object:
+                ids = [int(i) for i in item_ids] or [
+                    item_id for item_id, _props in self._menu._model.layout()]
+                return dbus.Array(
+                    [(dbus.Int32(i), self._menu._model.get(i)) for i in ids],
+                    signature="(ia{sv})")
+
+            @dbus.service.method(MENU_IFACE, in_signature="i",
+                                 out_signature="b")
+            def AboutToShow(self, item_id: int) -> bool:
+                # The layout is static, so the host never has to re-read
+                # it before popping the menu.  Hosts (libdbusmenu-qt,
+                # Plasma) call this before every popup; answering
+                # UnknownMethod makes them log and sometimes give up.
+                return dbus.Boolean(False)
+
             @dbus.service.method(MENU_IFACE, in_signature="isvu",
                                  out_signature="", sender_keyword="sender")
             def Event(self, item_id: int, event_id: str, data: object,
                       timestamp: int, sender=None) -> None:
                 self._menu._model.event(int(item_id), event_id)
+
+            @dbus.service.signal(MENU_IFACE, signature="ui")
+            def LayoutUpdated(self, revision: int, parent_id: int) -> None:
+                return None
 
         self._object = _MenuObject(self)

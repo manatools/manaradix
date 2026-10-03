@@ -176,6 +176,15 @@ when another instance already owns
 .IR org.mageia.manaradix.Tray .
 Checks run on a worker thread and report through the D-Bus daemon; the
 applet itself never elevates.  Shuts down cleanly on SIGTERM/SIGINT.
+Clicking the tray icon pops up the applet menu
+.RB ( "Open manaradix" ,
+.BR "Check now" ,
+.BR About ,
+.BR Quit )
+rather than launching the GUI directly: the item is exported with the
+StatusNotifierItem
+.B ItemIsMenu
+property set.
 .TP
 .B manaradix tray status
 

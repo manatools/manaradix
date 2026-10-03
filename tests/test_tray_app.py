@@ -324,6 +324,25 @@ class TestHandleResults:
         assert "space problem" in body
 
 
+class TestDefaultIcon:
+    def test_icon_is_a_menu_button_not_a_launcher(self):
+        """The icon must pop the menu on a click: ItemIsMenu is set and
+        no Activate/SecondaryActivate callback launches the GUI."""
+        app = _app(icon=None)
+        app._setup_components()
+        assert app._icon.item_is_menu is True
+        assert app._icon._on_activate is None
+        assert app._icon._on_secondary is None
+        assert app._icon._on_context_menu is None
+
+    def test_default_menu_model_dispatches_to_the_app(self):
+        opened = []
+        app = _app(icon=None, menu_model=None, open_gui=lambda: opened.append(1))
+        app._setup_components()
+        app._menu_model.event(1, "clicked")  # ID_OPEN
+        assert opened == [1]
+
+
 class TestActions:
     def test_menu_open(self):
         opened = []

@@ -10,9 +10,12 @@ surfaces problems exactly when they need attention.
 
 ## What it does
 
-- **Quick GUI access** — a single click on the tray icon opens the
-  manaradix GUI (the menu's *Open manaradix* item and the notification
-  buttons do the same).
+- **A menu on the icon** — clicking the tray icon pops up the applet
+  menu: *Open manaradix*, *Check now*, *About*, *Quit*.  The icon is a
+  menu button (`ItemIsMenu`), not a launcher, so a stray click never
+  starts the GUI.
+- **Quick GUI access** — the menu's *Open manaradix* item and the
+  notification buttons launch the GUI.
 - **About** — the menu's *About* item shows a notification with the
   running version, a one-line description, and the project website
   (clicking the notification opens the GUI).
@@ -170,8 +173,8 @@ being notified at the next check.
 |---|---|
 | `manaradix/tray/app.py` | `TrayApp` wiring: SNI name claim, worker thread, drain queue, timers, icon/tooltip/notify |
 | `manaradix/tray/checks.py` | `build_check_registry()`: the four `CheckSpec`s (space/devices/retention/scrub) |
-| `manaradix/tray/status_icon.py` | StatusNotifierItem object (icon, tooltip, context-menu signals) |
-| `manaradix/tray/dbus_menu.py` | `MenuModel`: canonical DBusMenu GetLayout/Get/Event → open/check/about/quit |
+| `manaradix/tray/status_icon.py` | StatusNotifierItem object (icon, tooltip, `ItemIsMenu`, context-menu signals) |
+| `manaradix/tray/dbus_menu.py` | `MenuModel`: canonical DBusMenu GetLayout/Get/GetGroupProperties/AboutToShow/Event → open/check/about/quit |
 | `manaradix/tray/notifier.py` | Freedesktop notifications with actions |
 | `manaradix/tray/scheduler.py` | `FindingTracker`: new/upgrade/gone rules + per-finding nag cadence |
 | `manaradix/core/health.py` | `HealthReport` merging btrfs counters + SMART fields |
@@ -184,6 +187,10 @@ being notified at the next check.
 - **Read-only observer.**  The applet never creates, deletes, or
   restores anything.  Retention *suggestions* describe what `prune`
   would do; the user acts through the GUI.
+- **The icon is a menu, not a button.**  `ItemIsMenu = true` tells the
+  tray host to pop the dbusmenu on a primary click and never call
+  `Activate`, so every one of the applet's actions is reachable from the
+  same place and no click launches a GUI the user did not ask for.
 - **Quiet by default, present when needed.**  `hide_when_ok` + the silent exit without a
   StatusNotifierWatcher mean a healthy system shows no extra tray icon.
 - **Fail open.**  A check that cannot run (daemon down, UDisks2 absent,

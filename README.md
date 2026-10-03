@@ -462,6 +462,8 @@ error counters with UDisks2 SMART data when available — and:
 - suggests pruning snapshots that are already past their retention tier
   budget (the same numbers `snapshot prune` uses);
 - reminds when no scrub is recorded for a filesystem;
+- opens a menu when the icon is clicked — *Open manaradix*, *Check
+  now*, *About*, *Quit* — rather than launching the GUI straight away;
 - stays visible and clickable even when everything is fine (set
   `hide_when_ok = true` in `[tray]` to hide the healthy icon instead),
   respects
@@ -473,7 +475,8 @@ All checks are individually switchable in the `[tray]` section of
 and is never elevated (user-session process, `_SESSION_COMMANDS` in
 `manaradix/utils/pkexec.py`).  See
 [docs/tray-applet.md](docs/tray-applet.md) and
-[docs/activity-tray-applet.md](docs/activity-tray-applet.md).
+[docs/activity-tray-applet.md](docs/activity-tray-applet.md) /
+[docs/activity-tray-menu.md](docs/activity-tray-menu.md).
 
 ## Project Structure
 

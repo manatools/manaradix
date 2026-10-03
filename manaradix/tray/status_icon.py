@@ -95,6 +95,13 @@ class StatusIcon(object):
     python3-dbus; the applet calls :meth:`export` once a session bus is
     available.  All ``set_*`` methods emit the matching SNI signal when
     the value actually changes.
+
+    ``item_is_menu`` is the SNI ``ItemIsMenu`` property: when True (the
+    default) the host treats the item as a pure menu button — a primary
+    click pops up the dbusmenu named by the ``Menu`` property instead of
+    calling ``Activate``.  That is how the applet exposes *Open
+    manaradix* / *Check now* / *About* / *Quit* on a left click rather
+    than launching the GUI straight away.
     """
 
     def __init__(
@@ -104,6 +111,7 @@ class StatusIcon(object):
         app_id: str = "manaradix-tray",
         title: str = "Manaradix",
         icon_name: str = ICON_NORMAL,
+        item_is_menu: bool = True,
         on_activate=None,
         on_secondary=None,
         on_context_menu=None,
@@ -115,6 +123,7 @@ class StatusIcon(object):
         self._icon_name = icon_name
         self._tooltip_title = title
         self._tooltip_body = ""
+        self._item_is_menu = bool(item_is_menu)
         self._on_activate = on_activate
         self._on_secondary = on_secondary
         self._on_context_menu = on_context_menu
@@ -131,6 +140,11 @@ class StatusIcon(object):
     def icon_name(self) -> str:
         """The current icon name."""
         return self._icon_name
+
+    @property
+    def item_is_menu(self) -> bool:
+        """True when a primary click pops the menu instead of activating."""
+        return self._item_is_menu
 
     def set_status(self, status: str) -> None:
         """Change the SNI status, emitting ``NewStatus`` when it changes."""
@@ -211,7 +225,7 @@ class StatusIcon(object):
                     "AttentionMovieName": "",
                     "ToolTip": _tooltip_struct(icon._tooltip_title,
                                                icon._tooltip_body),
-                    "ItemIsMenu": dbus.Boolean(False),
+                    "ItemIsMenu": dbus.Boolean(icon._item_is_menu),
                     "Menu": _menu_struct(icon.service_name),
                 }
 

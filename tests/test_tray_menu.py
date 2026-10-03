@@ -11,6 +11,7 @@ from manaradix.tray.dbus_menu import (
     ID_OPEN,
     ID_QUIT,
     ID_SEPARATOR,
+    MENU_IFACE,
     MenuModel,
     build_menu,
 )
@@ -88,3 +89,53 @@ class TestExport:
             MagicMock(), MenuModel(on_action=lambda action: None),
             service_name="org.kde.StatusNotifierItem-1-1")
         assert menu._object is not None
+
+    def test_both_get_methods_dispatch_by_interface(self):
+        """Regression: dbus-python resolves an incoming call by Python
+        attribute name, so defining ``Get`` for both Properties and
+        dbusmenu in one class body left only the dbusmenu one and
+        Properties.Get on /MenuBar answered UnknownMethod.  The host
+        reads the menu's ``status``/``version`` through that call before
+        popping the menu up."""
+        pytest.importorskip("dbus")
+        from dbus.service import _method_lookup
+
+        menu = DbusMenu(
+            MagicMock(), MenuModel(on_action=lambda action: None),
+            service_name="org.kde.StatusNotifierItem-1-1")
+        obj = menu._object
+
+        def resolve(interface, name):
+            candidate, parent = _method_lookup(obj, name, interface)
+            assert parent._dbus_interface == interface
+            return candidate
+
+        props_get = resolve("org.freedesktop.DBus.Properties", "Get")
+        assert props_get(obj, MENU_IFACE, "version") == 3
+        assert resolve("org.freedesktop.DBus.Properties", "GetAll")(
+            obj, MENU_IFACE)["status"] == "normal"
+
+        menu_get = resolve(MENU_IFACE, "Get")
+        assert menu_get(obj, ID_OPEN, [])["label"]
+
+    def test_host_popup_methods_are_exported(self):
+        """Hosts call GetGroupProperties + AboutToShow before every
+        popup; the icon is a menu button now, so an UnknownMethod there
+        costs the user the menu."""
+        pytest.importorskip("dbus")
+        menu = DbusMenu(
+            MagicMock(), MenuModel(on_action=lambda action: None),
+            service_name="org.kde.StatusNotifierItem-1-1")
+        obj = menu._object
+
+        _revision, items = obj.GetLayout(0, -1, [])
+        assert [int(i) for i, _props in items] == [
+            ID_OPEN, ID_CHECK_NOW, ID_ABOUT, ID_SEPARATOR, ID_QUIT]
+
+        group = obj.GetGroupProperties([], [])
+        assert [int(i) for i, _props in group] == [
+            ID_OPEN, ID_CHECK_NOW, ID_ABOUT, ID_SEPARATOR, ID_QUIT]
+        subset = obj.GetGroupProperties([ID_ABOUT], [])
+        assert [int(i) for i, _props in subset] == [ID_ABOUT]
+
+        assert bool(obj.AboutToShow(0)) is False  # static layout

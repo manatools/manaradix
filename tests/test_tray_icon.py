@@ -54,6 +54,12 @@ class TestStatusIcon:
         icon = StatusIcon()
         assert icon.status == SNI_STATUS_PASSIVE
         assert icon.icon_name == ICON_NORMAL
+        # a click pops the menu rather than activating the item
+        assert icon.item_is_menu is True
+
+    def test_item_is_menu_can_be_disabled(self):
+        icon = StatusIcon(item_is_menu=False)
+        assert icon.item_is_menu is False
 
     def test_set_status_no_signal_when_unchanged(self):
         icon = StatusIcon()
@@ -141,3 +147,23 @@ class TestStatusIcon:
         _name, _pixmap, title, body = get("ToolTip")
         assert title == "Manaradix: 1 issue(s)"
         assert body == "space problem"
+
+    def test_exported_item_is_menu_property(self):
+        """A click must pop the dbusmenu, so the host has to read
+        ``ItemIsMenu == true`` and a ``Menu`` path to pop up."""
+        pytest.importorskip("dbus")
+        icon = StatusIcon(service_name="org.kde.StatusNotifierItem-1-1")
+        icon.export(MagicMock(), watcher=False)
+        assert bool(icon._object.Get(
+            "org.kde.StatusNotifierItem", "ItemIsMenu")) is True
+        _service, path = icon._object.Get(
+            "org.kde.StatusNotifierItem", "Menu")
+        assert str(path) == "/MenuBar"
+
+    def test_exported_item_is_menu_property_off(self):
+        pytest.importorskip("dbus")
+        icon = StatusIcon(service_name="org.kde.StatusNotifierItem-1-1",
+                          item_is_menu=False)
+        icon.export(MagicMock(), watcher=False)
+        assert bool(icon._object.Get(
+            "org.kde.StatusNotifierItem", "ItemIsMenu")) is False
