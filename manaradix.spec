@@ -9,7 +9,7 @@
 
 Name:           manaradix
 Version:        0.2.2
-Release:        %mkrel 3
+Release:        %mkrel 4
 Summary:        Btrfs snapshot, subvolume, and filesystem management utility
 
 License:        GPLv2+
