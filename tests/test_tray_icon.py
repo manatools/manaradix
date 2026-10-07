@@ -150,15 +150,20 @@ class TestStatusIcon:
 
     def test_exported_item_is_menu_property(self):
         """A click must pop the dbusmenu, so the host has to read
-        ``ItemIsMenu == true`` and a ``Menu`` path to pop up."""
+        ``ItemIsMenu == true`` and a ``Menu`` path to pop up.
+        Plasma reads the property with ``value<QDBusObjectPath>()``: a
+        ``(so)`` struct (spec-shaped) silently yields an empty path and
+        the menu is never imported — hence a bare object path."""
         pytest.importorskip("dbus")
+        import dbus as _dbus
+
         icon = StatusIcon(service_name="org.kde.StatusNotifierItem-1-1")
         icon.export(MagicMock(), watcher=False)
         assert bool(icon._object.Get(
             "org.kde.StatusNotifierItem", "ItemIsMenu")) is True
-        _service, path = icon._object.Get(
-            "org.kde.StatusNotifierItem", "Menu")
-        assert str(path) == "/MenuBar"
+        menu = icon._object.Get("org.kde.StatusNotifierItem", "Menu")
+        assert isinstance(menu, _dbus.ObjectPath)
+        assert str(menu) == "/MenuBar"
 
     def test_exported_item_is_menu_property_off(self):
         pytest.importorskip("dbus")

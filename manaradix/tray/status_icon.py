@@ -19,6 +19,9 @@ SNI_IFACE = "org.kde.StatusNotifierItem"
 SNI_WATCHER = "org.kde.StatusNotifierWatcher"
 SNI_WATCHER_PATH = "/StatusNotifierWatcher"
 
+#: Object path of the exported dbusmenu (also the ``Menu`` property value).
+MENU_PATH = "/MenuBar"
+
 SNI_CATEGORY_APP_STATUS = "ApplicationStatus"
 SNI_STATUS_PASSIVE = "Passive"
 SNI_STATUS_ACTIVE = "Active"
@@ -79,12 +82,22 @@ def _tooltip_struct(title: str, body: str):
     )
 
 
-def _menu_struct(service_name: str) -> object:
-    """The SNI Menu property: ``(service, path)`` pointing at the dbusmenu."""
+def _menu_prop() -> object:
+    """The SNI ``Menu`` property value: the dbusmenu object path.
+
+    The StatusNotifierItem spec types ``Menu`` as ``(so)`` (service +
+    path), but the host that matters — plasma's
+    ``StatusNotifierItemSource`` — reads it with
+    ``properties["Menu"].value<QDBusObjectPath>()`` and silently skips
+    the menu importer when the property is a struct: every click then
+    falls back to ``ContextMenu()`` (regression:
+    ``test_exported_menu_property_is_object_path``).  KStatusNotifierItem
+    and mgaapplet export a bare object path on the item's own service;
+    do the same.
+    """
     import dbus  # lazy
 
-    return dbus.Struct((dbus.String(service_name), dbus.String("/MenuBar")),
-                       signature="(so)")
+    return dbus.ObjectPath(MENU_PATH)
 
 
 class StatusIcon(object):
@@ -226,7 +239,7 @@ class StatusIcon(object):
                     "ToolTip": _tooltip_struct(icon._tooltip_title,
                                                icon._tooltip_body),
                     "ItemIsMenu": dbus.Boolean(icon._item_is_menu),
-                    "Menu": _menu_struct(icon.service_name),
+                    "Menu": _menu_prop(),
                 }
 
             def _set_prop(self, name: str, value) -> None:
