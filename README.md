@@ -464,6 +464,8 @@ error counters with UDisks2 SMART data when available — and:
 - reminds when no scrub is recorded for a filesystem;
 - opens a menu when the icon is clicked — *Open manaradix*, *Check
   now*, *About*, *Quit* — rather than launching the GUI straight away;
+- shows a tray icon that stays readable on dark panels (a light plate
+  variant, since the plain black logo disappears on GNOME's top bar);
 - stays visible and clickable even when everything is fine (set
   `hide_when_ok = true` in `[tray]` to hide the healthy icon instead),
   respects
