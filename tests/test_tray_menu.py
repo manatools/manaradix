@@ -152,19 +152,23 @@ class TestExport:
         assert bool(obj.AboutToShow(0)) is False  # static layout
 
     def test_getlayout_reply_shape(self):
-        """Regression: libdbusmenu-qt (plasma) demarshals GetLayout
-        strictly against the canonical dbusmenu shape — revision as
-        uint32 and the layout as ONE VARIANT wrapping ``(i, a{sv}, av)``
-        with every child VARIANT-wrapped.  The flat
-        ``(i, a(ia{sv}))`` reply shipped until 0.2.2-2 failed the cast,
-        the importer never built a menu, and every click logged
-        "Could not find DBusMenu interface, falling back to calling
-        ContextMenu()" — the icon was dead on a left click.
+        """Regression: the GetLayout reply signature must be exactly
+        ``u(ia{sv}av)`` as ``com.canonical.dbusmenu.xml`` declares — a
+        uint32 revision and the root item as a PLAIN STRUCT whose
+        children are each VARIANT-wrapped.
 
-        dbus-python applies the variant wrapping at marshalling time
-        (out_signature ``uv`` + ``signature="v"`` arrays), so the shape
-        is asserted through a real bus round trip in a subprocess: the
-        in-process call bypasses the wire and shows variant_level 0.
+        Both halves broke once, each costing the menu:
+
+        * through 0.2.2-2 the reply was ``i`` + ``a(ia{sv})``: plasma
+          could not cast the children;
+        * in 0.2.2-3 the root was variant-wrapped (``uv``), which makes
+          ``QDBusPendingReply<uint, DBusMenuLayoutItem>`` invalid, so
+          ``slotGetLayoutFinished`` bailed out and emitted an empty menu
+          with nothing logged.
+
+        dbus-python applies variant wrapping at marshalling time, so the
+        shape is asserted through a real bus round trip in a subprocess:
+        an in-process call bypasses the wire entirely.
         """
         pytest.importorskip("dbus")
         import subprocess
@@ -197,10 +201,14 @@ class TestExport:
                 "test.manaradix.menushape", "/MenuBar",
                 MENU_IFACE, "GetLayout", "iias", [0, -1, []])
             assert isinstance(revision, dbus.UInt32)
-            assert layout.variant_level == 1  # exported as a variant
             assert isinstance(layout, dbus.Struct)
+            # the ROOT is a plain struct, never a variant: a variant here
+            # invalidates plasma's QDBusPendingReply and kills the menu
+            assert layout.variant_level == 0
             item_id, _props, children = layout
             assert int(item_id) == 0
+            # ...while every CHILD is variant-wrapped (the "av" in the
+            # signature), which is how plasma reads each child back
             assert all(child.variant_level == 1 for child in children)
             assert [int(child[0]) for child in children] == [
                 ID_OPEN, ID_CHECK_NOW, ID_ABOUT, ID_SEPARATOR, ID_QUIT]

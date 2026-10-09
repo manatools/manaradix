@@ -193,19 +193,25 @@ class DbusMenu(object):
                 }
 
             @dbus.service.method(
-                MENU_IFACE, in_signature="iias", out_signature="uv")
+                MENU_IFACE, in_signature="iias",
+                out_signature="u(ia{sv}av)")
             def GetLayout(self, parent_id: int, recursion_depth: int,
                           property_names: list) -> tuple:
-                """Canonical layout: ``(revision, variant(root item))``.
+                """Canonical layout: ``(revision, root item)``.
 
-                The layout variant wraps the struct ``(id, props, av)``
-                where *av* is an array of VARIANTS, each holding a child
-                item of the same shape.  libdbusmenu-qt (plasma) demarshals
-                strictly against this shape — a flat
-                ``(i, a(ia{sv}))`` reply fails the cast, the importer
-                never builds a menu, and the host falls back to
-                ``ContextMenu()`` (regression:
-                ``test_getlayout_reply_shape``).
+                The out signature is ``u(ia{sv}av)`` — see
+                ``com.canonical.dbusmenu.xml``: the ROOT item is a plain
+                struct ``(id, props, av)``, and only its CHILDREN are
+                variant-wrapped (plasma's demarshaller reads each child
+                as a ``QDBusVariant`` holding another such struct).
+
+                Both halves matter and each was wrong once.  A flat
+                ``i``/``a(ia{sv})`` reply (through 0.2.2-2) left plasma
+                unable to cast the children, and wrapping the root in a
+                variant (``uv``, 0.2.2-3) made
+                ``QDBusPendingReply<uint, DBusMenuLayoutItem>`` itself
+                invalid, so the importer silently emitted an empty menu.
+                Regression: ``test_getlayout_reply_shape``.
                 """
                 items = self._menu._model.layout(recursion_depth)
                 if int(parent_id) != 0:
