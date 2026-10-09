@@ -27,9 +27,15 @@ SNI_STATUS_PASSIVE = "Passive"
 SNI_STATUS_ACTIVE = "Active"
 SNI_STATUS_NEEDS_ATTENTION = "NeedsAttention"
 
-#: Default icon names (normal / attention state).
-ICON_NORMAL = "manaradix"
+#: Default icon names (normal / attention state).  The tray uses the
+#: ``-tray`` variant — the glyph on a light rounded plate — because the
+#: plain logo is black line-work on a transparent background and
+#: disappears on dark panels (GNOME's top bar, dark Plasma themes).
+ICON_NORMAL = "manaradix-tray"
 ICON_ATTENTION = "manaradix-attention"
+
+#: Plain logo, for hosts/uses that draw their own background.
+ICON_LOGO = "manaradix"
 
 #: Repo checkout of the hicolor icons (editable installs).
 _REPO_ICONS = Path(__file__).resolve().parents[2] / "data" / "icons" / "hicolor"
@@ -55,8 +61,8 @@ def icon_state(findings, *, hide_when_ok: bool = False) -> tuple[str, str]:
     ``hide_when_ok`` the healthy state is passive instead, which Plasma
     renders in the hidden overflow.  Warnings → active; any critical
     finding → NeedsAttention, using the attention icon when one is
-    shipped (the current art is black line work that fades on dark
-    themes — spec §16.8).
+    shipped (its red mark stays visible on dark panels; the plain logo
+    did not — hence the ``-tray`` plate variant).
     """
     severities = {finding.severity for finding in findings}
     if "critical" in severities:
