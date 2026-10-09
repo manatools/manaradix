@@ -76,8 +76,10 @@ user session
   results from a just-triggered re-check are never displayed.
 - Each check batch gets a **fresh client connection** — the applet never
   holds the D-Bus daemon open permanently, it is bus-activated on demand.
-- The icon is **two-state**: a healthy manaradix icon while nothing is
-  wrong, an attention variant while problems exist.  By default the
+- The icon is **two-state**: a healthy `manaradix-tray` icon (the logo
+  glyph on a light plate, readable on dark panels — GNOME's top bar,
+  dark Plasma themes) while nothing is wrong, an attention variant
+  while problems exist.  By default the
   icon stays visible and clickable even when everything is fine (quick
   GUI access is the applet's first job); set `hide_when_ok = true` to
   get the hide-until-problem behavior instead (Plasma parks the healthy
