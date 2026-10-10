@@ -403,10 +403,10 @@ class TrayApp:
         """Show an About notification: version, description, website."""
         try:
             self._notifier.notify(
-                f"Manaradix {__version__}",
+                f"Manaradix {__version__}\n",
                 _("Btrfs snapshot, subvolume, and filesystem "
                   "management utility for Mageia")
-                + "\nhttps://github.com/mageia/manaradix",
+                + "\nhttps://bitbucket.org/_pmat_/manaradix",
                 actions=["open", _("Open manaradix")],
             )
         except Exception as exc:
