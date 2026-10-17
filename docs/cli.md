@@ -27,6 +27,7 @@ manaradix [GLOBAL OPTIONS] <command> <subcommand> [OPTIONS]
 | `activity` | `status`, `record` | Automated snapshot run status and records |
 | `dbus` | `serve`, `status` | System D-Bus service daemon and status |
 | `tray` | `serve`, `status` | Notification-area applet (user session) and status |
+| `usage` | `collect`, `status`, `show` | Snapshot disk-usage collector and stored results |
 
 ## snapshot create
 
@@ -138,6 +139,26 @@ manaradix dbus status
 |---|---|
 | `dbus serve` | Run the system D-Bus service in the foreground (root only; normally started on demand by bus activation via the systemd unit). Exits 1 if not root or if the bus name is already taken; shuts down cleanly on SIGTERM |
 | `dbus status` | Report whether the service is running — **never** activates it (uses `NameHasOwner`). Prints `running` and exits 0, or prints a hint and exits 2 |
+
+## usage collect / status / show
+
+```bash
+manaradix usage collect     # measure now (root; what the systemd unit runs)
+manaradix usage status      # collector state and timestamps (read-only)
+manaradix usage show        # stored per-mount and per-snapshot sizes (read-only)
+```
+
+Measuring snapshot disk usage means walking every extent of every
+snapshot (`btrfs filesystem du`), which can take minutes. The GUI never
+does this itself: `manaradix-usage.timer` runs `usage collect` daily and
+the result is stored in `/var/lib/manaradix/usage.sqlite`. The Dashboard
+reads that file, shows when it was last updated, and its **Force Usage
+Data Update** button starts the collector in the background. See
+[Usage tracker](usage-tracker.md).
+
+`usage collect` exits non-zero when the measurement failed (the failure
+is also recorded in the store). `usage status` prints `Status:` as one of
+`idle` (never run), `running`, `ok` or `failed`.
 
 ## tray serve / status
 

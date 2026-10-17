@@ -50,12 +50,14 @@ nav:
       - Setup profiles: profiles.md
       - Pre-upgrade snapshots: pre-upgrade-snapshots.md
       - Tray applet: tray-applet.md
+      - Usage tracker: usage-tracker.md
   - D-Bus interface: api/dbus.md
   - API reference: api/python.md
   - Development: development.md
   - Design & internals: activities.md
   - Activity reports:
       - Tray applet: activity-tray-applet.md
+      - Usage tracker: activity-usage-tracker.md
       - Tray menu on the About item: activity-about-menu.md
       - Tray icon became a menu: activity-tray-menu.md
   - Roadmap & issues: SECURITY_AND_PERFORMANCES.md

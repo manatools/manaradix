@@ -35,6 +35,7 @@ gates methods by polkit tier; pkexec re-exec guarded by `MANARADIX_PKEXEC`
 | ID | Pri | Item | Status | Notes |
 |----|-----|------|--------|-------|
 | PERF-01 | P2 | Dashboard render spawns 3+ btrfs CLI subprocesses | Done | 2026-08-03: `SnapshotManager.list_all` cached (stat-key on snapshot dir + explicit invalidation in all 6 mutators + 2 s TTL — kills the N+1 sidecar reads too); `BtrfsOps.filesystem_usage` cached 5 s per mount. Dashboard render now hits ~1-2 subprocesses at most when nothing changed. Tests: cache hit/invalidation/mtime/TTL. |
+| PERF-04 | P1 | Dashboard "Measure Usage" froze the GUI (`btrfs filesystem du` in the event loop) | Done | 2026-10-17: measurement moved to `manaradix-usage.timer`/`usage collect`, stored in `/var/lib/manaradix/usage.sqlite`; the GUI reads it read-only and the button starts the collector via `systemctl start --no-block`. See `docs/usage-tracker.md`. |
 | PERF-02 | P2 | N+1 JSON sidecar reads in `SnapshotManager.list_all()` | Open | One `info.json` read per snapshot. Fine at small scale; batch or memoize above ~100 snapshots. |
 | PERF-03 | P3 | Full page re-render after every UI event (`build_model()`) | Open | Correct + simple; revisit only if a page grows heavy. |
 

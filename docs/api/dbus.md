@@ -54,6 +54,7 @@ documented in the Python API reference
 | `ListSetupProfiles` | Available setup profiles |
 | `GrubIsInstalled` | Whether the GRUB script is installed |
 | `GrubListEntries` | Snapshot entries in the GRUB script |
+| `GetUsage` | Stored snapshot disk usage: collector status, last update, per-mount aggregates and per-snapshot rows (read from the SQLite store; never runs `btrfs filesystem du`) |
 | `GetDeviceStats` | Merged per-device health report: the five btrfs error counters plus `smart_*` fields when UDisks2 provides SMART data (used by the tray applet) |
 
 ### Tier 2 — manage snapshots (`auth_admin_keep`)
@@ -93,6 +94,7 @@ documented in the Python API reference
 | `CreateSubvolume` | Create a subvolume |
 | `DeleteSubvolume` | Delete a subvolume |
 | `SetDefaultSubvolume` | Set the default subvolume |
+| `RefreshUsage` | Start a background usage collection (`systemctl start --no-block manaradix-usage.service`); returns `started`, `already_running` or `failed` immediately |
 
 ## Calling from the shell
 

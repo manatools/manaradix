@@ -26,7 +26,9 @@ service units:
 .B activity
 (status, record),
 .B dbus
-(serve, status), and
+(serve, status),
+.B usage
+(collect, status, show), and
 .B tray
 (serve, status) \-\- the notification-area applet, a user-session
 process that watches filesystem health and snapshot retention and
@@ -145,6 +147,23 @@ without an auth prompt.  \fB\-\-result\fR defaults to the
 .B SERVICE_RESULT
 environment variable set by systemd, \fB\-\-exit\-status\fR to
 .BR EXIT_STATUS .
+.SS usage
+Snapshot disk\-usage measurement.  Measuring walks every extent of every
+snapshot and can take minutes, so it never runs inside the GUI.
+.TP
+.B manaradix usage collect
+Measure now and store the result in
+.IR /var/lib/manaradix/usage.sqlite .
+Run daily by
+.IR manaradix\-usage.timer ;
+exits non\-zero if the measurement failed.  Elevated via pkexec.
+.TP
+.B manaradix usage status
+Report the collector state (idle, running, ok, failed) and timestamps.
+Read\-only.
+.TP
+.B manaradix usage show
+Print the stored per\-mount and per\-snapshot sizes.  Read\-only.
 .SS dbus
 System D-Bus service.
 .TP
@@ -219,6 +238,9 @@ Set on the re-executed process to prevent pkexec elevation loops.
 .B MANARADIX_TEMPLATE_DIRS
 Colon-separated search path for setup profile templates.
 .SH FILES
+.TP
+.I /var/lib/manaradix/usage.sqlite
+Stored snapshot disk\-usage measurements.
 .TP
 .I /etc/manaradix/config.toml
 Configuration (see

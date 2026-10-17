@@ -226,6 +226,19 @@ each scheduled tier:
 manaradix activity status
 ```
 
+### Snapshot disk usage
+
+```bash
+manaradix usage status    # idle / running / ok / failed, with timestamps
+manaradix usage show      # stored per-mount and per-snapshot sizes
+sudo manaradix usage collect   # measure now (the daily timer does this)
+```
+
+Measuring snapshot usage can take minutes, so it runs in the background
+(`manaradix-usage.timer`) and the Dashboard shows the stored result with
+its last-update time. The **Force Usage Data Update** button starts a run
+without blocking the window. See `docs/usage-tracker.md`.
+
 ### First-run setup wizard
 
 When the system has no snapshots and no snapshot policies (a stock Mageia
