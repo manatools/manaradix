@@ -332,12 +332,13 @@ class TestUsageCollector:
 
     def test_skips_mounts_without_snapshot_dir(self, tmp_path, monkeypatch) -> None:
         # Only reject the snapshot directory, not the pytest temp dir
-        # the store lives under.
+        # the store lives under.  Snapshot dirs live under btrfs mounts
+        # — on real systems `/.snapshots`, so the path to reject is
+        # `"/" + snapshot_dir` → "/.snapshots".
         real_isdir = os.path.isdir
         monkeypatch.setattr(
             os.path, "isdir",
-            lambda p: False if p.rstrip("/").endswith("/.snapshots") or p == "/.snapshots"
-            else real_isdir(p),
+            lambda p: False if p == "/.snapshots" else real_isdir(p),
         )
         coll, store = self._coll(
             tmp_path,

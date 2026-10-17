@@ -558,6 +558,33 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Report whether the tray applet is running",
     )
 
+    # -- usage ---------------------------------------------------------------
+    usage_parser = subparsers.add_parser(
+        "usage",
+        help="Snapshot disk usage measurement",
+        description="Collect and query snapshot disk usage. The "
+        "background collector (manaradix-usage.service) runs on a "
+        "systemd timer; the dashboard reads from the SQLite store "
+        "so the slow 'btrfs filesystem du' call never blocks the GUI.",
+    )
+    usage_subs = usage_parser.add_subparsers(
+        title="usage subcommands",
+        dest="usage_command",
+        metavar="ACTION",
+    )
+    usage_subs.add_parser(
+        "collect",
+        help="Run a single usage collection (called by the systemd unit)",
+    )
+    usage_subs.add_parser(
+        "status",
+        help="Report collector state (read-only)",
+    )
+    usage_subs.add_parser(
+        "show",
+        help="Print stored usage data (read-only)",
+    )
+
     return parser
 
 
@@ -950,6 +977,95 @@ def _cmd_tray_status(ctx: AppContext, args: argparse.Namespace) -> int:
     return 2
 
 
+# ---------------------------------------------------------------------------
+# usage subcommands
+# ---------------------------------------------------------------------------
+
+
+def _cmd_usage_collect(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``usage collect`` — run a single measurement cycle.
+
+    Called by ``manaradix-usage.service`` (the systemd oneshot fired by
+    the daily timer) and by the dashboard's "Force Update" button.  Runs
+    as root (the ``btrfs filesystem du`` call needs it over snapshot
+    dirs); the result is written to ``/var/lib/manaradix/usage.sqlite``
+    where the GUI reads it.
+    """
+    from manaradix.core import usage_store
+
+    try:
+        store = usage_store.UsageStore(usage_store.DEFAULT_DB_PATH)
+        collector = usage_store.UsageCollector(ctx.btrfs_ops, ctx.snapshot_manager, store)
+        collector.collect_once()
+        # Check if the collection actually failed (status recorded in DB).
+        # The collector records failures in the DB rather than raising, so
+        # we check the final status to return the correct exit code.
+        reader = usage_store.UsageReader(usage_store.DEFAULT_DB_PATH)
+        status = reader.status()
+        if status.get("state") == "failed":
+            logger.error("Usage collection failed: %s", status.get("last_error"))
+            return 1
+    except Exception as exc:
+        logger.error("Usage collection failed: %s", exc)
+        return 1
+    logger.info("Usage collection completed")
+    return 0
+
+
+def _cmd_usage_status(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``usage status`` — print collector state (read-only)."""
+    from manaradix.core import usage_store
+
+    reader = usage_store.UsageReader(usage_store.DEFAULT_DB_PATH)
+    status = reader.status()
+    print(_("Status: %s") % status["state"])
+    if status["last_started"]:
+        print(_("Last started: %s") % status["last_started"])
+    if status["last_finished"]:
+        print(_("Last finished: %s") % status["last_finished"])
+    if status["last_error"]:
+        print(_("Last error: %s") % status["last_error"])
+    return 0
+
+
+def _cmd_usage_show(ctx: AppContext, args: argparse.Namespace) -> int:
+    """Handle ``usage show`` — print stored usage data (read-only)."""
+    from manaradix.core import usage_store
+
+    reader = usage_store.UsageReader(usage_store.DEFAULT_DB_PATH)
+    aggregates = reader.aggregates()
+    if not aggregates:
+        print(_("No usage data available. Run 'manaradix usage collect' first."))
+        return 0
+
+    print(_("Snapshot disk usage (last collected):"))
+    for agg in aggregates:
+        print(
+            f"  {agg['mount']:10s}  "
+            f"total={_fmt_bytes(agg['total_bytes']):>10s}  "
+            f"exclusive={_fmt_bytes(agg['exclusive_bytes']):>10s}  "
+            f"device={_fmt_bytes(agg['device_size_bytes']):>10s}"
+        )
+        for snap in reader.snapshots(agg["mount"]):
+            print(
+                f"    {snap['snapshot_id']:20s}  "
+                f"total={_fmt_bytes(snap['total_bytes']):>10s}  "
+                f"exclusive={_fmt_bytes(snap['exclusive_bytes']):>10s}"
+            )
+    return 0
+
+
+def _fmt_bytes(value: int) -> str:
+    """Format a byte count for human display."""
+    if value <= 0:
+        return "0 B"
+    for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
+        if abs(value) < 1024:
+            return f"{value:.1f} {unit}"
+        value /= 1024
+    return f"{value:.1f} PiB"
+
+
 def _cmd_snapshot_info(ctx: AppContext, args: argparse.Namespace) -> int:
     """Handle ``snapshot info``."""
     snap = ctx.snapshot_manager.get(args.snapshot_id, mount=args.mount)
@@ -984,6 +1100,9 @@ _COMMAND_DISPATCH: dict[tuple[str, str], object] = {
     ("dbus", "status"): _cmd_dbus_status,
     ("tray", "serve"): _cmd_tray_serve,
     ("tray", "status"): _cmd_tray_status,
+    ("usage", "collect"): _cmd_usage_collect,
+    ("usage", "status"): _cmd_usage_status,
+    ("usage", "show"): _cmd_usage_show,
 }
 
 

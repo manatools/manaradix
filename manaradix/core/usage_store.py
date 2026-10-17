@@ -527,11 +527,9 @@ class UsageCollector:
         """
         paths: list[str] = []
         mounts: list[dict] = []
-        try:
-            btrfs_mounts = self._ops.btrfs_mounts()
-        except Exception as exc:
-            logger.warning("could not list btrfs mounts: %s", exc)
-            btrfs_mounts = []
+        # Don't catch exceptions from btrfs_mounts() - if we can't discover
+        # what to measure, that's a fatal error that should fail the collection.
+        btrfs_mounts = self._ops.btrfs_mounts()
 
         # One filesystem may be mounted at several targets (/, /var,
         # ...); keep the shortest (top-level) target per uuid so the

@@ -8,10 +8,10 @@ Polkit actions (from ``data/polkit/org.mageia.manaradix.policy``):
 =====================  =============================================
 Action ID               Required for
 =====================  =============================================
-``read``               snapshot list, snapshot info
+``read``               snapshot list, snapshot info, usage status/show
 ``manage-snapshots``   snapshot create, snapshot delete, snapshot prune
 ``manage-policies``    (future) policy apply/remove
-``manage-filesystem``  (future) scrub, balance, defrag
+``manage-filesystem``  (future) scrub, balance, defrag, usage collect
 =====================  =============================================
 """
 
@@ -39,6 +39,8 @@ _READ_ONLY_COMMANDS: set[tuple[str, str | None]] = {
     ("setup", "status"),
     ("setup", "list-profiles"),
     ("activity", "status"),
+    ("usage", "status"),
+    ("usage", "show"),
 }
 
 # Operations requiring write access to the btrfs filesystem
@@ -47,6 +49,7 @@ _PRIVILEGED_COMMANDS: set[tuple[str, str | None]] = {
     ("snapshot", "delete"),
     ("snapshot", "prune"),
     ("setup", "apply"),
+    ("usage", "collect"),
 }
 
 # D-Bus subcommands never re-exec via pkexec: 'dbus serve' refuses
