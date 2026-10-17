@@ -13,6 +13,9 @@ StandardError=journal
 
 # Security hardening
 NoNewPrivileges=true
+# The GUI and CLI run unprivileged and read usage.sqlite (and its -wal/-shm
+# companions) read-only: pin the mode instead of trusting the ambient umask.
+UMask=0022
 PrivateTmp=true
 ProtectSystem=full
 ProtectHome=true

@@ -138,3 +138,20 @@ class TestCrossFileConsistency:
         text = _POLKIT_POLICY.read_text()
         for action in set(METHOD_ACTIONS.values()):
             assert action in text
+
+
+class TestUsageUnit:
+    def _service(self):
+        config = configparser.ConfigParser()
+        config.read(Path("data/systemd/manaradix-usage.service"))
+        return config["Service"]
+
+    def test_umask_pinned_so_unprivileged_readers_work(self) -> None:
+        # The GUI reads usage.sqlite (+ -wal/-shm) as a normal user.
+        assert self._service()["UMask"] == "0022"
+
+    def test_oneshot_runs_collect_as_root(self) -> None:
+        service = self._service()
+        assert service["Type"] == "oneshot"
+        assert service["ExecStart"] == "/usr/bin/manaradix usage collect"
+        assert service["User"] == "root"
