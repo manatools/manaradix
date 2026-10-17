@@ -474,3 +474,28 @@ class TestSnapshotUsageSection:
         status_text = section["fields"][0]["text"]
         assert "failed" in status_text
         assert "btrfs du timed out" in status_text
+
+
+class TestFmtTimestamp:
+    def test_iso_with_microseconds_is_trimmed_to_minutes(self) -> None:
+        assert DashboardPage._fmt_timestamp("2026-10-17T21:50:15.160486") == "2026-10-17 21:50"
+
+    def test_unparseable_text_is_kept(self) -> None:
+        assert DashboardPage._fmt_timestamp("yesterday-ish") == "yesterday-ish"
+
+    def test_empty_is_a_dash(self) -> None:
+        assert DashboardPage._fmt_timestamp(None) == "-"
+        assert DashboardPage._fmt_timestamp("") == "-"
+
+    def test_status_line_uses_formatted_time(self, tmp_path, monkeypatch) -> None:
+        from manaradix.core import usage_store
+
+        db = tmp_path / "u.sqlite"
+        monkeypatch.setattr(usage_store, "DEFAULT_DB_PATH", str(db))
+        store = usage_store.UsageStore(str(db))
+        store.start_collect()
+        store.finish_collect([], [])
+        text = make_page(MagicMock(), snapshots=[])._snapshot_usage_section()["fields"][0]["text"]
+        assert "Last updated: " in text
+        stamp = text.split("Last updated: ", 1)[1]
+        assert len(stamp) == len("2026-10-17 21:50") and "T" not in stamp and "." not in stamp

@@ -11,6 +11,7 @@ import logging
 import os
 import re
 import subprocess
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from manaradix.core.activity_status import ActivityStatus
@@ -343,8 +344,9 @@ class DashboardPage:
         if status["state"] == "running":
             status_text = _("Collecting usage data...")
         elif status["state"] == "ok":
-            last_update = status["last_finished"]
-            status_text = _("Last updated: %s") % last_update
+            status_text = _("Last updated: %s") % self._fmt_timestamp(
+                status["last_finished"]
+            )
         elif status["state"] == "failed":
             status_text = _("Last collection failed: %s") % status["last_error"]
         else:
@@ -628,6 +630,20 @@ class DashboardPage:
                 logger.warning("Could not read filesystem usage for %s: %s", mount, exc)
                 self._usage_cache[mount] = {}
         return self._usage_cache[mount]
+
+    @staticmethod
+    def _fmt_timestamp(value: str | None) -> str:
+        """Format a stored ISO-8601 timestamp as ``YYYY-MM-DD HH:MM``.
+
+        Falls back to the raw text when it cannot be parsed, and to ``-``
+        when there is none.
+        """
+        if not value:
+            return "-"
+        try:
+            return datetime.fromisoformat(value).strftime("%Y-%m-%d %H:%M")
+        except ValueError:
+            return value
 
     @staticmethod
     def _fmt_bytes(value: int) -> str:
