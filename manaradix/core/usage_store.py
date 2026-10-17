@@ -46,6 +46,11 @@ DB_DIR = "/var/lib/manaradix"
 #: than enough for a collector that runs once per day.
 _BUSY_TIMEOUT_MS = 30_000
 
+#: Upper bound for the single ``btrfs filesystem du`` pass.  It walks every
+#: extent of every snapshot; a root with a few dozen snapshots takes many
+#: minutes, and the collector runs detached from any UI, so be generous.
+_DU_TIMEOUT_S = 3600
+
 #: SQL schema applied to a freshly-created database.  Keep in sync with
 #: the column names used by :class:`UsageStore` and :class:`UsageReader`.
 _SCHEMA = """
@@ -596,7 +601,7 @@ class UsageCollector:
 
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, check=False, timeout=600,
+                cmd, capture_output=True, text=True, check=False, timeout=_DU_TIMEOUT_S,
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
             raise RuntimeError(f"btrfs du failed: {exc}") from exc

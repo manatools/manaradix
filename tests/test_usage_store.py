@@ -472,3 +472,18 @@ class TestUsageCollector:
 def test_default_db_path_is_under_var_lib() -> None:
     """Production DB location must be under /var/lib/manaradix."""
     assert DEFAULT_DB_PATH.startswith("/var/lib/manaradix")
+
+
+def test_du_timeout_is_generous(tmp_path):
+    """The du pass must not be capped at minutes: it is slow by nature."""
+    from unittest.mock import patch
+    from manaradix.core import usage_store
+
+    assert usage_store._DU_TIMEOUT_S >= 3600
+    ops = MagicMock()
+    ops.BTRFS_BIN = "/usr/sbin/btrfs"
+    coll = UsageCollector(ops, MagicMock(), UsageStore(str(tmp_path / "u.sqlite")))
+    with patch("subprocess.run") as run:
+        run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        coll._measure(["/.snapshots"])
+    assert run.call_args.kwargs["timeout"] == usage_store._DU_TIMEOUT_S
