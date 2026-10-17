@@ -1157,6 +1157,7 @@ def main() -> None:
         or getattr(args, "dbus_command", None)
         or getattr(args, "activity_command", None)
         or getattr(args, "tray_command", None)
+        or getattr(args, "usage_command", None)
     )
     if needs_elevation(args.command, subcmd) and not is_root() and not already_reexecuted():
         logger.info(
@@ -1187,7 +1188,8 @@ def main() -> None:
         or getattr(args, "setup_command", None)
         or getattr(args, "dbus_command", None)
         or getattr(args, "activity_command", None)
-        or getattr(args, "tray_command", None),
+        or getattr(args, "tray_command", None)
+        or getattr(args, "usage_command", None),
     )
     handler = _COMMAND_DISPATCH.get(dispatch_key)
 

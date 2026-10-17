@@ -260,3 +260,63 @@ class TestUsageParser:
         args = parser.parse_args(["usage", "show"])
         assert args.command == "usage"
         assert args.usage_command == "show"
+
+
+# ---------------------------------------------------------------------------
+# main() wiring: the parser and handlers can each be right while the
+# dispatch chain in main() forgets the command (it printed help and exited 1,
+# so the systemd unit failed in ~90 ms).  Go through main() itself.
+# ---------------------------------------------------------------------------
+
+
+class TestMainDispatch:
+    @staticmethod
+    def _run_main(argv, *, root, reexec=None):
+        from unittest.mock import patch
+
+        import pytest
+
+        from manaradix.module import main
+
+        seen = {}
+
+        def handler(ctx, args):
+            seen["key"] = (args.command, args.usage_command)
+            return 0
+
+        table = {("usage", s): handler for s in ("collect", "status", "show")}
+        with patch("manaradix.module._init_services"), \
+             patch("manaradix.module.is_root", return_value=root), \
+             patch("manaradix.module.already_reexecuted", return_value=False), \
+             patch("manaradix.module.reexec_with_pkexec",
+                   side_effect=reexec or (lambda: None)) as mock_reexec, \
+             patch("manaradix.module._COMMAND_DISPATCH", table), \
+             patch("sys.argv", ["manaradix", *argv]):
+            with pytest.raises(SystemExit) as excinfo:
+                main()
+        return seen, excinfo.value.code, mock_reexec
+
+    def test_collect_reaches_its_handler_as_root(self):
+        seen, code, reexec = self._run_main(["usage", "collect"], root=True)
+        assert seen["key"] == ("usage", "collect")
+        assert code == 0
+        reexec.assert_not_called()
+
+    def test_status_and_show_reach_handlers_without_pkexec(self):
+        for sub in ("status", "show"):
+            seen, code, reexec = self._run_main(["usage", sub], root=False)
+            assert seen["key"] == ("usage", sub), sub
+            assert code == 0
+            reexec.assert_not_called()
+
+    def test_collect_as_user_elevates_via_pkexec(self):
+        import pytest
+
+        class _Elevated(Exception):
+            pass
+
+        def boom():
+            raise _Elevated
+
+        with pytest.raises(_Elevated):
+            self._run_main(["usage", "collect"], root=False, reexec=boom)
