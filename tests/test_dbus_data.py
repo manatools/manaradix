@@ -155,3 +155,8 @@ class TestUsageUnit:
         assert service["Type"] == "oneshot"
         assert service["ExecStart"] == "/usr/bin/manaradix usage collect"
         assert service["User"] == "root"
+
+    def test_home_snapshots_stay_readable(self) -> None:
+        # /home is often its own btrfs filesystem; ProtectHome=true would
+        # hide /home/.snapshots and silently drop it from the measurement.
+        assert self._service()["ProtectHome"] == "read-only"

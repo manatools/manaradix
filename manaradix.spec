@@ -9,7 +9,7 @@
 
 Name:           manaradix
 Version:        0.2.2
-Release:        %mkrel 7
+Release:        %mkrel 8
 Summary:        Btrfs snapshot, subvolume, and filesystem management utility
 
 License:        GPLv2+
@@ -176,10 +176,13 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor 2>/dev/null || :
 %{_bindir}/systemctl reload dbus >/dev/null 2>&1 || \
     %{_bindir}/systemctl reload dbus-broker >/dev/null 2>&1 || true
 
-# Usage collector timer: enabled on first install only, so an upgrade
-# never re-enables a timer the admin disabled.
-if [ "$1" -eq 1 ]; then
+# Usage collector timer: enabled exactly once -- on a fresh install, or on
+# the first upgrade from a release that did not ship it ($1 -eq 1 alone
+# would miss that case). The marker keeps later upgrades from re-enabling
+# a timer the admin disabled.
+if [ ! -e %{_sharedstatedir}/manaradix/.usage-timer-enabled ]; then
     %{_bindir}/systemctl enable --now manaradix-usage.timer >/dev/null 2>&1 || true
+    touch %{_sharedstatedir}/manaradix/.usage-timer-enabled 2>/dev/null || true
 fi
 
 %preun
@@ -200,6 +203,13 @@ fi
 
 %postun
 # Runs on upgrade and erasure (the bus policy may already be gone).
+# Full erase: drop the usage cache and the enable marker so the state
+# directory can be removed.
+if [ "$1" -eq 0 ]; then
+    rm -f %{_sharedstatedir}/manaradix/usage.sqlite \
+          %{_sharedstatedir}/manaradix/usage.sqlite-journal \
+          %{_sharedstatedir}/manaradix/.usage-timer-enabled 2>/dev/null || :
+fi
 %{_bindir}/systemctl daemon-reload >/dev/null 2>&1 || true
 gtk-update-icon-cache %{_datadir}/icons/hicolor 2>/dev/null || :
 %{_bindir}/systemctl reload dbus >/dev/null 2>&1 || \
