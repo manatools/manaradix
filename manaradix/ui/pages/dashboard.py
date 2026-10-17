@@ -10,9 +10,11 @@ from __future__ import annotations
 import logging
 import os
 import re
+import subprocess
 from typing import TYPE_CHECKING
 
 from manaradix.core.activity_status import ActivityStatus
+from manaradix.core import usage_store
 from manaradix.i18n import _
 from manaradix.ui.model import PageModel, Widget
 from manaradix.ui.pages.snapshots import SnapshotsPage
@@ -57,12 +59,6 @@ class DashboardPage:
         self._selected_disk: str | None = None
         self._selected_fs: str | None = None
         self._selected_internal_fs: str | None = None
-        # Snapshot disk usage is measured on demand only: ``btrfs
-        # filesystem du`` walks every extent of every snapshot and can
-        # take minutes (it hits the 60 s subprocess timeout on a busy
-        # root), which would stall the whole page load.  None means "not
-        # measured yet"; the Measure button fills it in.
-        self._snapshot_du: dict | None = None
 
     # -- build_model --------------------------------------------------------
 
@@ -329,38 +325,66 @@ class DashboardPage:
         }
 
     def _snapshot_usage_section(self) -> dict:
-        """Snapshot count, plus disk usage once measured on demand.
+        """Snapshot count and disk usage from the SQLite store.
 
-        The count is free; the sizes come from ``btrfs filesystem du``,
-        which is slow enough to block the page, so they stay ``-`` until
-        the user presses Measure (see :meth:`on_measure_snapshot_usage`).
+        The usage data is collected in the background by the systemd
+        timer (or manually via `usage collect`), so we never block the
+        UI.  We show the last update timestamp and provide a button to
+        trigger a fresh collection if needed.
         """
         count = len(self._snapshots)
-        du = self._snapshot_du
+        reader = usage_store.UsageReader(usage_store.DEFAULT_DB_PATH)
+        status = reader.status()
+        # Get aggregate for root mount (or None if not available)
+        aggregates = reader.aggregates()
+        aggregate = next((a for a in aggregates if a["mount"] == "/"), None)
 
-        device_size = self._usage("/").get("overall", {}).get("device_size", 0)
-        exclusive = du.get("exclusive", 0) if du else 0
-        pct = f"{(exclusive / device_size * 100):.1f}%" if device_size and du else "-"
+        # Build the status line
+        if status["state"] == "running":
+            status_text = _("Collecting usage data...")
+        elif status["state"] == "ok":
+            last_update = status["last_finished"]
+            status_text = _("Last updated: %s") % last_update
+        elif status["state"] == "failed":
+            status_text = _("Last collection failed: %s") % status["last_error"]
+        else:
+            status_text = _("No usage data collected yet")
+
+        # Build the data rows
+        if aggregate:
+            total = aggregate["total_bytes"]
+            exclusive = aggregate["exclusive_bytes"]
+            device_size = aggregate["device_size_bytes"]
+            pct = (exclusive / device_size * 100) if device_size > 0 else 0
+            rows = [{
+                "Snapshots": count,
+                "Total": self._fmt_bytes(total),
+                "Exclusive": self._fmt_bytes(exclusive),
+                "% of device": f"{pct:.1f}%",
+            }]
+        else:
+            rows = [{
+                "Snapshots": count,
+                "Total": "-",
+                "Exclusive": "-",
+                "% of device": "-",
+            }]
 
         return {
             "title": _("Snapshot Usage"),
             "id": "snapshot_usage",
             "column": 1,
             "fields": [
+                Widget.label(text=status_text),
                 Widget.tree(
                     id="snapshot_usage",
-                    rows=[{
-                        "Snapshots": count,
-                        "Total": self._fmt_bytes(du["total"]) if du else "-",
-                        "Exclusive": self._fmt_bytes(exclusive) if du else "-",
-                        "% of device": pct,
-                    }],
+                    rows=rows,
                     selectable=False,
                 ),
                 Widget.button(
-                    id="btn_measure_snapshot_usage",
-                    label=_("Measure Usage"),
-                    callback=self.on_measure_snapshot_usage,
+                    id="btn_force_update_usage",
+                    label=_("Force Update"),
+                    callback=self.on_force_update_usage,
                 ),
             ],
         }
@@ -545,20 +569,34 @@ class DashboardPage:
         except Exception as exc:
             logger.error("Scrub failed: %s", exc)
 
-    def on_measure_snapshot_usage(self) -> None:
-        """Measure snapshot disk usage now (slow: ``btrfs filesystem du``).
+    def on_force_update_usage(self) -> None:
+        """Trigger a background usage collection.
 
-        The result is cached on the page, so the numbers survive the
-        re-render the renderer does after every callback and every later
-        refresh until the user asks again.
+        Spawns a detached ``manaradix usage collect`` subprocess so the
+        slow ``btrfs filesystem du`` call never blocks the GUI.  Falls
+        back to ``systemctl start manaradix-usage.service`` (the packaged
+        oneshot) when systemd is reachable; when neither works the error
+        is logged and the next section rebuild will show the failure
+        state.
         """
-        snap_dir = self.app.btrfs_ops.snapshot_dir
-        snap_base = snap_dir if os.path.isabs(snap_dir) else f"/{snap_dir.lstrip('/')}"
         try:
-            self._snapshot_du = self.app.btrfs_ops.filesystem_du(snap_base)
+            subprocess.Popen(
+                ["systemctl", "start", "--no-block", "manaradix-usage.service"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            return
         except Exception as exc:
-            logger.warning("Could not measure snapshot usage: %s", exc)
-            self._snapshot_du = {}
+            logger.debug("systemctl start failed (%s); trying direct CLI", exc)
+        try:
+            subprocess.Popen(
+                ["manaradix", "usage", "collect"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+        except Exception as exc:
+            logger.error("Could not start usage collection: %s", exc)
 
     def on_refresh(self) -> None:
         """Request a UI refresh."""

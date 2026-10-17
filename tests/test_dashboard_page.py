@@ -340,17 +340,33 @@ class TestInternalStatsSection:
 
 
 class TestSnapshotUsageSection:
-    def test_row_with_sizes(self) -> None:
+    def test_row_with_stored_data(self, tmp_path, monkeypatch) -> None:
+        """Dashboard reads from SQLite store when data is available."""
+        from manaradix.core import usage_store
+
+        # Create a test database with usage data
+        db_path = tmp_path / "usage.sqlite"
+        monkeypatch.setattr(usage_store, "DEFAULT_DB_PATH", str(db_path))
+
+        store = usage_store.UsageStore(db_path)
+        store.start_collect()
+        store.finish_collect(
+            [{
+                "mount": "/",
+                "snapshot_dir": "/.snapshots",
+                "total_bytes": 6442450944,
+                "exclusive_bytes": 2147483648,
+                "device_size_bytes": 211618365440,
+            }],
+            [],
+        )
+
         ops = MagicMock()
         ops.snapshot_dir = ".snapshots"
-        ops.filesystem_du.return_value = {"total": 6442450944, "exclusive": 2147483648}
         ops.filesystem_usage.return_value = usage()
-        page = make_page(
-            ops, snapshots=[MagicMock(), MagicMock(), MagicMock()],
-        )
-        page.on_measure_snapshot_usage()
+        page = make_page(ops, snapshots=[MagicMock(), MagicMock(), MagicMock()])
         section = page._snapshot_usage_section()
-        row = section["fields"][0]["rows"][0]
+        row = section["fields"][1]["rows"][0]
         assert row == {
             "Snapshots": 3,
             "Total": "6.0 GiB",
@@ -358,14 +374,18 @@ class TestSnapshotUsageSection:
             "% of device": "1.0%",
         }
 
-    def test_no_snapshots_and_du_error(self) -> None:
+    def test_shows_dashes_when_no_data(self, tmp_path, monkeypatch) -> None:
+        """Dashboard shows dashes when no usage data exists yet."""
+        from manaradix.core import usage_store
+
+        db_path = tmp_path / "usage.sqlite"
+        monkeypatch.setattr(usage_store, "DEFAULT_DB_PATH", str(db_path))
+
         ops = MagicMock()
         ops.snapshot_dir = ".snapshots"
-        ops.filesystem_du.return_value = {}
         ops.filesystem_usage.return_value = usage()
         page = make_page(ops, snapshots=[])
-        page.on_measure_snapshot_usage()
-        row = page._snapshot_usage_section()["fields"][0]["rows"][0]
+        row = page._snapshot_usage_section()["fields"][1]["rows"][0]
         assert row == {
             "Snapshots": 0,
             "Total": "-",
@@ -373,36 +393,84 @@ class TestSnapshotUsageSection:
             "% of device": "-",
         }
 
-    def test_not_measured_until_button_pressed(self) -> None:
+    def test_does_not_call_btrfs_du_on_build(self, tmp_path, monkeypatch) -> None:
         """The slow ``btrfs filesystem du`` never runs on page build."""
+        from manaradix.core import usage_store
+
+        db_path = tmp_path / "usage.sqlite"
+        monkeypatch.setattr(usage_store, "DEFAULT_DB_PATH", str(db_path))
+
         ops = MagicMock()
         ops.snapshot_dir = ".snapshots"
         ops.filesystem_usage.return_value = usage()
         page = make_page(ops, snapshots=[MagicMock()])
         section = page._snapshot_usage_section()
         ops.filesystem_du.assert_not_called()
-        assert section["fields"][0]["rows"][0] == {
+        assert section["fields"][1]["rows"][0] == {
             "Snapshots": 1,
             "Total": "-",
             "Exclusive": "-",
             "% of device": "-",
         }
-        assert section["fields"][1]["id"] == "btn_measure_snapshot_usage"
+        assert section["fields"][2]["id"] == "btn_force_update_usage"
 
-    def test_measure_error_is_swallowed(self) -> None:
-        ops = MagicMock()
-        ops.snapshot_dir = ".snapshots"
-        ops.filesystem_du.side_effect = RuntimeError("timed out")
-        ops.filesystem_usage.return_value = usage()
-        page = make_page(ops, snapshots=[])
-        page.on_measure_snapshot_usage()
-        assert page._snapshot_du == {}
+    def test_shows_status_when_running(self, tmp_path, monkeypatch) -> None:
+        """Dashboard shows 'Collecting...' when status is running."""
+        from manaradix.core import usage_store
 
-    def test_absolute_snapshot_dir(self) -> None:
+        db_path = tmp_path / "usage.sqlite"
+        monkeypatch.setattr(usage_store, "DEFAULT_DB_PATH", str(db_path))
+
+        store = usage_store.UsageStore(db_path)
+        store.start_collect()
+        # Don't finish - leave it in "running" state
+
         ops = MagicMock()
-        ops.snapshot_dir = "/mnt/data/.my-snaps"
-        ops.filesystem_du.return_value = {}
-        ops.filesystem_usage.return_value = usage()
         page = make_page(ops, snapshots=[])
-        page.on_measure_snapshot_usage()
-        ops.filesystem_du.assert_called_once_with("/mnt/data/.my-snaps")
+        section = page._snapshot_usage_section()
+        status_text = section["fields"][0]["text"]
+        assert "Collecting usage data" in status_text
+
+    def test_shows_last_update_on_success(self, tmp_path, monkeypatch) -> None:
+        """Dashboard shows 'Last updated: <timestamp>' on success."""
+        from manaradix.core import usage_store
+
+        db_path = tmp_path / "usage.sqlite"
+        monkeypatch.setattr(usage_store, "DEFAULT_DB_PATH", str(db_path))
+
+        store = usage_store.UsageStore(db_path)
+        store.start_collect()
+        store.finish_collect(
+            [{
+                "mount": "/",
+                "snapshot_dir": "/.snapshots",
+                "total_bytes": 100,
+                "exclusive_bytes": 10,
+                "device_size_bytes": 1000,
+            }],
+            [],
+        )
+
+        ops = MagicMock()
+        page = make_page(ops, snapshots=[])
+        section = page._snapshot_usage_section()
+        status_text = section["fields"][0]["text"]
+        assert "Last updated:" in status_text
+
+    def test_shows_error_on_failure(self, tmp_path, monkeypatch) -> None:
+        """Dashboard shows error message when collection failed."""
+        from manaradix.core import usage_store
+
+        db_path = tmp_path / "usage.sqlite"
+        monkeypatch.setattr(usage_store, "DEFAULT_DB_PATH", str(db_path))
+
+        store = usage_store.UsageStore(db_path)
+        store.start_collect()
+        store.fail_collect("btrfs du timed out")
+
+        ops = MagicMock()
+        page = make_page(ops, snapshots=[])
+        section = page._snapshot_usage_section()
+        status_text = section["fields"][0]["text"]
+        assert "failed" in status_text
+        assert "btrfs du timed out" in status_text

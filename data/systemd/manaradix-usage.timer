@@ -1,0 +1,12 @@
+[Unit]
+Description=Manaradix snapshot disk usage collection timer
+Documentation=man:manaradix(1)
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

@@ -120,6 +120,16 @@ install -D -m 0644 data/dbus/org.mageia.manaradix.service \
 install -D -m 0644 data/dbus/org.mageia.manaradix.conf \
     %{buildroot}%{_sysconfdir}/dbus-1/system.d/org.mageia.manaradix.conf
 
+# --- Usage collector: systemd timer + oneshot service ---
+# Runs daily to collect snapshot usage data into SQLite
+install -D -m 0644 data/systemd/manaradix-usage.service \
+    %{buildroot}%{_unitdir}/manaradix-usage.service
+install -D -m 0644 data/systemd/manaradix-usage.timer \
+    %{buildroot}%{_unitdir}/manaradix-usage.timer
+
+# --- State directory ---
+install -d -m 0755 %{buildroot}%{_sharedstatedir}/manaradix
+
 # --- Locale files (translations ship as .mo, compiled from .po) ---
 install -d %{buildroot}%{_datadir}/locale/it/LC_MESSAGES
 msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
@@ -145,8 +155,11 @@ msgfmt -o %{buildroot}%{_datadir}/locale/zh_CN/LC_MESSAGES/manaradix.mo \
 %{_datadir}/manaradix/images/
 %{_libexecdir}/manaradix/pre-upgrade
 %{_unitdir}/manaradix-dbus.service
+%{_unitdir}/manaradix-usage.service
+%{_unitdir}/manaradix-usage.timer
 %{_datadir}/dbus-1/system-services/org.mageia.manaradix.service
 %config(noreplace) %{_sysconfdir}/dbus-1/system.d/org.mageia.manaradix.conf
+%dir %attr(0755, root, root) %{_sharedstatedir}/manaradix
 
 %post
 # Polkit: reload policy definitions
