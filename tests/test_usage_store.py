@@ -487,3 +487,41 @@ def test_du_timeout_is_generous(tmp_path):
         run.return_value = MagicMock(returncode=0, stdout="", stderr="")
         coll._measure(["/.snapshots"])
     assert run.call_args.kwargs["timeout"] == usage_store._DU_TIMEOUT_S
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores file permissions")
+def test_unprivileged_reader_reads_root_owned_db(tmp_path):
+    """The GUI/CLI user reads a file it cannot write, in a dir it cannot write."""
+    import gc
+
+    db = str(tmp_path / "u.sqlite")
+    store = UsageStore(db)
+    store.start_collect()
+    store.finish_collect(
+        [{"mount": "/", "snapshot_dir": "/.snapshots", "total_bytes": 5,
+          "exclusive_bytes": 1, "device_size_bytes": 10}], [],
+    )
+    del store
+    gc.collect()
+    os.chmod(db, 0o444)
+    os.chmod(tmp_path, 0o555)
+    try:
+        reader = UsageReader(db)
+        assert reader.status()["state"] == "ok"
+        assert reader.aggregate_for("/")["total_bytes"] == 5
+    finally:
+        os.chmod(tmp_path, 0o755)
+
+
+def test_writer_converts_legacy_wal_database(tmp_path):
+    """A DB left in WAL mode by an earlier build is switched back."""
+    import sqlite3
+
+    db = str(tmp_path / "u.sqlite")
+    conn = sqlite3.connect(db)
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("CREATE TABLE x (a)")
+    conn.commit()
+    conn.close()
+    store = UsageStore(db)
+    assert store._conn.execute("PRAGMA journal_mode").fetchone()[0] == "delete"

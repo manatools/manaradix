@@ -96,25 +96,27 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
 
 
 def _open(path: str, *, read_only: bool = False) -> sqlite3.Connection:
-    """Open (or create) the database with a safe URI path.
+    """Open (or create) the database.
 
-    ``mode=ro`` for read-only callers ensures a concurrent writer that
-    crashed mid-update leaves the file intact — SQLite's journal
-    recovery then runs on the next write, not the next read.  The busy
-    timeout covers the brief lock window of a writer that finishes
-    cleanly.
+    Read-only callers use ``mode=ro`` and issue no PRAGMA that writes:
+    the unprivileged GUI/CLI must be able to read a root-owned file from
+    a directory they cannot write to (a ``journal_mode = WAL`` pragma, or
+    reading a WAL database, would need to create ``-shm``/``-wal`` there
+    and fail with "attempt to write a readonly database").  The single
+    daily writer does not need WAL either, so the default rollback
+    journal is used and a database left in WAL mode by an earlier build
+    is switched back by the writer.
     """
     if read_only:
         uri = f"file:{path}?mode=ro"
         conn = sqlite3.connect(uri, uri=True, check_same_thread=False)
-    else:
-        conn = sqlite3.connect(path, check_same_thread=False)
-    # Parameter binding is not supported for PRAGMA values, and
-    # _BUSY_TIMEOUT_MS is a module constant — interpolate directly.
+        conn.execute(f"PRAGMA busy_timeout = {_BUSY_TIMEOUT_MS}")
+        return conn
+    conn = sqlite3.connect(path, check_same_thread=False)
+    # PRAGMA values cannot be bound as parameters; the constant is ours.
     conn.execute(f"PRAGMA busy_timeout = {_BUSY_TIMEOUT_MS}")
-    # Foreign-key style pragmas: durable writes and quick reads.
+    conn.execute("PRAGMA journal_mode = DELETE")
     conn.execute("PRAGMA synchronous = NORMAL")
-    conn.execute("PRAGMA journal_mode = WAL")
     return conn
 
 
