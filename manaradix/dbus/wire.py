@@ -994,6 +994,19 @@ class ManaradixService(dbus.service.Object):
                                     "dry_run": dry_run}, sender
         )
 
+    @dbus.service.method(DBUS_INTERFACE, in_signature="", out_signature="a{sv}",
+                         sender_keyword="sender")
+    def GetUsage(self, sender=None) -> dict:
+        """Get snapshot usage data from the SQLite store.
+
+        Returns:
+            Dict with keys: status (dict), last_update (string or None),
+            aggregates (list of dicts), snapshots (list of dicts).
+
+        Requires the read polkit action.
+        """
+        return self._dispatch("GetUsage", {}, sender)
+
 
 def serve_main(config_path: str, snapshot_dir: str = ".snapshots", *,
                debug: bool = False) -> int:

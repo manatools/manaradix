@@ -309,6 +309,32 @@ class ManaradixHandler:
                 stats[f"smart_{key}"] = value
         return list(by_device.values())
 
+    def handle_GetUsage(self, kwargs: dict) -> dict:
+        """Get snapshot usage data from the SQLite store.
+
+        Reads the pre-collected usage data from /var/lib/manaradix/usage.sqlite
+        instead of calling btrfs filesystem du synchronously.
+
+        Args:
+            kwargs: Method arguments (unused).
+
+        Returns:
+            Dict with keys: status, last_update, aggregates, snapshots.
+        """
+        from manaradix.core.usage_store import UsageReader
+
+        reader = UsageReader()
+        status = reader.status()
+        aggregates = reader.aggregates()
+        snapshots = reader.snapshots()
+
+        return {
+            "status": status,
+            "last_update": status.get("last_finished"),
+            "aggregates": aggregates,
+            "snapshots": snapshots,
+        }
+
     def handle_GetCompression(self, kwargs: dict) -> str:
         """Get the compression algorithm of a subvolume.
 

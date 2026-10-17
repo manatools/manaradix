@@ -74,4 +74,6 @@ METHOD_ACTIONS: dict[str, str] = {
     "CreateSubvolume": ACTION_MANAGE_FILESYSTEM,
     "DeleteSubvolume": ACTION_MANAGE_FILESYSTEM,
     "SetDefaultSubvolume": ACTION_MANAGE_FILESYSTEM,
+    # Tier 5: usage tracking
+    "GetUsage": ACTION_READ,
 }

@@ -247,6 +247,23 @@ class ManaradixClient:
         """
         return self._call("GetDeviceStats")
 
+    def get_usage(self) -> dict:
+        """Get snapshot usage data from the SQLite store.
+
+        Returns:
+            Dict with keys: status (dict with state/last_started/last_finished),
+            last_update (ISO timestamp or None), aggregates (list of per-mount
+            dicts), snapshots (list of per-snapshot dicts).
+
+        Raises:
+            AuthorizationError: The caller lacks the read polkit action.
+            OperationError: The usage data could not be read.
+            DaemonUnavailableError: The service is not running.
+
+        Requires the read polkit action.
+        """
+        return self._call("GetUsage")
+
     def get_compression(self, path: str) -> str:
         """Get the compression algorithm of a subvolume.
 
