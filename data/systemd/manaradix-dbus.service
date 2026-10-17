@@ -27,11 +27,11 @@ RestrictSUIDSGID=yes
 LockPersonality=yes
 RestrictRealtime=yes
 # Writable carve-outs for the read-only locations: config, generated
-# systemd units (incl. systemctl enable symlinks), the GRUB script, and
-# update-grub's output.  Snapshot dirs (/.snapshots or configured
-# elsewhere) and /mnt stay writable under ProtectSystem=full without
-# carve-outs.
-ReadWritePaths=/etc/manaradix /etc/systemd/system /etc/grub.d /boot
+# systemd units (incl. systemctl enable symlinks), the GRUB script,
+# update-grub's output, and the usage cache database.  Snapshot dirs
+# (/.snapshots or configured elsewhere) and /mnt stay writable under
+# ProtectSystem=full without carve-outs.
+ReadWritePaths=/etc/manaradix /etc/systemd/system /etc/grub.d /boot /var/lib/manaradix
 
 # Deliberately no [Install] section: the service is never enabled at
 # boot.  It is activated on demand through

@@ -58,12 +58,14 @@ class TestSystemdUnit:
         assert service["ProtectHome"] == "yes"
         # Every daemon write location under the read-only zones must be
         # carved back in: config, generated units, GRUB script, /boot
-        # output.  Snapshot dirs and /mnt stay writable automatically.
+        # output, and the usage cache database.  Snapshot dirs and /mnt
+        # stay writable automatically.
         for path in (
             "/etc/manaradix",
             "/etc/systemd/system",
             "/etc/grub.d",
             "/boot",
+            "/var/lib/manaradix",
         ):
             assert path in service["ReadWritePaths"], f"missing carve-out {path}"
 
