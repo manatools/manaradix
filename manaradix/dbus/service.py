@@ -321,9 +321,9 @@ class ManaradixHandler:
         Returns:
             Dict with keys: status, last_update, aggregates, snapshots.
         """
-        from manaradix.core.usage_store import UsageReader
+        from manaradix.core.usage_store import DEFAULT_DB_PATH, UsageReader
 
-        reader = UsageReader()
+        reader = UsageReader(DEFAULT_DB_PATH)
         status = reader.status()
         aggregates = reader.aggregates()
         snapshots = reader.snapshots()
@@ -334,6 +334,40 @@ class ManaradixHandler:
             "aggregates": aggregates,
             "snapshots": snapshots,
         }
+
+    def handle_RefreshUsage(self, kwargs: dict) -> dict:
+        """Start a background usage collection (non-blocking).
+
+        Starts ``manaradix-usage.service`` with ``systemctl start
+        --no-block`` so the call returns at once; the collector writes
+        its result to the SQLite store read by ``GetUsage``.  A run that
+        is already in progress is left alone.
+
+        Args:
+            kwargs: Unused method arguments.
+
+        Returns:
+            ``{"state": "started" | "already_running" | "failed",
+            "error": str}``; ``error`` is empty unless state is failed.
+        """
+        import subprocess
+
+        from manaradix.core import usage_store
+
+        if usage_store.UsageReader(usage_store.DEFAULT_DB_PATH).status()[
+            "state"
+        ] == "running":
+            return {"state": "already_running", "error": ""}
+        try:
+            subprocess.run(
+                ["systemctl", "start", "--no-block", "manaradix-usage.service"],
+                check=True, capture_output=True, text=True, timeout=10,
+            )
+        except subprocess.CalledProcessError as exc:
+            return {"state": "failed", "error": (exc.stderr or "").strip()}
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            return {"state": "failed", "error": str(exc)}
+        return {"state": "started", "error": ""}
 
     def handle_GetCompression(self, kwargs: dict) -> str:
         """Get the compression algorithm of a subvolume.

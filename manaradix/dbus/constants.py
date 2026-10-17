@@ -39,6 +39,7 @@ METHOD_ACTIONS: dict[str, str] = {
     "BalanceStatus": ACTION_READ,
     "ScrubStatus": ACTION_READ,
     "GetDeviceStats": ACTION_READ,
+    "GetUsage": ACTION_READ,
     "GetCompression": ACTION_READ,
     "ListPolicies": ACTION_READ,
     "GetConfig": ACTION_READ,
@@ -74,6 +75,5 @@ METHOD_ACTIONS: dict[str, str] = {
     "CreateSubvolume": ACTION_MANAGE_FILESYSTEM,
     "DeleteSubvolume": ACTION_MANAGE_FILESYSTEM,
     "SetDefaultSubvolume": ACTION_MANAGE_FILESYSTEM,
-    # Tier 5: usage tracking
-    "GetUsage": ACTION_READ,
+    "RefreshUsage": ACTION_MANAGE_FILESYSTEM,
 }

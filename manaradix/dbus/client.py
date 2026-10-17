@@ -264,6 +264,22 @@ class ManaradixClient:
         """
         return self._call("GetUsage")
 
+    def refresh_usage(self) -> dict:
+        """Start a background snapshot-usage collection.
+
+        Returns:
+            ``{"state": "started" | "already_running" | "failed",
+            "error": str}``; returns immediately.
+
+        Raises:
+            AuthorizationError: The caller lacks the manage-filesystem
+                polkit action.
+            DaemonUnavailableError: The service is not running.
+
+        Requires the manage-filesystem polkit action.
+        """
+        return self._call("RefreshUsage")
+
     def get_compression(self, path: str) -> str:
         """Get the compression algorithm of a subvolume.
 

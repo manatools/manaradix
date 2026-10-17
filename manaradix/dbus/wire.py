@@ -1,6 +1,6 @@
 """D-Bus wire layer: the ``dbus.service.Object`` and the daemon entry point.
 
-:class:`ManaradixService` registers the 42 methods defined by
+:class:`ManaradixService` registers the 44 methods defined by
 :data:`~manaradix.dbus.constants.METHOD_ACTIONS` on the system bus and
 delegates to :class:`~manaradix.dbus.service.ManaradixHandler`; the
 handler's typed errors are translated into D-Bus error names
@@ -1006,6 +1006,19 @@ class ManaradixService(dbus.service.Object):
         Requires the read polkit action.
         """
         return self._dispatch("GetUsage", {}, sender)
+
+    @dbus.service.method(DBUS_INTERFACE, out_signature="a{sv}",
+                         sender_keyword="sender")
+    def RefreshUsage(self, sender=None) -> dict:
+        """Start a background snapshot-usage collection.
+
+        Returns:
+            ``{"state": "started" | "already_running" | "failed",
+            "error": str}``; returns immediately.
+
+        Requires the manage-filesystem polkit action.
+        """
+        return self._dispatch("RefreshUsage", {}, sender)
 
 
 def serve_main(config_path: str, snapshot_dir: str = ".snapshots", *,
