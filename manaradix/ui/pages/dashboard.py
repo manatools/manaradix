@@ -383,7 +383,7 @@ class DashboardPage:
                 ),
                 Widget.button(
                     id="btn_force_update_usage",
-                    label=_("Force Update"),
+                    label=_("Force Usage Data Update"),
                     callback=self.on_force_update_usage,
                 ),
             ],
