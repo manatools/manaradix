@@ -110,6 +110,9 @@ _UUID_RE = re.compile(r"UUID:\s+(?P<uuid>[0-9a-f-]+)")
 # Parses lines like: "Parent UUID: 01234567-89ab-cdef-0123-456789abcdef"
 _PARENT_UUID_RE = re.compile(r"Parent UUID:\s+(?P<uuid>[0-9a-f-]+)")
 
+# Parses the "parent_uuid <uuid|->" column of ``btrfs subvolume list -q``.
+_PARENT_UUID_LIST_RE = re.compile(r"\bparent_uuid\s+(\S+)")
+
 # Parses lines like: "Data,single: Size:20409483264, Used:18928889856 (92.75%)"
 # Profile names vary (single/DUP/RAID1/RAID1C3/...) and btrfs-progs >= 6.x
 # appends a percentage in parentheses to the Used number — never anchor
@@ -133,6 +136,19 @@ def _parse_subvol_list_line(line: str) -> Optional[dict]:
         "path": match.group("path"),
         "parent_id": int(match.group("parent_id") or 0),
     }
+
+
+def _mount_compression(options: str) -> str:
+    """Return the compression algorithm from a mount option string.
+
+    Picks ``compress=`` or ``compress-force=`` (e.g. ``"zstd:3"``);
+    ``compress=no`` and a missing option both yield ``""``.
+    """
+    for option in options.split(","):
+        key, _, value = option.partition("=")
+        if key in ("compress", "compress-force") and value and value != "no":
+            return value
+    return ""
 
 
 def _parse_subvol_show(text: str) -> dict:
@@ -272,6 +288,36 @@ class BtrfsOps:
             subvolumes.append(Subvolume(**data))
 
         return subvolumes
+
+    def subvolume_counts(self, mount: str, *, dry_run: bool = False) -> Optional[dict]:
+        """Count the subvolumes of the filesystem mounted at *mount*.
+
+        Runs a single ``btrfs subvolume list -q <mount>`` (no per-entry
+        ``subvolume show``, unlike :meth:`list_subvolumes`).  Entries
+        with a parent UUID are snapshots.  Returns ``{"subvolumes": n,
+        "snapshots": m}`` (plain subvolumes and snapshots, disjoint), or
+        ``None`` when the list cannot be read (e.g. unprivileged).
+        """
+        try:
+            result = self._run(
+                ["subvolume", "list", "-q", mount],
+                dry_run=dry_run,
+                check=False,
+            )
+        except BtrfsError:
+            return None
+        if result.returncode != 0:
+            return None
+        counts = {"subvolumes": 0, "snapshots": 0}
+        for line in result.stdout.splitlines():
+            if not line.startswith("ID "):
+                continue
+            match = _PARENT_UUID_LIST_RE.search(line)
+            if match and match.group(1) != "-":
+                counts["snapshots"] += 1
+            else:
+                counts["subvolumes"] += 1
+        return counts
 
     def get_subvolume(self, path: str) -> Optional[Subvolume]:
         """Get a single subvolume by path, or None."""
@@ -862,16 +908,20 @@ class BtrfsOps:
     def btrfs_mounts(self, *, dry_run: bool = False) -> list[dict]:
         """Return mounted btrfs filesystems from findmnt.
 
-        Runs ``findmnt -t btrfs -o TARGET,SOURCE,UUID -r`` (util-linux;
-        ``-r`` disables the tree decorations).  In raw mode util-linux
-        separates columns with a single space (not tabs), so rows are
-        split on any whitespace.  Returns a list of ``{"target",
-        "source", "uuid"}`` dicts, or an empty list on error.
+        Runs ``findmnt -t btrfs -o TARGET,SOURCE,UUID,OPTIONS -r``
+        (util-linux; ``-r`` disables the tree decorations).  In raw mode
+        util-linux separates columns with a single space (not tabs) and
+        escapes blanks inside values, so rows are split on any
+        whitespace.  Returns a list of ``{"target", "source", "uuid",
+        "compression"}`` dicts, or an empty list on error.
+        ``compression`` is the ``compress=``/``compress-force=`` mount
+        option value (e.g. ``"zstd:3"``), or ``""`` when not mounted
+        with compression.
         """
         cmd = [
             self.FINMNT_BIN,
             "-t", "btrfs",
-            "-o", "TARGET,SOURCE,UUID",
+            "-o", "TARGET,SOURCE,UUID,OPTIONS",
             "-r",
         ]
         if dry_run:
@@ -898,6 +948,9 @@ class BtrfsOps:
                         "target": parts[0],
                         "source": parts[1],
                         "uuid": parts[2],
+                        "compression": _mount_compression(
+                            parts[3] if len(parts) > 3 else ""
+                        ),
                     }
                 )
         return mounts

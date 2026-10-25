@@ -12,6 +12,7 @@ from manaradix.core.btrfs_ops import (
     BtrfsOps,
     BtrfsPermissionError,
     SnapshotNotFoundError,
+    _mount_compression,
 )
 from manaradix.model.snapshot import Snapshot, SnapshotType
 
@@ -417,10 +418,12 @@ class TestBtrfsMounts:
         mounts = ops.btrfs_mounts()
 
         assert len(mounts) == 2
+        # No OPTIONS column -> no compression info.
         assert mounts[0] == {
             "target": "/",
             "source": "/dev/nvme0n1p3",
             "uuid": "3149ac5f-25ee-4805-b0ae-e6679af72699",
+            "compression": "",
         }
         assert mounts[1]["target"] == "/home"
 
@@ -431,9 +434,11 @@ class TestBtrfsMounts:
             ["/usr/bin/findmnt", "-t", "btrfs", "-o", "TARGET,SOURCE,UUID", "-r"],
             returncode=0,
             stdout=(
-                "TARGET SOURCE UUID\n"
-                "/ /dev/nvme0n1p3 3149ac5f-25ee-4805-b0ae-e6679af72699\n"
-                "/home /dev/mapper/crypt_nvme0n1p6 efff4471-576f-4fbb-976e-162761395cfa\n"
+                "TARGET SOURCE UUID OPTIONS\n"
+                "/ /dev/nvme0n1p3 3149ac5f-25ee-4805-b0ae-e6679af72699 "
+                "rw,noatime,compress=zstd:3,ssd,subvolid=5,subvol=/\n"
+                "/home /dev/mapper/crypt_nvme0n1p6 efff4471-576f-4fbb-976e-162761395cfa "
+                "rw,noatime,ssd,subvolid=5,subvol=/\n"
             ),
             stderr="",
         )
@@ -443,8 +448,19 @@ class TestBtrfsMounts:
             "target": "/",
             "source": "/dev/nvme0n1p3",
             "uuid": "3149ac5f-25ee-4805-b0ae-e6679af72699",
+            "compression": "zstd:3",
         }
         assert mounts[1]["target"] == "/home"
+        assert mounts[1]["compression"] == ""
+
+    @patch("subprocess.run")
+    def test_requests_options_column(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["/usr/bin/findmnt"], returncode=0, stdout="", stderr="",
+        )
+        BtrfsOps().btrfs_mounts()
+        cmd = mock_run.call_args[0][0]
+        assert cmd[cmd.index("-o") + 1] == "TARGET,SOURCE,UUID,OPTIONS"
 
     @patch("subprocess.run")
     def test_no_mounts_returns_empty(self, mock_run: MagicMock) -> None:
@@ -460,6 +476,52 @@ class TestBtrfsMounts:
 
     def test_dry_run_returns_empty(self) -> None:
         assert BtrfsOps().btrfs_mounts(dry_run=True) == []
+
+
+class TestMountCompression:
+    def test_compress_option(self) -> None:
+        assert _mount_compression("rw,compress=zstd:3,ssd") == "zstd:3"
+
+    def test_compress_force_option(self) -> None:
+        assert _mount_compression("rw,compress-force=lzo") == "lzo"
+
+    def test_compress_no(self) -> None:
+        assert _mount_compression("rw,compress=no") == ""
+
+    def test_no_option(self) -> None:
+        assert _mount_compression("rw,noatime,ssd") == ""
+        assert _mount_compression("") == ""
+
+
+class TestSubvolumeCounts:
+    _LIST = (
+        "ID 256 gen 2210 top level 5 parent_uuid -                                    path @\n"
+        "ID 257 gen 2210 top level 5 parent_uuid -                                    path @home\n"
+        "ID 300 gen 2100 top level 5 parent_uuid 0b1c2d3e-4f50-6172-8394-a5b6c7d8e9f0 "
+        "path .snapshots/20260101-000000/root\n"
+    )
+
+    @patch("subprocess.run")
+    def test_splits_subvolumes_and_snapshots(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs"], returncode=0, stdout=self._LIST, stderr="",
+        )
+        assert BtrfsOps().subvolume_counts("/") == {"subvolumes": 2, "snapshots": 1}
+        assert mock_run.call_args[0][0][1:] == ["subvolume", "list", "-q", "/"]
+
+    @patch("subprocess.run")
+    def test_empty_list(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs"], returncode=0, stdout="", stderr="",
+        )
+        assert BtrfsOps().subvolume_counts("/") == {"subvolumes": 0, "snapshots": 0}
+
+    @patch("subprocess.run")
+    def test_failure_returns_none(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = subprocess.CompletedProcess(
+            ["btrfs"], returncode=1, stdout="", stderr="ERROR: Operation not permitted",
+        )
+        assert BtrfsOps().subvolume_counts("/") is None
 
 
 # ---------------------------------------------------------------------------
