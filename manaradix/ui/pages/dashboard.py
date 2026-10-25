@@ -175,12 +175,12 @@ class DashboardPage:
         # can show where its devices are mounted.  The uuid index is a
         # fallback: btrfs may report /dev/mapper/name while findmnt shows
         # the underlying /dev/dm-N device.
-        mounts_by_source: dict[str, list[str]] = {}
-        mounts_by_uuid: dict[str, list[str]] = {}
+        mounts_by_source: dict[str, list[dict]] = {}
+        mounts_by_uuid: dict[str, list[dict]] = {}
         try:
             for mount in self.app.btrfs_ops.btrfs_mounts():
-                mounts_by_source.setdefault(mount["source"], []).append(mount["target"])
-                mounts_by_uuid.setdefault(mount["uuid"], []).append(mount["target"])
+                mounts_by_source.setdefault(mount["source"], []).append(mount)
+                mounts_by_uuid.setdefault(mount["uuid"], []).append(mount)
         except Exception as exc:
             logger.warning("Could not read btrfs mount points: %s", exc)
 
@@ -193,13 +193,14 @@ class DashboardPage:
             used = fs["fs_bytes_used"]
             free = total - used if total else 0
             pct = f"{(used / total * 100):.1f}%" if total else "-"
-            mount_targets = [
-                target
+            fs_mounts = [
+                mount
                 for device in fs["devices"]
-                for target in mounts_by_source.get(device["path"], [])
+                for mount in mounts_by_source.get(device["path"], [])
             ]
-            if not mount_targets:
-                mount_targets = mounts_by_uuid.get(fs["uuid"], [])
+            if not fs_mounts:
+                fs_mounts = mounts_by_uuid.get(fs["uuid"], [])
+            mount_targets = list(dict.fromkeys(m["target"] for m in fs_mounts))
             return {
                 "Label": fs["label"] or "-",
                 "Devices": devices,
@@ -207,7 +208,9 @@ class DashboardPage:
                 "Used": self._fmt_bytes(used) if used else "-",
                 "Free": self._fmt_bytes(free) if total else "-",
                 "Used %": pct,
-                "Mount": ", ".join(dict.fromkeys(mount_targets)) or "-",
+                "Compression": self._compression(fs_mounts),
+                "Subvolumes": self._subvolume_count(mount_targets),
+                "Mount": ", ".join(mount_targets) or "-",
             }
 
         if len(self._filesystems) > _MAX_ROWS_DIRECT:
@@ -518,6 +521,7 @@ class DashboardPage:
             "title": _("Quick Actions"),
             "id": "quick",
             "column": 0,
+            "horizontal": True,
             "fields": [
                 Widget.button(
                     id="btn_create_snapshot",
@@ -620,6 +624,48 @@ class DashboardPage:
         except Exception as exc:
             logger.warning("Could not list btrfs filesystems: %s", exc)
             return []
+
+    def _compression(self, mounts: list[dict]) -> str:
+        """Compression in use on a filesystem, for display.
+
+        The ``compress=`` mount option wins (it applies to every write
+        through that mount); otherwise the ``compression`` property of
+        the first mount's root directory (inherited by new files).
+        Unmounted filesystems show ``-``.
+        """
+        if not mounts:
+            return "-"
+        for mount in mounts:
+            if mount.get("compression"):
+                return mount["compression"]
+        try:
+            prop = self.app.btrfs_ops.get_compression(mounts[0]["target"])
+        except Exception as exc:
+            logger.warning("Could not read compression of %s: %s", mounts[0]["target"], exc)
+            prop = None
+        if isinstance(prop, str) and prop:
+            return _("%s (property)") % prop
+        return _("off")
+
+    def _subvolume_count(self, mount_targets: list[str]) -> str:
+        """Subvolume count of a mounted filesystem, for display.
+
+        Plain subvolumes first, snapshots in parentheses (snapshots are
+        subvolumes too, but would otherwise swamp the number).  ``-``
+        when unmounted or unreadable.
+        """
+        if not mount_targets:
+            return "-"
+        try:
+            counts = self.app.btrfs_ops.subvolume_counts(mount_targets[0])
+        except Exception as exc:
+            logger.warning("Could not count subvolumes of %s: %s", mount_targets[0], exc)
+            return "-"
+        if not isinstance(counts, dict):
+            return "-"
+        if counts["snapshots"]:
+            return _("%d (+%d snapshots)") % (counts["subvolumes"], counts["snapshots"])
+        return str(counts["subvolumes"])
 
     def _usage(self, mount: str) -> dict:
         """Memoized ``filesystem_usage()`` per mount (one call per fs)."""

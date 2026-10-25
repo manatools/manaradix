@@ -78,6 +78,14 @@ class TestPageIdentity:
         assert "Snapshot Usage" in col1
 
 
+class TestQuickActionsSection:
+    def test_buttons_flow_horizontally(self) -> None:
+        """Quick actions sit side by side in their top frame."""
+        section = DashboardPage(MagicMock())._quick_actions_section()
+        assert section["horizontal"] is True
+        assert [f["widget"] for f in section["fields"]] == ["button"] * 3
+
+
 class TestDiskKey:
     def test_partition_suffix_stripping(self) -> None:
         assert _disk_key("/dev/nvme0n1p3") == "nvme0n1"
@@ -222,6 +230,8 @@ class TestFilesystemsSection:
             "Used": "17.7 GiB",  # FS-level used is available unprivileged
             "Free": "-",
             "Used %": "-",
+            "Compression": "off",
+            "Subvolumes": "-",
             "Mount": "/",
         }
         # uuid fallback: no device-path match, uuid matches
@@ -230,6 +240,66 @@ class TestFilesystemsSection:
         assert rows[1]["Used"] == "-"  # fs_bytes_used 0
         assert rows[1]["Free"] == "30.0 GiB"
         assert rows[1]["Used %"] == "0.0%"
+
+    def _compression_page(self, mounts, **ops_attrs):
+        ops = MagicMock(**ops_attrs)
+        ops.btrfs_mounts.return_value = mounts
+        return make_page(ops, filesystems=[fs()])
+
+    def test_compression_from_mount_option(self) -> None:
+        page = self._compression_page(
+            [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "x", "compression": "zstd:3"}],
+        )
+        rows = page._filesystems_section()["fields"][0]["rows"]
+        assert rows[0]["Compression"] == "zstd:3"
+        page.app.btrfs_ops.get_compression.assert_not_called()
+
+    def test_compression_from_property(self) -> None:
+        page = self._compression_page(
+            [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "x", "compression": ""}],
+            **{"get_compression.return_value": "lzo"},
+        )
+        rows = page._filesystems_section()["fields"][0]["rows"]
+        assert rows[0]["Compression"] == "lzo (property)"
+
+    def test_compression_off(self) -> None:
+        page = self._compression_page(
+            [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "x", "compression": ""}],
+            **{"get_compression.return_value": None},
+        )
+        rows = page._filesystems_section()["fields"][0]["rows"]
+        assert rows[0]["Compression"] == "off"
+
+    def test_unmounted_shows_dashes(self) -> None:
+        page = self._compression_page([])
+        row = page._filesystems_section()["fields"][0]["rows"][0]
+        assert row["Compression"] == "-"
+        assert row["Subvolumes"] == "-"
+
+    def test_subvolume_count_with_snapshots(self) -> None:
+        page = self._compression_page(
+            [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "x", "compression": ""}],
+            **{"subvolume_counts.return_value": {"subvolumes": 3, "snapshots": 12}},
+        )
+        rows = page._filesystems_section()["fields"][0]["rows"]
+        assert rows[0]["Subvolumes"] == "3 (+12 snapshots)"
+        page.app.btrfs_ops.subvolume_counts.assert_called_once_with("/")
+
+    def test_subvolume_count_without_snapshots(self) -> None:
+        page = self._compression_page(
+            [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "x", "compression": ""}],
+            **{"subvolume_counts.return_value": {"subvolumes": 1, "snapshots": 0}},
+        )
+        rows = page._filesystems_section()["fields"][0]["rows"]
+        assert rows[0]["Subvolumes"] == "1"
+
+    def test_subvolume_count_unreadable(self) -> None:
+        page = self._compression_page(
+            [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "x", "compression": ""}],
+            **{"subvolume_counts.return_value": None},
+        )
+        rows = page._filesystems_section()["fields"][0]["rows"]
+        assert rows[0]["Subvolumes"] == "-"
 
     def test_dropdown_when_more_than_three(self) -> None:
         ops = MagicMock()
