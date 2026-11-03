@@ -2,7 +2,7 @@ site_name: Manaradix
 site_author: Matteo Pasotti
 copyright: Copyright &copy; 2026 Matteo Pasotti &lt;xquiet@coriolite.com&gt;
 site_description: Btrfs snapshot, subvolume, and filesystem management utility for Mageia
-repo_url: https://bitbucket.org/_pmat_/manaradix
+repo_url: https://github.com/manatools/manaradix
 edit_uri: ""
 
 theme:

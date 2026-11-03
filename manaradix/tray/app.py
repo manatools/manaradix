@@ -406,7 +406,7 @@ class TrayApp:
                 f"Manaradix {__version__}\n",
                 _("Btrfs snapshot, subvolume, and filesystem "
                   "management utility for Mageia")
-                + "\nhttps://bitbucket.org/_pmat_/manaradix",
+                + "\nhttps://github.com/manatools/manaradix",
                 actions=["open", _("Open manaradix")],
             )
         except Exception as exc:

@@ -21,7 +21,7 @@ _AUTHOR = "Matteo Pasotti (xquiet)"
 _EMAIL = "me@matteopasotti.it"
 _COPYRIGHT = "© 2026 Matteo Pasotti"
 _LICENSE = "GPLv2+"
-_WEBSITE = "https://github.com/mageia/manaradix"
+_WEBSITE = "https://github.com/manatools/manaradix"
 
 _GPL_NOTICE = _(
     "Manaradix is free software: you can redistribute it and/or modify it "

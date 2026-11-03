@@ -368,7 +368,7 @@ class TestActions:
         assert len(app._notifier.calls) == 1
         call = app._notifier.calls[0]
         assert call["summary"] == f"Manaradix {__version__}"
-        assert "github.com/mageia/manaradix" in call["body"]
+        assert "github.com/manatools/manaradix" in call["body"]
         assert call["actions"] == ["open", call["actions"][1]]
 
     def test_menu_about_notification_failure_swallowed(self):

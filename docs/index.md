@@ -65,5 +65,5 @@ The Qt frontend. The same pages render in GTK and ncurses.
 | [Roadmap & issues](SECURITY_AND_PERFORMANCES.md) | Living security/perf/feature tracker |
 
 The full technical specification lives in
-[`spec.md`](https://bitbucket.org/_pmat_/manaradix/src/master/spec.md) at
+[`spec.md`](https://github.com/manatools/manaradix/blob/main/spec.md) at
 the repository root.

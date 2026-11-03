@@ -14,7 +14,7 @@ Summary:        Btrfs snapshot, subvolume, and filesystem management utility
 
 License:        GPLv2+
 Group:          System/Configuration
-URL:            https://github.com/mageia/manaradix
+URL:            https://github.com/manatools/manaradix
 Source0:        %{name}-%{version}.tar.gz
 
 BuildArch:      noarch
