@@ -610,4 +610,6 @@ from the repository root.
 
 ## License
 
+Copyright © 2026 Matteo Pasotti <xquiet@coriolite.com>
+
 GPLv2+ — see [LICENSE](LICENSE).

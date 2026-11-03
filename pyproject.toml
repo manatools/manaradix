@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "GPLv2+"}
 requires-python = ">=3.11"
 authors = [
-    {name = "Mageia Community"},
+    {name = "Matteo Pasotti", email = "xquiet@coriolite.com"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
