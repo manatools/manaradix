@@ -608,6 +608,12 @@ User guide, CLI/configuration references, and the D-Bus interface are in
 [`docs/`](docs/README.md) — rendered as an MkDocs site with `mkdocs serve`
 from the repository root.
 
+## Development Note
+
+manaradix is developed in spare time. AI-assisted tools are used to help
+with a portion of the development work; every change is reviewed, tested
+and maintained by the author.
+
 ## License
 
 Copyright © 2026 Matteo Pasotti <xquiet@coriolite.com>
