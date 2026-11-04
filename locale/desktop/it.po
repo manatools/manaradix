@@ -1,0 +1,58 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: manaradix desktop files translation\n"
+"Report-Msgid-Bugs-To: i18n-discuss@ml.mageia.org\n"
+"POT-Creation-Date: 2026-11-04 17:43+0100\n"
+"PO-Revision-Date: 2026-11-04 00:00+0100\n"
+"Last-Translator: Matteo Pasotti <xquiet@coriolite.com>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Name"
+msgid "Manaradix Tray"
+msgstr "Manaradix Tray"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "GenericName"
+msgid "Btrfs Snapshot Health Monitor"
+msgstr "Monitor dello stato degli snapshot Btrfs"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Comment"
+msgid ""
+"Monitor disk space, device health, and snapshot retention from the system "
+"tray"
+msgstr ""
+"Controlla spazio su disco, salute dei dispositivi e conservazione degli "
+"snapshot dalla barra di sistema"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Keywords"
+msgid "btrfs;snapshot;tray;notification;health;disk;"
+msgstr "btrfs;snapshot;barra di sistema;notifica;salute;disco;"
+
+#: data/desktop/manaradix.desktop
+msgctxt "Name"
+msgid "Manaradix"
+msgstr "Manaradix"
+
+#: data/desktop/manaradix.desktop
+msgctxt "GenericName"
+msgid "Btrfs Snapshot Manager"
+msgstr "Gestore degli snapshot Btrfs"
+
+#: data/desktop/manaradix.desktop
+msgctxt "Comment"
+msgid "Manage Btrfs snapshots, subvolumes, and filesystem parameters"
+msgstr "Gestisci snapshot, subvolume e parametri del filesystem Btrfs"
+
+#: data/desktop/manaradix.desktop
+msgctxt "Keywords"
+msgid "btrfs;snapshot;subvolume;filesystem;backup;restore;"
+msgstr "btrfs;snapshot;subvolume;filesystem;backup;ripristino;"

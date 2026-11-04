@@ -1,12 +1,20 @@
 [Desktop Entry]
 Type=Application
 Name=Manaradix Tray
+Name[it]=Manaradix Tray
+Name[zh_CN]=Manaradix 托盘
 GenericName=Btrfs Snapshot Health Monitor
+GenericName[it]=Monitor dello stato degli snapshot Btrfs
+GenericName[zh_CN]=Btrfs 快照健康监视器
 Comment=Monitor disk space, device health, and snapshot retention from the system tray
+Comment[it]=Controlla spazio su disco, salute dei dispositivi e conservazione degli snapshot dalla barra di sistema
+Comment[zh_CN]=在系统托盘中监视磁盘空间、设备健康状况和快照保留情况
 Icon=manaradix
 Exec=manaradix tray serve
 Terminal=false
 Categories=System;Utility;FileTools;
 Keywords=btrfs;snapshot;tray;notification;health;disk;
+Keywords[it]=btrfs;snapshot;barra di sistema;notifica;salute;disco;
+Keywords[zh_CN]=btrfs;快照;托盘;通知;健康;磁盘;
 StartupNotify=false
 X-GNOME-Autostart-enabled=true

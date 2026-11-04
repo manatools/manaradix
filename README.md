@@ -617,6 +617,21 @@ tx pull -a          # fetch every translation into locale/<lang>.po
 The RPM spec compiles every `locale/*.po`, so pulled languages ship
 without spec changes.
 
+Desktop-file strings (`Name`, `GenericName`, `Comment`, `Keywords` of
+`data/desktop/*.desktop`) are a second resource, `manaradix_desktop`
+(`locale/desktop/.tx/config`), handled like dnfdragora's: the
+translations are written straight into the committed desktop files by
+`tools/desktoppo.py` (needs `polib`, in the `dev` extra), so nothing runs
+at build time.
+
+```bash
+cd locale/desktop && tx pull -a && cd ../..   # fetch locale/desktop/<lang>.po
+python3 tools/desktoppo.py -d data/desktop    # regenerate the pot, merge the
+                                              # .po files, add Key[lang]= lines
+cd locale/desktop && tx push -s               # upload the pot after a desktop
+                                              # string changes
+```
+
 ## Documentation
 
 User guide, CLI/configuration references, and the D-Bus interface are in

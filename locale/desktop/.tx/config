@@ -1,0 +1,8 @@
+[main]
+host = https://www.transifex.com
+
+[o:MageiaLinux:p:mageia:r:manaradix_desktop]
+file_filter = <lang>.po
+source_file = manaradix_desktop.pot
+source_lang = en
+type = PO

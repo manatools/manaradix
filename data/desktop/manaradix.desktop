@@ -1,12 +1,20 @@
 [Desktop Entry]
 Type=Application
 Name=Manaradix
+Name[it]=Manaradix
+Name[zh_CN]=Manaradix
 GenericName=Btrfs Snapshot Manager
+GenericName[it]=Gestore degli snapshot Btrfs
+GenericName[zh_CN]=Btrfs 快照管理器
 Comment=Manage Btrfs snapshots, subvolumes, and filesystem parameters
+Comment[it]=Gestisci snapshot, subvolume e parametri del filesystem Btrfs
+Comment[zh_CN]=管理 Btrfs 快照、子卷和文件系统参数
 Icon=manaradix
 Exec=manaradix
 Terminal=false
 Categories=System;Utility;FileTools;
 Keywords=btrfs;snapshot;subvolume;filesystem;backup;restore;
+Keywords[it]=btrfs;snapshot;subvolume;filesystem;backup;ripristino;
+Keywords[zh_CN]=btrfs;快照;子卷;文件系统;备份;还原;
 StartupNotify=true
 X-Mageia-Polkit=org.mageia.manaradix.manage-snapshots

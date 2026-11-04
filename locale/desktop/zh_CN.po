@@ -1,0 +1,56 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: manaradix desktop files translation\n"
+"Report-Msgid-Bugs-To: i18n-discuss@ml.mageia.org\n"
+"POT-Creation-Date: 2026-11-04 17:43+0100\n"
+"PO-Revision-Date: 2026-11-04 00:00+0100\n"
+"Last-Translator: Matteo Pasotti <xquiet@coriolite.com>\n"
+"Language-Team: Chinese (China)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Name"
+msgid "Manaradix Tray"
+msgstr "Manaradix 托盘"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "GenericName"
+msgid "Btrfs Snapshot Health Monitor"
+msgstr "Btrfs 快照健康监视器"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Comment"
+msgid ""
+"Monitor disk space, device health, and snapshot retention from the system "
+"tray"
+msgstr "在系统托盘中监视磁盘空间、设备健康状况和快照保留情况"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Keywords"
+msgid "btrfs;snapshot;tray;notification;health;disk;"
+msgstr "btrfs;快照;托盘;通知;健康;磁盘;"
+
+#: data/desktop/manaradix.desktop
+msgctxt "Name"
+msgid "Manaradix"
+msgstr "Manaradix"
+
+#: data/desktop/manaradix.desktop
+msgctxt "GenericName"
+msgid "Btrfs Snapshot Manager"
+msgstr "Btrfs 快照管理器"
+
+#: data/desktop/manaradix.desktop
+msgctxt "Comment"
+msgid "Manage Btrfs snapshots, subvolumes, and filesystem parameters"
+msgstr "管理 Btrfs 快照、子卷和文件系统参数"
+
+#: data/desktop/manaradix.desktop
+msgctxt "Keywords"
+msgid "btrfs;snapshot;subvolume;filesystem;backup;restore;"
+msgstr "btrfs;快照;子卷;文件系统;备份;还原;"
