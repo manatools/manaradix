@@ -131,12 +131,13 @@ install -D -m 0644 data/systemd/manaradix-usage.timer \
 install -d -m 0755 %{buildroot}%{_sharedstatedir}/manaradix
 
 # --- Locale files (translations ship as .mo, compiled from .po) ---
-install -d %{buildroot}%{_datadir}/locale/it/LC_MESSAGES
-msgfmt -o %{buildroot}%{_datadir}/locale/it/LC_MESSAGES/manaradix.mo \
-    locale/it.po
-install -d %{buildroot}%{_datadir}/locale/zh_CN/LC_MESSAGES
-msgfmt -o %{buildroot}%{_datadir}/locale/zh_CN/LC_MESSAGES/manaradix.mo \
-    locale/zh_CN.po
+# Every locale/<lang>.po is shipped, so catalogs pulled from Transifex
+# (locale/.tx/config) are picked up without touching the spec.
+for po in locale/*.po; do
+    lang=$(basename "$po" .po)
+    install -d %{buildroot}%{_datadir}/locale/$lang/LC_MESSAGES
+    msgfmt -o %{buildroot}%{_datadir}/locale/$lang/LC_MESSAGES/manaradix.mo "$po"
+done
 %find_lang %{name}
 
 %files -f %{name}.lang

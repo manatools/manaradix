@@ -602,6 +602,21 @@ is at `locale/manaradix.pot`.  System-installed ``.mo`` files go to
 ``/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo``, compiled and
 installed by the RPM spec (``msgfmt`` + ``%find_lang``).
 
+Mageia contributors translate manaradix on
+[Transifex](https://explore.transifex.com/MageiaLinux/mageia/) (resource
+`manaradix` in the `mageia` project, same as dnfdragora and manafirewall).
+`locale/.tx/config` maps the resource to `locale/<lang>.po`; with the
+[tx CLI](https://developers.transifex.com/docs/cli):
+
+```bash
+cd locale
+tx push -s          # upload manaradix.pot after regenerating it
+tx pull -a          # fetch every translation into locale/<lang>.po
+```
+
+The RPM spec compiles every `locale/*.po`, so pulled languages ship
+without spec changes.
+
 ## Documentation
 
 User guide, CLI/configuration references, and the D-Bus interface are in
