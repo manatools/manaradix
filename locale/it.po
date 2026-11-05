@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-25 19:06+0100\n"
+"POT-Creation-Date: 2026-11-05 21:43+0100\n"
 "PO-Revision-Date: 2026-08-01 19:00+0200\n"
 "Last-Translator: Mageia Community <mageia-community@mageia.org>\n"
 "Language-Team: Italian <https://www.mageia.org>\n"
@@ -171,12 +171,12 @@ msgstr "Nessuna politica configurata."
 msgid "Activity status:"
 msgstr "Stato attività:"
 
-#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:513
+#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:542
 #: manaradix/ui/pages/triggers.py:313
 msgid "never"
 msgstr "mai"
 
-#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:515
+#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:544
 #: manaradix/ui/pages/triggers.py:316
 #, python-format
 msgid "%s (%s)"
@@ -640,7 +640,7 @@ msgstr "Informazioni"
 msgid "Quit"
 msgstr "Esci"
 
-#: manaradix/ui/renderer.py:343
+#: manaradix/ui/renderer.py:346 manaradix/ui/renderer.py:397
 msgid "(no data)"
 msgstr "(nessun dato)"
 
@@ -717,101 +717,109 @@ msgstr "Filesystem Btrfs"
 msgid "No btrfs filesystems found."
 msgstr "Nessun filesystem btrfs trovato."
 
-#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:309
+#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:298
 msgid "Filesystem"
 msgstr "Filesystem"
 
-#: manaradix/ui/pages/dashboard.py:281
-msgid "Data"
-msgstr "Dati"
-
-#: manaradix/ui/pages/dashboard.py:282
-msgid "Metadata"
-msgstr "Metadati"
-
-#: manaradix/ui/pages/dashboard.py:283
-#, fuzzy
-msgid "System"
-msgstr "Sistema"
-
-#: manaradix/ui/pages/dashboard.py:303 manaradix/ui/pages/dashboard.py:323
+#: manaradix/ui/pages/dashboard.py:306
 #, fuzzy
 msgid "Internal Filesystem Usage"
 msgstr "Uso Interno del Filesystem"
 
-#: manaradix/ui/pages/dashboard.py:348
+#: manaradix/ui/pages/dashboard.py:321
+msgid "Data"
+msgstr "Dati"
+
+#: manaradix/ui/pages/dashboard.py:322
+msgid "Metadata"
+msgstr "Metadati"
+
+#: manaradix/ui/pages/dashboard.py:323
+#, fuzzy
+msgid "System"
+msgstr "Sistema"
+
+#: manaradix/ui/pages/dashboard.py:337
+msgid "Allocated, unused"
+msgstr "Allocato, non usato"
+
+#: manaradix/ui/pages/dashboard.py:345
+msgid "Unallocated"
+msgstr "Non allocato"
+
+#: manaradix/ui/pages/dashboard.py:377
 msgid "Collecting usage data..."
 msgstr "Raccolta dei dati di utilizzo in corso..."
 
-#: manaradix/ui/pages/dashboard.py:350
+#: manaradix/ui/pages/dashboard.py:379
 #, python-format
 msgid "Last updated: %s"
 msgstr "Ultimo aggiornamento: %s"
 
-#: manaradix/ui/pages/dashboard.py:354
+#: manaradix/ui/pages/dashboard.py:383
 #, python-format
 msgid "Last collection failed: %s"
 msgstr "Ultima raccolta non riuscita: %s"
 
-#: manaradix/ui/pages/dashboard.py:356
+#: manaradix/ui/pages/dashboard.py:385
 msgid "No usage data collected yet"
 msgstr "Nessun dato di utilizzo ancora raccolto"
 
-#: manaradix/ui/pages/dashboard.py:379
+#: manaradix/ui/pages/dashboard.py:408
 #, fuzzy
 msgid "Snapshot Usage"
 msgstr "Uso degli Snapshot"
 
-#: manaradix/ui/pages/dashboard.py:391
+#: manaradix/ui/pages/dashboard.py:420
 msgid "Force Usage Data Update"
 msgstr "Forza aggiornamento dati di utilizzo"
 
-#: manaradix/ui/pages/dashboard.py:401 manaradix/ui/pages/dashboard.py:409
+#: manaradix/ui/pages/dashboard.py:430 manaradix/ui/pages/dashboard.py:438
 msgid "Recent Snapshots"
 msgstr "Snapshot Recenti"
 
-#: manaradix/ui/pages/dashboard.py:404
+#: manaradix/ui/pages/dashboard.py:433
 msgid "No snapshots yet."
 msgstr "Nessuno snapshot ancora."
 
-#: manaradix/ui/pages/dashboard.py:440 manaradix/ui/pages/dashboard.py:447
+#: manaradix/ui/pages/dashboard.py:469 manaradix/ui/pages/dashboard.py:476
 msgid "Active Policies"
 msgstr "Politiche Attive"
 
-#: manaradix/ui/pages/dashboard.py:443
+#: manaradix/ui/pages/dashboard.py:472
 msgid "No active policies."
 msgstr "Nessuna politica attiva."
 
-#: manaradix/ui/pages/dashboard.py:488
+#: manaradix/ui/pages/dashboard.py:517
 msgid "Activity Status"
 msgstr "Stato attività"
 
-#: manaradix/ui/pages/dashboard.py:521
+#: manaradix/ui/pages/dashboard.py:550
 msgid "Quick Actions"
 msgstr "Azioni Rapide"
 
-#: manaradix/ui/pages/dashboard.py:528
+#: manaradix/ui/pages/dashboard.py:557
 msgid "Create Snapshot"
 msgstr "Crea Snapshot"
 
-#: manaradix/ui/pages/dashboard.py:533 manaradix/ui/pages/settings.py:164
+#: manaradix/ui/pages/dashboard.py:562 manaradix/ui/pages/settings.py:164
 msgid "Start Scrub"
 msgstr "Avvia Scrub"
 
-#: manaradix/ui/pages/dashboard.py:538 manaradix/ui/pages/triggers.py:238
+#: manaradix/ui/pages/dashboard.py:567 manaradix/ui/pages/triggers.py:238
 msgid "Refresh"
 msgstr "Aggiorna"
 
-#: manaradix/ui/pages/dashboard.py:647
+#: manaradix/ui/pages/dashboard.py:676
 #, python-format
 msgid "%s (property)"
 msgstr "%s (proprietà)"
 
-#: manaradix/ui/pages/dashboard.py:648
+#: manaradix/ui/pages/dashboard.py:677
 msgid "off"
 msgstr "disattivata"
 
-#: manaradix/ui/pages/dashboard.py:667
+#: manaradix/ui/pages/dashboard.py:696
 #, python-format
 msgid "%d (+%d snapshots)"
 msgstr "%d (+%d snapshot)"
@@ -1264,6 +1272,7 @@ msgstr "Disattiva Selezionato"
 #, fuzzy
 msgid "next boot"
 msgstr "al prossimo avvio"
+
 
 #~ msgid "Measure Usage"
 #~ msgstr "Misura Utilizzo"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.1.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-25 19:06+0100\n"
+"POT-Creation-Date: 2026-11-05 21:43+0100\n"
 "PO-Revision-Date: 2026-08-14 15:51+0200\n"
 "Last-Translator: Matteo Pasotti <EMAIL@ADDRESS>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -161,12 +161,12 @@ msgstr ""
 msgid "Activity status:"
 msgstr ""
 
-#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:513
+#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:542
 #: manaradix/ui/pages/triggers.py:313
 msgid "never"
 msgstr ""
 
-#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:515
+#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:544
 #: manaradix/ui/pages/triggers.py:316
 #, python-format
 msgid "%s (%s)"
@@ -585,7 +585,7 @@ msgstr ""
 msgid "Quit"
 msgstr "退出"
 
-#: manaradix/ui/renderer.py:343
+#: manaradix/ui/renderer.py:346 manaradix/ui/renderer.py:397
 msgid "(no data)"
 msgstr ""
 
@@ -657,98 +657,106 @@ msgstr ""
 msgid "No btrfs filesystems found."
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:309
+#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:298
 msgid "Filesystem"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:281
-msgid "Data"
-msgstr ""
-
-#: manaradix/ui/pages/dashboard.py:282
-msgid "Metadata"
-msgstr ""
-
-#: manaradix/ui/pages/dashboard.py:283
-msgid "System"
-msgstr ""
-
-#: manaradix/ui/pages/dashboard.py:303 manaradix/ui/pages/dashboard.py:323
+#: manaradix/ui/pages/dashboard.py:306
 msgid "Internal Filesystem Usage"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:348
+#: manaradix/ui/pages/dashboard.py:321
+msgid "Data"
+msgstr ""
+
+#: manaradix/ui/pages/dashboard.py:322
+msgid "Metadata"
+msgstr ""
+
+#: manaradix/ui/pages/dashboard.py:323
+msgid "System"
+msgstr ""
+
+#: manaradix/ui/pages/dashboard.py:337
+msgid "Allocated, unused"
+msgstr "已分配，未使用"
+
+#: manaradix/ui/pages/dashboard.py:345
+msgid "Unallocated"
+msgstr "未分配"
+
+#: manaradix/ui/pages/dashboard.py:377
 msgid "Collecting usage data..."
 msgstr "正在收集使用数据..."
 
-#: manaradix/ui/pages/dashboard.py:350
+#: manaradix/ui/pages/dashboard.py:379
 #, python-format
 msgid "Last updated: %s"
 msgstr "上次更新：%s"
 
-#: manaradix/ui/pages/dashboard.py:354
+#: manaradix/ui/pages/dashboard.py:383
 #, python-format
 msgid "Last collection failed: %s"
 msgstr "上次收集失败：%s"
 
-#: manaradix/ui/pages/dashboard.py:356
+#: manaradix/ui/pages/dashboard.py:385
 msgid "No usage data collected yet"
 msgstr "尚未收集使用数据"
 
-#: manaradix/ui/pages/dashboard.py:379
+#: manaradix/ui/pages/dashboard.py:408
 msgid "Snapshot Usage"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:391
+#: manaradix/ui/pages/dashboard.py:420
 msgid "Force Usage Data Update"
 msgstr "强制更新使用数据"
 
-#: manaradix/ui/pages/dashboard.py:401 manaradix/ui/pages/dashboard.py:409
+#: manaradix/ui/pages/dashboard.py:430 manaradix/ui/pages/dashboard.py:438
 msgid "Recent Snapshots"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:404
+#: manaradix/ui/pages/dashboard.py:433
 msgid "No snapshots yet."
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:440 manaradix/ui/pages/dashboard.py:447
+#: manaradix/ui/pages/dashboard.py:469 manaradix/ui/pages/dashboard.py:476
 msgid "Active Policies"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:443
+#: manaradix/ui/pages/dashboard.py:472
 msgid "No active policies."
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:488
+#: manaradix/ui/pages/dashboard.py:517
 msgid "Activity Status"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:521
+#: manaradix/ui/pages/dashboard.py:550
 msgid "Quick Actions"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:528
+#: manaradix/ui/pages/dashboard.py:557
 msgid "Create Snapshot"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:533 manaradix/ui/pages/settings.py:164
+#: manaradix/ui/pages/dashboard.py:562 manaradix/ui/pages/settings.py:164
 msgid "Start Scrub"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:538 manaradix/ui/pages/triggers.py:238
+#: manaradix/ui/pages/dashboard.py:567 manaradix/ui/pages/triggers.py:238
 msgid "Refresh"
 msgstr ""
 
-#: manaradix/ui/pages/dashboard.py:647
+#: manaradix/ui/pages/dashboard.py:676
 #, python-format
 msgid "%s (property)"
 msgstr "%s（属性）"
 
-#: manaradix/ui/pages/dashboard.py:648
+#: manaradix/ui/pages/dashboard.py:677
 msgid "off"
 msgstr "关闭"
 
-#: manaradix/ui/pages/dashboard.py:667
+#: manaradix/ui/pages/dashboard.py:696
 #, python-format
 msgid "%d (+%d snapshots)"
 msgstr "%d（+%d 个快照）"
@@ -1185,6 +1193,7 @@ msgstr ""
 #: manaradix/ui/pages/triggers.py:323
 msgid "next boot"
 msgstr ""
+
 
 #~ msgid "Measure Usage"
 #~ msgstr "测量占用"
