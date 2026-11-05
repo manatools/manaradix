@@ -117,7 +117,8 @@ in `.venv/pyvenv.cfg` (no recreation needed).
 
 The Dashboard page shows disk usage per physical disk, a table of all
 btrfs filesystems (label, devices, sizes, free space, used percentage),
-internal Data/Metadata/System usage per filesystem, snapshot usage
+a donut chart of internal Data/Metadata/System usage per filesystem
+(used, allocated-but-unused, and unallocated space), snapshot usage
 (total and exclusive bytes vs device size), recent snapshots, and active
 policies. When many disks or filesystems are present, dropdowns keep the
 view compact. It is the default tab on startup (the Setup Wizard is

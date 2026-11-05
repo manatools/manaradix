@@ -62,6 +62,7 @@ nav:
       - Usage tracker: activity-usage-tracker.md
       - Tray menu on the About item: activity-about-menu.md
       - Tray icon became a menu: activity-tray-menu.md
+      - Dashboard donut chart: activity-dashboard-pie-chart.md
   - Roadmap & issues: SECURITY_AND_PERFORMANCES.md
 
 # docs/README.md is the index for repository browsing, not a site page.
