@@ -791,6 +791,10 @@ class BtrfsOps:
                 m = re.search(r"(\d+)", line)
                 if m:
                     info["overall"]["device_size"] = int(m.group(1))
+            elif "Device unallocated:" in line:
+                m = re.search(r"(\d+)", line)
+                if m:
+                    info["overall"]["unallocated"] = int(m.group(1))
             elif "Free (estimated):" in line:
                 m = re.search(r"(\d+)", line.replace(",", ""))
                 if m:

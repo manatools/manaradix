@@ -566,6 +566,7 @@ class TestFilesystemUsage:
         overall = BtrfsOps().filesystem_usage("/")["overall"]
         assert overall["device_size"] == 211618365440
         assert overall["free_estimated"] == 190525214720
+        assert overall["unallocated"] == 189073981440
         assert overall["data"] == {"size": 20409483264, "used": 18928889856}
         assert overall["metadata"] == {"size": 1073741824, "used": 382238720}
         assert overall["system"] == {"size": 8388608, "used": 16384}
