@@ -1,0 +1,67 @@
+#
+# SPDX-FileCopyrightText: 2026 Yuri Chornoivan <yurchor@ukr.net>
+msgid ""
+msgstr ""
+"Project-Id-Version: manaradix desktop files translation\n"
+"Report-Msgid-Bugs-To: i18n-discuss@ml.mageia.org\n"
+"POT-Creation-Date: 2026-11-04 17:43+0100\n"
+"PO-Revision-Date: 2026-11-05 18:50+0200\n"
+"Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: uk\n"
+"Plural-Forms: nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != 11 "
+"? 0 : n % 1 == 0 && n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > "
+"14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || (n % 100"
+" >=11 && n % 100 <=14 )) ? 2: 3);\n"
+"Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
+"X-Generator: Lokalize 25.12.1\n"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Name"
+msgid "Manaradix Tray"
+msgstr "Лоток Manaradix"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "GenericName"
+msgid "Btrfs Snapshot Health Monitor"
+msgstr "Монітор стану знімків Btrfs"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Comment"
+msgid ""
+"Monitor disk space, device health, and snapshot retention from the system "
+"tray"
+msgstr ""
+"Стеження з місцем на диску, стан пристрою та збереження знімків з системного "
+"лотка"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Keywords"
+msgid "btrfs;snapshot;tray;notification;health;disk;"
+msgstr ""
+"btrfs;snapshot;tray;notification;health;disk;бтрфс;знімок;лоток;сповіщення;ст"
+"ан;диск;"
+
+#: data/desktop/manaradix.desktop
+msgctxt "Name"
+msgid "Manaradix"
+msgstr "Manaradix"
+
+#: data/desktop/manaradix.desktop
+msgctxt "GenericName"
+msgid "Btrfs Snapshot Manager"
+msgstr "Керування знімками Btrfs"
+
+#: data/desktop/manaradix.desktop
+msgctxt "Comment"
+msgid "Manage Btrfs snapshots, subvolumes, and filesystem parameters"
+msgstr "Керування знімками, підтомами та параметрами файлової системи Btrfs"
+
+#: data/desktop/manaradix.desktop
+msgctxt "Keywords"
+msgid "btrfs;snapshot;subvolume;filesystem;backup;restore;"
+msgstr ""
+"btrfs;snapshot;subvolume;filesystem;backup;restore;бтрфс;знімок;підтом;файлов"
+"а система;резервна копія;відновлення;"

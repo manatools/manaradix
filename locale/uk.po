@@ -1,0 +1,1209 @@
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the manaradix package.
+#
+# Translators:
+# SPDX-FileCopyrightText: 2026 Yuri Chornoivan <yurchor@ukr.net>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: manaradix 0.2.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-25 19:06+0100\n"
+"PO-Revision-Date: 2026-11-05 20:20+0200\n"
+"Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
+"Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: uk\n"
+"Plural-Forms: nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != 11 "
+"? 0 : n % 1 == 0 && n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > "
+"14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || (n % 100"
+" >=11 && n % 100 <=14 )) ? 2: 3);\n"
+"X-Generator: Lokalize 25.12.1\n"
+
+#: manaradix/module.py:298
+#, python-format
+msgid "Path to config file (default: %(default)s)"
+msgstr "Шлях до файла налаштувань (типовий: %(default)s)"
+
+#: manaradix/module.py:631
+#, python-format
+msgid "Created snapshot: %s"
+msgstr "Створений знімок: %s"
+
+#: manaradix/module.py:632
+#, python-format
+msgid "  Subvolume:   %s"
+msgstr "  Підтом:   %s"
+
+#: manaradix/module.py:633
+#, python-format
+msgid "  Path:        %s"
+msgstr "  Шлях:        %s"
+
+#: manaradix/module.py:634
+#, python-format
+msgid "  Type:        %s"
+msgstr "  Тип:        %s"
+
+#: manaradix/module.py:636
+#, python-format
+msgid "  Schedule:    %s"
+msgstr "  Розклад:    %s"
+
+#: manaradix/module.py:638
+#, python-format
+msgid "  Description: %s"
+msgstr "  Опис: %s"
+
+#: manaradix/module.py:695
+msgid "No snapshots found."
+msgstr "Знімків не знайдено."
+
+#: manaradix/module.py:727
+#, python-format
+msgid "Deleted snapshot: %s"
+msgstr "Вилучено знімок: %s"
+
+#: manaradix/module.py:767
+#, python-format
+msgid "[DRY RUN] Would delete %d snapshot(s):"
+msgstr "[ТЕСТОВИЙ ЗАПУСК] Могло б бути вилучено %d знімків:"
+
+#: manaradix/module.py:771
+#, python-format
+msgid "[DRY RUN] Nothing to prune (%d kept, 0 excess)."
+msgstr "[ТЕСТОВИЙ ЗАПУСК] Нічого витирати (%d збережено, 0 перевищення)."
+
+#: manaradix/module.py:773
+#, python-format
+msgid "Pruned %d snapshot(s):"
+msgstr "Витерто %d знімків:"
+
+#: manaradix/module.py:777
+#, python-format
+msgid "Nothing to prune (%d kept, no excess)."
+msgstr "Нічого витирати (%d збережено, немає перевищень)."
+
+#: manaradix/module.py:792
+msgid "Setup not needed: snapshots or policies already exist."
+msgstr "Налаштовування непотрібне: знімки або правила вже існують."
+
+#: manaradix/module.py:797
+msgid "Setup needed, but no btrfs filesystem was found on this system."
+msgstr ""
+"Потрібне налаштовування, але у цій системі не знайдено файлової системи btrfs"
+"."
+
+#: manaradix/module.py:802
+msgid "Setup needed: no snapshots and no snapshot policies are configured."
+msgstr "Потрібне налаштовування: не налаштовано знімків і правил знімків."
+
+#: manaradix/module.py:803
+#, python-format
+msgid "Detected role: %s"
+msgstr "Вибрана роль: %s"
+
+#: manaradix/module.py:805 manaradix/module.py:853
+#: manaradix/core/setup_wizard.py:263 manaradix/ui/pages/setup.py:90
+msgid "No setup profiles are available on this system."
+msgstr "У цій системі немає профілів налаштовування."
+
+#: manaradix/module.py:807
+#, python-format
+msgid "Default profile: %s"
+msgstr "Типовий профіль: %s"
+
+#: manaradix/module.py:808
+msgid "Run 'manaradix setup apply' to apply it."
+msgstr "Запустіть «manaradix setup apply» для застосування."
+
+#: manaradix/module.py:823
+#, python-format
+msgid "[DRY RUN] Would apply the setup profile %s:"
+msgstr "[ТЕСТОВИЙ ЗАПУСК] Мало б бути застосовано профіль налаштувань %s:"
+
+#: manaradix/module.py:825
+#, python-format
+msgid "Applied the setup profile %s:"
+msgstr "Застосовано профіль налаштувань %s:"
+
+#: manaradix/module.py:830
+#, python-format
+msgid "  %s: %s (retention: %s)"
+msgstr "  %s: %s (заощадження: %s)"
+
+#: manaradix/module.py:837
+msgid "would be installed"
+msgstr "мало б бути встановлено"
+
+#: manaradix/module.py:839
+msgid "not available"
+msgstr "не доступне"
+
+#: manaradix/module.py:842 manaradix/ui/pages/settings.py:190
+#: manaradix/ui/pages/setup.py:271
+msgid "installed"
+msgstr "встановлено"
+
+#: manaradix/module.py:842 manaradix/ui/pages/settings.py:190
+#: manaradix/ui/pages/setup.py:271
+msgid "not installed"
+msgstr "не встановлено"
+
+#: manaradix/module.py:843
+#, python-format
+msgid "  GRUB recovery menu: %s"
+msgstr "  Меню відновлення GRUB: %s"
+
+#: manaradix/module.py:856
+msgid "Available setup profiles:"
+msgstr "Доступні профілі налаштування:"
+
+#: manaradix/module.py:879
+msgid "No activities are configured."
+msgstr "Дій не налаштовано."
+
+#: manaradix/module.py:882
+msgid "Activity status:"
+msgstr "Стан дій:"
+
+#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:513
+#: manaradix/ui/pages/triggers.py:313
+msgid "never"
+msgstr "ніколи"
+
+#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:515
+#: manaradix/ui/pages/triggers.py:316
+#, python-format
+msgid "%s (%s)"
+msgstr "%s (%s)"
+
+#: manaradix/module.py:946
+msgid "The manaradix D-Bus service is running."
+msgstr "Запущено службу D-Bus manaradix."
+
+#: manaradix/module.py:950
+msgid ""
+"The manaradix D-Bus service is not running; it starts automatically on first"
+" use."
+msgstr ""
+"Службу D-Bus manaradix не запущено; її буде запущено автоматично при першому "
+"використанні."
+
+#: manaradix/module.py:969
+msgid "The manaradix tray applet is running."
+msgstr "Запущено аплет лотка manaradix."
+
+#: manaradix/module.py:973
+msgid ""
+"The manaradix tray applet is not running; it starts automatically at login."
+msgstr ""
+"Аплет лотка manaradix не запущено; він запускається автоматично при вході до "
+"системи."
+
+#: manaradix/module.py:1021
+#, python-format
+msgid "Status: %s"
+msgstr "Стан: %s"
+
+#: manaradix/module.py:1023
+#, python-format
+msgid "Last started: %s"
+msgstr "Останній початий: %s"
+
+#: manaradix/module.py:1025
+#, python-format
+msgid "Last finished: %s"
+msgstr "Останнє завершене: %s"
+
+#: manaradix/module.py:1027
+#, python-format
+msgid "Last error: %s"
+msgstr "Остання помилка: %s"
+
+#: manaradix/module.py:1038
+msgid "No usage data available. Run 'manaradix usage collect' first."
+msgstr ""
+"Немає даних щодо використання. Спочатку запустіть «manaradix usage collect»."
+
+#: manaradix/module.py:1041
+msgid "Snapshot disk usage (last collected):"
+msgstr "Використання дисків знімками (останнє зібране):"
+
+#: manaradix/module.py:1076
+#, python-format
+msgid "ID:          %s"
+msgstr "Ідентифікатор: %s"
+
+#: manaradix/module.py:1077
+#, python-format
+msgid "Subvolume:   %s"
+msgstr "Підтом:   %s"
+
+#: manaradix/module.py:1078
+#, python-format
+msgid "Path:        %s"
+msgstr "Шлях:        %s"
+
+#: manaradix/module.py:1079
+#, python-format
+msgid "Date:        %s"
+msgstr "Дата:        %s"
+
+#: manaradix/module.py:1080
+#, python-format
+msgid "Type:        %s"
+msgstr "Тип:         %s"
+
+#: manaradix/module.py:1081
+#, python-format
+msgid "Read-only:   %s"
+msgstr "Лише читання:   %s"
+
+#: manaradix/module.py:1082
+#, python-format
+msgid "Schedule:    %s"
+msgstr "Розклад:    %s"
+
+#: manaradix/module.py:1083
+#, python-format
+msgid "Description: %s"
+msgstr "Опис: %s"
+
+#: manaradix/utils/pkexec.py:152
+#, python-format
+msgid ""
+"error: %s not found. Install polkit to use privileged manaradix commands."
+msgstr ""
+"помилка: не знайдено %s. Встановіть polkit для використання привілейованих ко"
+"манд manaradix."
+
+#: manaradix/utils/pkexec.py:158
+#, python-format
+msgid "error: pkexec failed: %s"
+msgstr "помилка: помилка pkexec: %s"
+
+#: manaradix/core/health.py:175
+#, python-format
+msgid "Disk space critical on %s"
+msgstr "Критична нестача місця на диску %s"
+
+#: manaradix/core/health.py:177
+#, python-format
+msgid "%(percent)d%% of %(total)s used, only %(free)s free"
+msgstr "Використано %(percent)d%% з %(total)s, вільно лише %(free)s"
+
+#: manaradix/core/health.py:180
+#, python-format
+msgid "Disk space low on %s"
+msgstr "Мало місця на диску %s"
+
+#: manaradix/core/health.py:182
+#, python-format
+msgid "%(percent)d%% of %(total)s used, %(free)s free"
+msgstr "Використано %(percent)d%% з %(total)s, вільно %(free)s"
+
+#: manaradix/core/health.py:191
+msgid "Free some space, or let the retention profile prune old snapshots."
+msgstr ""
+"Звільніть трохи місця або надайте змогу профілю заощадження витерти застарілі"
+" знімки."
+
+#: manaradix/core/health.py:224
+#, python-format
+msgid "Data integrity errors on %s"
+msgstr ""
+
+#: manaradix/core/health.py:226
+#, python-format
+msgid ""
+"%(corruption)d corruption, %(generation)d generation errors recorded by "
+"btrfs."
+msgstr ""
+
+#: manaradix/core/health.py:230
+msgid "Check the device and restore from the newest good snapshot."
+msgstr ""
+
+#: manaradix/core/health.py:240
+#, python-format
+msgid "IO errors on %s"
+msgstr ""
+
+#: manaradix/core/health.py:242
+#, python-format
+msgid ""
+"%(write)d write, %(read)d read, %(flush)d flush errors recorded by btrfs."
+msgstr ""
+
+#: manaradix/core/health.py:247
+msgid "Inspect the device, cabling, and enclosure."
+msgstr ""
+
+#: manaradix/core/health.py:258
+#, python-format
+msgid "SMART health failing on %s"
+msgstr ""
+
+#: manaradix/core/health.py:259
+msgid "The drive reports an imminent failure.  Back up your data now."
+msgstr ""
+
+#: manaradix/core/health.py:261
+msgid "Replace the drive as soon as possible."
+msgstr ""
+
+#: manaradix/core/health.py:271
+#, python-format
+msgid "Drive running hot on %s"
+msgstr ""
+
+#: manaradix/core/health.py:272
+#, python-format
+msgid "The drive is at %(temp)d °C."
+msgstr ""
+
+#: manaradix/core/health.py:275
+msgid "Check airflow and cooling."
+msgstr ""
+
+#: manaradix/core/health.py:305
+msgid "Scrub found errors"
+msgstr ""
+
+#: manaradix/core/health.py:306
+#, python-format
+msgid "%d errors were found by the last scrub."
+msgstr ""
+
+#: manaradix/core/health.py:307
+msgid "Run a new scrub and inspect the devices."
+msgstr ""
+
+#: manaradix/core/health.py:319
+msgid "Scrub appears stuck"
+msgstr ""
+
+#: manaradix/core/health.py:321
+#, python-format
+msgid "The scrub has been running for more than %d hours."
+msgstr ""
+
+#: manaradix/core/health.py:323
+msgid "Check the scrub progress in the GUI."
+msgstr ""
+
+#: manaradix/core/health.py:333
+msgid "No scrub recorded"
+msgstr ""
+
+#: manaradix/core/health.py:335
+msgid ""
+"No scrub run is recorded.  Regular scrubs catch bit-rot on long-lived "
+"servers."
+msgstr ""
+
+#: manaradix/core/health.py:338
+msgid "Run a scrub now and schedule it regularly."
+msgstr ""
+
+#: manaradix/core/health.py:347
+msgid "Last scrub is stale"
+msgstr ""
+
+#: manaradix/core/health.py:349
+#, python-format
+msgid "The last scrub is %d days old; run a new one."
+msgstr ""
+
+#: manaradix/core/health.py:351
+msgid "Run a scrub now."
+msgstr ""
+
+#: manaradix/core/health.py:440
+#, python-format
+msgid "Too many %(tier)s snapshots on %(subvol)s"
+msgstr ""
+
+#: manaradix/core/health.py:444
+#, python-format
+msgid "%(count)d snapshots kept, retention caps at %(cap)d."
+msgstr ""
+
+#: manaradix/core/health.py:446
+msgid "Delete the oldest ones, or adjust the retention on the Policies page."
+msgstr ""
+
+#: manaradix/core/health.py:460
+#, python-format
+msgid "Too many snapshots on %s (kiosk)"
+msgstr "Забагато знімків на %s (кіоск)"
+
+#: manaradix/core/health.py:462
+#, python-format
+msgid "Kiosk profiles keep at most %(max)d snapshots; %(count)d exist."
+msgstr ""
+
+#: manaradix/core/health.py:465
+msgid "Delete the oldest snapshots and keep the last good state."
+msgstr ""
+
+#: manaradix/core/health.py:479
+#, python-format
+msgid "Free space below %d%% on %s"
+msgstr ""
+
+#: manaradix/core/health.py:483
+msgid "The kiosk is nearly full; new snapshots may fail."
+msgstr ""
+
+#: manaradix/core/health.py:485
+msgid "Consider pausing the hourly and daily snapshot schedules."
+msgstr ""
+
+#: manaradix/core/health.py:505
+#, python-format
+msgid "%(tier)s snapshots older than %(days)d days on %(subvol)s"
+msgstr ""
+
+#: manaradix/core/health.py:511
+#, python-format
+msgid "%(count)d snapshots, oldest from %(date)s."
+msgstr ""
+
+#: manaradix/core/health.py:513
+msgid "Delete the old ones, or extend the retention policy."
+msgstr ""
+
+#: manaradix/core/setup_wizard.py:179 manaradix/core/setup_wizard.py:205
+msgid "Boot snapshots are not available: the root filesystem is not btrfs."
+msgstr ""
+
+#: manaradix/core/setup_wizard.py:185 manaradix/ui/pages/setup.py:208
+#: manaradix/ui/pages/setup.py:232
+msgid "Not available on this system"
+msgstr "Немає доступу на цій системі"
+
+#: manaradix/core/setup_wizard.py:211
+msgid ""
+"The GRUB recovery menu is not available: it needs a btrfs root filesystem "
+"and GRUB."
+msgstr ""
+
+#: manaradix/core/setup_wizard.py:217
+msgid ""
+"Pre-upgrade snapshots are not available: the root filesystem is not btrfs."
+msgstr ""
+
+#: manaradix/core/setup_wizard.py:258
+#, python-format
+msgid "Unknown setup profile: %s"
+msgstr "Невідомий профіль налаштування: %s"
+
+#: manaradix/core/setup_wizard.py:270
+#, python-format
+msgid ""
+"The %s profile does not apply to this system: no btrfs subvolume matches its"
+" policies."
+msgstr ""
+
+#: manaradix/core/template_strings.py:18
+msgid "Desktop workstation"
+msgstr "Робоча станція"
+
+#: manaradix/core/template_strings.py:20
+msgid ""
+"Daily and weekly snapshots with a boot-time recovery point, plus the GRUB "
+"recovery menu — suited for a graphical workstation."
+msgstr ""
+
+#: manaradix/core/template_strings.py:23
+msgid "Server"
+msgstr "Сервер"
+
+#: manaradix/core/template_strings.py:25
+msgid ""
+"Frequent hourly snapshots with long retention, extra coverage for data "
+"subvolumes, a boot-time recovery point and the GRUB recovery menu."
+msgstr ""
+
+#: manaradix/core/template_strings.py:28
+msgid "Kiosk"
+msgstr "Кіоск"
+
+#: manaradix/core/template_strings.py:30
+msgid ""
+"Minimal setup for a single-purpose device: a snapshot at every boot with the"
+" GRUB recovery menu, no periodic snapshots."
+msgstr ""
+
+#: manaradix/dbus/service.py:94
+#, python-format
+msgid "Unknown method: %s"
+msgstr "Невідомий метод: %s"
+
+#: manaradix/dbus/service.py:100
+#, python-format
+msgid "Unhandled method: %s"
+msgstr "Необроблюваний метод: %s"
+
+#: manaradix/dbus/service.py:124
+#, python-format
+msgid "Snapshot not found: %s"
+msgstr "Знімок не знайдено: %s"
+
+#: manaradix/dbus/service.py:134
+#, python-format
+msgid "Invalid snapshot type: %s"
+msgstr "Некоректний тип знімка: %s"
+
+#: manaradix/dbus/wire.py:1038
+msgid "error: 'manaradix dbus serve' must run as root (system service)."
+msgstr ""
+
+#: manaradix/dbus/wire.py:1054
+msgid "error: the manaradix D-Bus service is already running."
+msgstr ""
+
+#: manaradix/tray/app.py:365
+#, python-format
+msgid "Manaradix: %d issue(s)"
+msgstr "Manaradix: %d проблема"
+
+#: manaradix/tray/app.py:369
+msgid "Manaradix"
+msgstr "Manaradix"
+
+#: manaradix/tray/app.py:369
+msgid "No issues found"
+msgstr "Проблем не виявлено"
+
+#: manaradix/tray/app.py:384 manaradix/tray/app.py:410
+#: manaradix/tray/dbus_menu.py:64
+msgid "Open manaradix"
+msgstr "Відкрити manaradix"
+
+#: manaradix/tray/app.py:407 manaradix/ui/pages/about.py:69
+msgid ""
+"Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
+msgstr ""
+
+#: manaradix/tray/dbus_menu.py:70
+msgid "Check now"
+msgstr "Перевірити зараз"
+
+#: manaradix/tray/dbus_menu.py:75 manaradix/ui/pages/about.py:38
+#: manaradix/ui/pages/about.py:63
+msgid "About"
+msgstr "Про програму"
+
+#: manaradix/tray/dbus_menu.py:86
+msgid "Quit"
+msgstr "Вийти"
+
+#: manaradix/ui/renderer.py:343
+msgid "(no data)"
+msgstr "(немає даних)"
+
+#: manaradix/ui/pages/about.py:27
+msgid ""
+"Manaradix is free software: you can redistribute it and/or modify it under "
+"the terms of the GNU General Public License as published by the Free "
+"Software Foundation, either version 2 of the License, or (at your option) "
+"any later version."
+msgstr ""
+"Manaradix ― вільне програмне забезпечення. Ви можете його розповсюджувати чи "
+"змінювати на умовах ліцензії GNU General Public License, що опублікована "
+"Free Software Foundation; або версії 2 ліцензії, або (на ваш розсуд) будь-"
+"якої більш пізньої версії."
+
+#: manaradix/ui/pages/about.py:75
+#, python-format
+msgid "Version: %s"
+msgstr "Версія: %s"
+
+#: manaradix/ui/pages/about.py:79
+#, python-format
+msgid "Author: %s"
+msgstr "Автор: %s"
+
+#: manaradix/ui/pages/about.py:83
+#, python-format
+msgid "Email: %s"
+msgstr "Ел. пошта: %s"
+
+#: manaradix/ui/pages/about.py:87
+#, python-format
+msgid "Copyright: %s"
+msgstr "Авторські права: %s"
+
+#: manaradix/ui/pages/about.py:91
+#, python-format
+msgid "License: %s"
+msgstr "Ліцензування: %s"
+
+#: manaradix/ui/pages/about.py:95
+#, python-format
+msgid "Website: %s"
+msgstr "Сайт: %s"
+
+#: manaradix/ui/pages/about.py:100
+msgid "License"
+msgstr "Ліцензування"
+
+#: manaradix/ui/pages/dashboard.py:54
+msgid "Dashboard"
+msgstr "Панель приладів"
+
+#: manaradix/ui/pages/dashboard.py:114 manaradix/ui/pages/dashboard.py:138
+#: manaradix/ui/pages/dashboard.py:154
+msgid "Physical Disks"
+msgstr "Фізичні диски"
+
+#: manaradix/ui/pages/dashboard.py:117
+msgid "No physical disks found."
+msgstr "Не знайдено фізичних дисків."
+
+#: manaradix/ui/pages/dashboard.py:144
+msgid "Physical Disk"
+msgstr "Фізичний диск"
+
+#: manaradix/ui/pages/dashboard.py:166 manaradix/ui/pages/dashboard.py:223
+#: manaradix/ui/pages/dashboard.py:243
+msgid "Btrfs Filesystems"
+msgstr "Файлові системи Btrfs"
+
+#: manaradix/ui/pages/dashboard.py:170
+msgid "No btrfs filesystems found."
+msgstr "Не знайдено файлових систем btrfs."
+
+#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:309
+msgid "Filesystem"
+msgstr "Файлова система"
+
+#: manaradix/ui/pages/dashboard.py:281
+msgid "Data"
+msgstr "Дані"
+
+#: manaradix/ui/pages/dashboard.py:282
+msgid "Metadata"
+msgstr "Метадані"
+
+#: manaradix/ui/pages/dashboard.py:283
+msgid "System"
+msgstr "Система"
+
+#: manaradix/ui/pages/dashboard.py:303 manaradix/ui/pages/dashboard.py:323
+msgid "Internal Filesystem Usage"
+msgstr "Внутрішнє використання файловою системою"
+
+#: manaradix/ui/pages/dashboard.py:348
+msgid "Collecting usage data..."
+msgstr "Збираємо дані щодо використання…"
+
+#: manaradix/ui/pages/dashboard.py:350
+#, python-format
+msgid "Last updated: %s"
+msgstr "Востаннє оновлено: %s"
+
+#: manaradix/ui/pages/dashboard.py:354
+#, python-format
+msgid "Last collection failed: %s"
+msgstr "Остання помилка при збиранні: %s"
+
+#: manaradix/ui/pages/dashboard.py:356
+msgid "No usage data collected yet"
+msgstr "Даних щодо використання ще не зібрано"
+
+#: manaradix/ui/pages/dashboard.py:379
+msgid "Snapshot Usage"
+msgstr "Використання знімками"
+
+#: manaradix/ui/pages/dashboard.py:391
+msgid "Force Usage Data Update"
+msgstr "Примусове оновлення даних щодо використання"
+
+#: manaradix/ui/pages/dashboard.py:401 manaradix/ui/pages/dashboard.py:409
+msgid "Recent Snapshots"
+msgstr "Нещодавні знімки"
+
+#: manaradix/ui/pages/dashboard.py:404
+msgid "No snapshots yet."
+msgstr "Знімків ще немає."
+
+#: manaradix/ui/pages/dashboard.py:440 manaradix/ui/pages/dashboard.py:447
+msgid "Active Policies"
+msgstr "Активні правила"
+
+#: manaradix/ui/pages/dashboard.py:443
+msgid "No active policies."
+msgstr "Немає активних правил."
+
+#: manaradix/ui/pages/dashboard.py:488
+msgid "Activity Status"
+msgstr "Стан дії"
+
+#: manaradix/ui/pages/dashboard.py:521
+msgid "Quick Actions"
+msgstr "Швидкі дії"
+
+#: manaradix/ui/pages/dashboard.py:528
+msgid "Create Snapshot"
+msgstr "Створити знімок"
+
+#: manaradix/ui/pages/dashboard.py:533 manaradix/ui/pages/settings.py:164
+msgid "Start Scrub"
+msgstr ""
+
+#: manaradix/ui/pages/dashboard.py:538 manaradix/ui/pages/triggers.py:238
+msgid "Refresh"
+msgstr "Освіжити"
+
+#: manaradix/ui/pages/dashboard.py:647
+#, python-format
+msgid "%s (property)"
+msgstr "%s (властивість)"
+
+#: manaradix/ui/pages/dashboard.py:648
+msgid "off"
+msgstr "вимкнено"
+
+#: manaradix/ui/pages/dashboard.py:667
+#, python-format
+msgid "%d (+%d snapshots)"
+msgstr "%d (+%d знімків)"
+
+#: manaradix/ui/pages/policies.py:31 manaradix/ui/pages/setup.py:36
+msgid "Hourly"
+msgstr "Погодинно"
+
+#: manaradix/ui/pages/policies.py:32 manaradix/ui/pages/setup.py:37
+msgid "Daily"
+msgstr "Щодня"
+
+#: manaradix/ui/pages/policies.py:33 manaradix/ui/pages/setup.py:38
+msgid "Weekly"
+msgstr "Щотижня"
+
+#: manaradix/ui/pages/policies.py:34 manaradix/ui/pages/setup.py:39
+msgid "Monthly"
+msgstr "Щомісяця"
+
+#: manaradix/ui/pages/policies.py:35 manaradix/ui/pages/setup.py:40
+msgid "Boot"
+msgstr "Завантаження"
+
+#: manaradix/ui/pages/policies.py:39
+msgid "Keep hourly"
+msgstr "Продовжувати щогодини"
+
+#: manaradix/ui/pages/policies.py:40
+msgid "Keep daily"
+msgstr "Продовжувати щодня"
+
+#: manaradix/ui/pages/policies.py:41
+msgid "Keep weekly"
+msgstr "Продовжувати щотижня"
+
+#: manaradix/ui/pages/policies.py:42
+msgid "Keep monthly"
+msgstr "Продовжувати щомісяця"
+
+#: manaradix/ui/pages/policies.py:43
+msgid "Keep boot"
+msgstr ""
+
+#: manaradix/ui/pages/policies.py:44
+msgid "Keep pre-upgrade"
+msgstr "Лишити до оновлення"
+
+#: manaradix/ui/pages/policies.py:52
+msgid "Policies"
+msgstr "Правила"
+
+#: manaradix/ui/pages/policies.py:77 manaradix/ui/pages/policies.py:82
+msgid "Configured Policies"
+msgstr "Налаштовані правила"
+
+#: manaradix/ui/pages/policies.py:78
+msgid "No policies configured."
+msgstr "Правил не налаштовано."
+
+#: manaradix/ui/pages/policies.py:116 manaradix/ui/pages/policies.py:121
+msgid "Add Policy"
+msgstr "Додати правило"
+
+#: manaradix/ui/pages/policies.py:118
+msgid "Subvolume path"
+msgstr "Шлях до підтому"
+
+#: manaradix/ui/pages/policies.py:136
+#, python-format
+msgid "On %s"
+msgstr "При %s"
+
+#: manaradix/ui/pages/policies.py:158
+#, python-format
+msgid "Edit Policy: %s"
+msgstr "Редагувати правило: %s"
+
+#: manaradix/ui/pages/policies.py:162 manaradix/ui/pages/setup.py:230
+msgid "Enabled"
+msgstr "Увімкнено"
+
+#: manaradix/ui/pages/policies.py:170
+msgid "Apply Policy"
+msgstr "Застосувати правило"
+
+#: manaradix/ui/pages/policies.py:175
+msgid "Dry-Run Preview"
+msgstr "Тестовий перегляд"
+
+#: manaradix/ui/pages/policies.py:180
+msgid "Remove Policy"
+msgstr "Вилучити правило"
+
+#: manaradix/ui/pages/policies.py:196 manaradix/ui/pages/policies.py:201
+msgid "systemd Units"
+msgstr "Модулі systemd"
+
+#: manaradix/ui/pages/policies.py:197
+msgid "No units installed."
+msgstr "Модулів не встановлено."
+
+#: manaradix/ui/pages/settings.py:26
+msgid "Settings"
+msgstr "Параметри"
+
+#: manaradix/ui/pages/settings.py:55
+msgid "Global Configuration"
+msgstr "Загальні налаштування"
+
+#: manaradix/ui/pages/settings.py:60
+msgid "Default subvolume"
+msgstr "Типовий підтом"
+
+#: manaradix/ui/pages/settings.py:65 manaradix/ui/pages/setup.py:224
+msgid "Snapshot directory"
+msgstr "Каталог знімків"
+
+#: manaradix/ui/pages/settings.py:70 manaradix/ui/pages/setup.py:228
+msgid "Boot-from-snapshot (GRUB menu)"
+msgstr "Завантаження зі знімка (меню GRUB)"
+
+#: manaradix/ui/pages/settings.py:76
+msgid "Snapshot / before system upgrades"
+msgstr "Знімок / до оновлень системи"
+
+#: manaradix/ui/pages/settings.py:82
+msgid "Save Settings"
+msgstr "Зберегти параметри"
+
+#: manaradix/ui/pages/settings.py:99
+msgid "Compression"
+msgstr "Стиснення"
+
+#: manaradix/ui/pages/settings.py:104
+#, python-format
+msgid "Compression for %s: %s"
+msgstr "Стискання для %s: %s"
+
+#: manaradix/ui/pages/settings.py:108
+msgid "Algorithm"
+msgstr "Алгоритм"
+
+#: manaradix/ui/pages/settings.py:114
+msgid "Apply Compression"
+msgstr "Застосувати стискання"
+
+#: manaradix/ui/pages/settings.py:128
+#, python-format
+msgid "running (%s/%s relocated)"
+msgstr "запущено (розміщено %s з %s)"
+
+#: manaradix/ui/pages/settings.py:134
+#, python-format
+msgid "running (%s extents, %s errors)"
+msgstr "запущено (%s розширень, %s помилок)"
+
+#: manaradix/ui/pages/settings.py:136
+#, python-format
+msgid "errors: %s"
+msgstr "помилки: %s"
+
+#: manaradix/ui/pages/settings.py:141
+msgid "Filesystem Maintenance"
+msgstr "Супровід файлової системи"
+
+#: manaradix/ui/pages/settings.py:146
+#, python-format
+msgid "Balance: %s"
+msgstr "Баланс: %s"
+
+#: manaradix/ui/pages/settings.py:150
+msgid "Start Balance"
+msgstr "Почати балансування"
+
+#: manaradix/ui/pages/settings.py:155
+msgid "Cancel Balance"
+msgstr "Скасувати балансування"
+
+#: manaradix/ui/pages/settings.py:160
+#, python-format
+msgid "Scrub: %s"
+msgstr ""
+
+#: manaradix/ui/pages/settings.py:169
+msgid "Cancel Scrub"
+msgstr "Скасувати витирання"
+
+#: manaradix/ui/pages/settings.py:174
+msgid "Defragment /"
+msgstr "Дефрагментація /"
+
+#: manaradix/ui/pages/settings.py:185
+msgid "GRUB Boot Menu"
+msgstr "Меню завантаження GRUB"
+
+#: manaradix/ui/pages/settings.py:190
+#, python-format
+msgid "GRUB snapshot script: %s"
+msgstr "Скрипт знімків GRUB: %s"
+
+#: manaradix/ui/pages/settings.py:194
+msgid "Install GRUB Script"
+msgstr "Встановити скрипт GRUB"
+
+#: manaradix/ui/pages/settings.py:199
+msgid "Remove GRUB Script"
+msgstr "Вилучити скрипт GRUB"
+
+#: manaradix/ui/pages/settings.py:204
+msgid "Update GRUB Config"
+msgstr "Оновити файл налаштувань GRUB"
+
+#: manaradix/ui/pages/setup.py:48 manaradix/ui/pages/setup.py:86
+#: manaradix/ui/pages/setup.py:100
+msgid "Setup Wizard"
+msgstr "Майстер налаштування"
+
+#: manaradix/ui/pages/setup.py:67
+msgid "Setup Skipped"
+msgstr "Налаштування пропущено"
+
+#: manaradix/ui/pages/setup.py:72
+msgid ""
+"You can configure snapshots and policies later from the Policies and "
+"Settings pages."
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:105
+msgid ""
+"No btrfs filesystem was found on this system. Manaradix only manages btrfs "
+"storage, so there is nothing to set up here."
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:121
+msgid ""
+"No snapshots or snapshot policies are configured yet. Choose a setup profile"
+" for this system and apply it:"
+msgstr ""
+
+#: manaradix/ui/pages/setup.py:127
+msgid "Profile"
+msgstr "Профіль"
+
+#: manaradix/ui/pages/setup.py:139
+msgid "Setup Plan"
+msgstr "План налаштовування"
+
+#: manaradix/ui/pages/setup.py:190
+msgid "Apply Setup"
+msgstr "Застосувати налаштування"
+
+#: manaradix/ui/pages/setup.py:195
+msgid "Skip"
+msgstr "Пропустити"
+
+#: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:64
+#: manaradix/ui/pages/triggers.py:224
+msgid "Actions"
+msgstr "Дії"
+
+#: manaradix/ui/pages/setup.py:206
+#, python-format
+msgid "Subvolume: %s"
+msgstr "Підтом: %s"
+
+#: manaradix/ui/pages/setup.py:217
+msgid "Retention"
+msgstr "Заощадження"
+
+#: manaradix/ui/pages/setup.py:241
+msgid "Setup Failed"
+msgstr "Помилка встановлення"
+
+#: manaradix/ui/pages/setup.py:245
+#, python-format
+msgid "The setup could not be applied: %s"
+msgstr "Не вдалося застосувати налаштування: %s"
+
+#: manaradix/ui/pages/setup.py:255
+msgid "The setup is now in place:"
+msgstr "Тепер налаштування на місці:"
+
+#: manaradix/ui/pages/setup.py:268
+#, python-format
+msgid "Subvolume: %s — %s (retention: %s)"
+msgstr "Підтом: %s — %s (заощадження: %s)"
+
+#: manaradix/ui/pages/setup.py:274
+#, python-format
+msgid "GRUB recovery menu: %s"
+msgstr "Меню відновлення GRUB: %s"
+
+#: manaradix/ui/pages/setup.py:278
+msgid "Setup Applied"
+msgstr "Налаштування застосовано"
+
+#: manaradix/ui/pages/snapshots.py:31 manaradix/ui/pages/snapshots.py:103
+msgid "Snapshots"
+msgstr "Знімки"
+
+#: manaradix/ui/pages/snapshots.py:54
+msgid "Error"
+msgstr "Помилка"
+
+#: manaradix/ui/pages/snapshots.py:58
+#, python-format
+msgid "Error: %s"
+msgstr "Помилка: %s"
+
+#: manaradix/ui/pages/snapshots.py:70
+msgid "Target"
+msgstr "Призначення"
+
+#: manaradix/ui/pages/snapshots.py:77
+msgid "Create Snapshot…"
+msgstr "Створити знімок…"
+
+#: manaradix/ui/pages/snapshots.py:82
+msgid "Delete Selected"
+msgstr "Вилучити позначене"
+
+#: manaradix/ui/pages/snapshots.py:87
+msgid "Restore Selected"
+msgstr "Відновити позначене"
+
+#: manaradix/ui/pages/snapshots.py:92
+msgid "Browse Selected"
+msgstr "Навігація позначеним"
+
+#: manaradix/ui/pages/snapshots.py:97
+msgid "Export Selected"
+msgstr "Експортувати позначене"
+
+#: manaradix/ui/pages/snapshots.py:128
+msgid "Filters"
+msgstr "Фільтри"
+
+#: manaradix/ui/pages/snapshots.py:132
+msgid "Subvolume"
+msgstr "Підтом"
+
+#: manaradix/ui/pages/snapshots.py:139
+msgid "Type"
+msgstr "Тип"
+
+#: manaradix/ui/pages/snapshots.py:152
+#, python-format
+msgid "Snapshot Detail: %s"
+msgstr "Подробиці щодо знімка: %s"
+
+#: manaradix/ui/pages/snapshots.py:154
+#, python-format
+msgid "Path: %s"
+msgstr "Шлях: %s"
+
+#: manaradix/ui/pages/snapshots.py:155
+#, python-format
+msgid "Date: %s"
+msgstr "Дата: %s"
+
+#: manaradix/ui/pages/snapshots.py:156
+#, python-format
+msgid "Read-only: %s"
+msgstr "Лише читання: %s"
+
+#: manaradix/ui/pages/snapshots.py:159
+msgid "Update Description"
+msgstr "Опис оновлення"
+
+#: manaradix/ui/pages/snapshots.py:164
+msgid "New description"
+msgstr "Новий опис"
+
+#: manaradix/ui/pages/snapshots.py:209
+#, python-format
+msgid "Snapshot not found on disk: %s"
+msgstr "Знімка не знайдено на диску: %s"
+
+#: manaradix/ui/pages/triggers.py:43
+msgid "systemd service (boot)"
+msgstr "служба systemd (завантаження)"
+
+#: manaradix/ui/pages/triggers.py:44
+msgid "systemd timer"
+msgstr "таймер systemd"
+
+#: manaradix/ui/pages/triggers.py:51
+msgid "Triggers"
+msgstr "Перемикачі"
+
+#: manaradix/ui/pages/triggers.py:169
+msgid "script missing"
+msgstr "пропущено скрипт"
+
+#: manaradix/ui/pages/triggers.py:171
+msgid "enabled"
+msgstr "увімкнено"
+
+#: manaradix/ui/pages/triggers.py:171
+msgid "disabled"
+msgstr "вимкнено"
+
+#: manaradix/ui/pages/triggers.py:180
+msgid "rpm file trigger"
+msgstr "перемикач файла rpm"
+
+#: manaradix/ui/pages/triggers.py:183
+msgid "next package update"
+msgstr "наступне оновлення пакунка"
+
+#: manaradix/ui/pages/triggers.py:205
+msgid "No triggers are configured."
+msgstr "Перемикачів не налаштовано."
+
+#: manaradix/ui/pages/triggers.py:212
+msgid ""
+"Select a trigger and use Enable/Disable. Schedules and retention are edited "
+"on the Policies tab."
+msgstr ""
+
+#: manaradix/ui/pages/triggers.py:217
+msgid "Configured Triggers"
+msgstr "Налаштовані перемикачі"
+
+#: manaradix/ui/pages/triggers.py:228
+msgid "Enable Selected"
+msgstr "Увімкнути позначене"
+
+#: manaradix/ui/pages/triggers.py:233
+msgid "Disable Selected"
+msgstr "Вимкнути позначене"
+
+#: manaradix/ui/pages/triggers.py:323
+msgid "next boot"
+msgstr "наступне завантаження"
