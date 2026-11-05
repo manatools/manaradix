@@ -327,6 +327,9 @@ class AuiRenderer:
         elif kind == "tree":
             self._render_tree(factory, parent, field)
 
+        elif kind == "pie":
+            self._render_pie(factory, parent, field)
+
         else:
             logger.warning("Unknown widget kind: %r", kind)
 
@@ -382,6 +385,54 @@ class AuiRenderer:
             self._handlers[widget.id()] = ("tree", field["on_select"])
             widget.setNotify(True)
         self._table_headers[widget] = header
+
+    def _render_pie(self, factory, parent, field: dict[str, Any]) -> None:
+        """Pie descriptors map onto a ``YChartPie`` (display only).
+
+        python-manatools without chart support (no ``createChartPie``,
+        e.g. 0.99.3) gets a two-column table of the slices instead.
+        """
+        slices = field.get("slices", [])
+        if not slices:
+            self._pin_vertical(factory.createLabel(parent, _("(no data)")))
+            return
+
+        fmt = field.get("value_format")
+        create = getattr(factory, "createChartPie", None)
+        if not callable(create):
+            total = sum(s.get("value", 0) for s in slices)
+            rows = [
+                {
+                    "Section": s.get("label", ""),
+                    "Size": fmt(s.get("value", 0)) if fmt else str(s.get("value", 0)),
+                    "%": f"{(s.get('value', 0) / total * 100):.1f}%" if total else "-",
+                }
+                for s in slices
+            ]
+            self._render_tree(factory, parent, {"id": field.get("id"), "rows": rows})
+            return
+
+        widget = create(parent, field.get("label", ""))
+        if field.get("id"):
+            widget._id = field["id"]  # noqa: SLF001 -- YWidget has no setId()
+        if fmt is not None:
+            # YChartPie formats legend/tooltip values with the private
+            # _format_value() hook (plain numbers); an instance attribute
+            # shadows it so byte counts read as "1.5 GiB".
+            widget._format_value = fmt  # noqa: SLF001
+        widget.setSlices(
+            (s.get("label", ""), s.get("value", 0), s.get("color")) for s in slices
+        )
+        # Charts default to stretchable/Expanding, yet in the grid the
+        # cell's stretch spacer and the equal row weights hand them only
+        # their minimumSizeHint (a 64 px pie, legend elided to "… +N").
+        # A Fixed policy holds them at their sizeHint: full pie + legend.
+        self._pin_vertical(widget)
+        ratio = field.get("donut_ratio") or 0.0
+        if ratio:
+            widget.setDonutRatio(ratio)
+            if field.get("center_text"):
+                widget.setCenterText(field["center_text"])
 
     def _pin_vertical(self, widget) -> None:
         """Keep a static widget at its natural height (Fixed policy).

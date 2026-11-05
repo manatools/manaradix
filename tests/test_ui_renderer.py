@@ -7,6 +7,8 @@ scripted fake factory can exercise the full widget build + event loop.
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from manatools.aui.yui_common import (
     YCancelEvent,
     YEventReason,
@@ -1056,3 +1058,121 @@ class TestWindowFit:
         renderer = AuiRenderer([PageA()], factory=factory)
         renderer.run()  # must not raise
         assert renderer._dialog is factory.dialog
+
+
+# ---------------------------------------------------------------------------
+# Pie charts
+# ---------------------------------------------------------------------------
+
+
+class FakeChartPie(FakeWidget):
+    """Records the YChartPie calls the renderer makes."""
+
+    def __init__(self, parent, label):
+        super().__init__("chartpie", parent, label)
+        self.slices = []
+        self.donut_ratio = 0.0
+        self.center_text = ""
+
+    def setSlices(self, slices):
+        self.slices = list(slices)
+
+    def setDonutRatio(self, ratio):
+        self.donut_ratio = ratio
+
+    def setCenterText(self, text):
+        self.center_text = text
+
+
+class ChartFactory(FakeFactory):
+    """FakeFactory with chart support (python-manatools feat/charts)."""
+
+    def createChartPie(self, parent, label=""):
+        widget = FakeChartPie(parent, label)
+        parent.children.append(widget)
+        self.widgets.append(widget)
+        return widget
+
+
+class PiePage:
+    title = "Pie"
+
+    def __init__(self, slices):
+        self.slices = slices
+
+    def build_model(self):
+        return PageModel(sections=[{
+            "title": "Usage",
+            "fields": [
+                Widget.pie(
+                    id="pie",
+                    label="/",
+                    slices=self.slices,
+                    center_text="42.0% used",
+                    donut_ratio=0.5,
+                    value_format=lambda v: f"{v:.0f} B",
+                ),
+            ],
+        }])
+
+
+_PIE_SLICES = [
+    {"label": "Data", "value": 30, "color": "#0072b2"},
+    {"label": "Free", "value": 10},
+]
+
+
+class TestPie:
+    def test_pie_maps_to_chart(self) -> None:
+        factory = ChartFactory([YCancelEvent()])
+        AuiRenderer([PiePage(_PIE_SLICES)], factory=factory).run()
+
+        chart = widgets_of(factory, "chartpie")[0]
+        assert chart._id == "pie"
+        assert chart.label_text == "/"
+        assert chart.slices == [("Data", 30, "#0072b2"), ("Free", 10, None)]
+        assert chart.donut_ratio == 0.5
+        assert chart.center_text == "42.0% used"
+        assert chart._format_value(7) == "7 B"
+        assert not widgets_of(factory, "table")
+
+    def test_pie_is_pinned_at_natural_height(self) -> None:
+        """Left stretchable, the grid hands the chart only its minimum
+        size (a 64 px pie with the legend elided) — it must be pinned."""
+        factory = ChartFactory([YCancelEvent()])
+        renderer = AuiRenderer([PiePage(_PIE_SLICES)], factory=factory)
+        renderer.run()
+        chart = widgets_of(factory, "chartpie")[0]
+        assert chart.stretch[YUIDimension.YD_VERT] is False
+        assert chart in renderer._pinned
+        assert chart._vpolicy is not None  # Fixed Qt policy applied
+
+    def test_without_chart_support_falls_back_to_table(self) -> None:
+        renderer, factory = make_renderer([PiePage(_PIE_SLICES)], [YCancelEvent()])
+        renderer.run()
+
+        table = widgets_of(factory, "table")[0]
+        assert table._id == "pie"
+        header = renderer._table_headers[table]
+        assert [header.header(i) for i in range(header.columns())] == ["Section", "Size", "%"]
+        assert [table._items[0].cell(i).label() for i in range(3)] == ["Data", "30 B", "75.0%"]
+        assert [table._items[1].cell(i).label() for i in range(3)] == ["Free", "10 B", "25.0%"]
+
+    def test_empty_slices_show_no_data_label(self) -> None:
+        factory = ChartFactory([YCancelEvent()])
+        AuiRenderer([PiePage([])], factory=factory).run()
+        assert not widgets_of(factory, "chartpie")
+        from manaradix.i18n import _
+
+        assert any(w.label_text == _("(no data)") for w in widgets_of(factory, "label"))
+
+    def test_value_format_reaches_real_chart_legend(self) -> None:
+        """The _format_value override is honoured by the real chart base."""
+        common = pytest.importorskip("manatools.aui.yui_common")
+        if not hasattr(common, "YChartPieBase"):
+            pytest.skip("python-manatools without chart support")
+        chart = common.YChartPieBase()
+        chart._format_value = lambda v: f"{v:.0f} B"
+        chart.setSlices([("Data", 30), ("Free", 10)])
+        assert [row[2] for row in chart._legend_rows()] == ["30 B", "10 B"]
+        assert chart._slice_tooltip(0) == "Data: 30 B (75.0%)"

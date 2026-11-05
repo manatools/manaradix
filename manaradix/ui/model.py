@@ -131,6 +131,48 @@ class Widget:
         }
 
     @staticmethod
+    def pie(
+        *,
+        id: str | None = None,
+        label: str = "",
+        slices: list[dict[str, Any]] | None = None,
+        center_text: str = "",
+        donut_ratio: float = 0.0,
+        value_format: Callable[[float], str] | None = None,
+    ) -> dict[str, Any]:
+        """Pie / donut chart; renders as a YUI ``YChartPie``
+        (``createChartPie``, python-manatools with chart support).
+
+        Backends without chart support get a plain table of the slices
+        instead, so the data is never lost.
+
+        Args:
+            id: Optional widget id for the descriptor.
+            label: Chart title (default "", no title).
+            slices: Slice dicts with ``label`` (str), ``value`` (number
+                ``>= 0``) and an optional ``color`` (``"#rrggbb"``;
+                omitted means the chart palette).
+            center_text: Text drawn in the donut hole (donut mode only).
+            donut_ratio: Hole radius as a fraction of the pie radius,
+                0 (full pie, default) to 0.9.
+            value_format: Formats a slice value for the legend, tooltip
+                and table fallback (e.g. bytes to "1.5 GiB"), or None
+                for the plain number.
+
+        Returns:
+            The widget descriptor dict (``widget`` kind ``"pie"``).
+        """
+        return {
+            "widget": "pie",
+            "id": id,
+            "label": label,
+            "slices": list(slices or []),
+            "center_text": center_text,
+            "donut_ratio": donut_ratio,
+            "value_format": value_format,
+        }
+
+    @staticmethod
     def text(
         *,
         id: str | None = None,
