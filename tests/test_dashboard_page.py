@@ -348,7 +348,47 @@ class TestInternalStatsSection:
         ops.btrfs_mounts.return_value = mounts
         return make_page(ops)
 
-    def test_rows_per_mount(self) -> None:
+    def test_single_filesystem_is_a_donut(self) -> None:
+        ops = MagicMock()
+        ops.filesystem_usage.return_value = usage(unallocated=189073981440)
+        page = self._page_with_mounts(
+            ops, [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "aaa"}],
+        )
+        section = page._internal_stats_section()
+
+        assert section["title"] == "Internal Filesystem Usage"
+        assert len(section["fields"]) == 1  # no selector for one fs
+        chart = section["fields"][0]
+        assert chart["widget"] == "pie"
+        assert chart["label"] == "/"
+        assert chart["donut_ratio"] == 0.55
+        assert [(s["label"], s["value"]) for s in chart["slices"]] == [
+            ("Data", 18928889856),
+            ("Metadata", 382238720),
+            ("System", 16384),
+            ("Allocated, unused", (20409483264 - 18928889856)
+             + (1073741824 - 382238720) + (8388608 - 16384)),
+            ("Unallocated", 189073981440),
+        ]
+        used = 18928889856 + 382238720 + 16384
+        assert chart["center_text"] == f"{used / 211618365440 * 100:.1f}%"
+        assert chart["value_format"](1073741824) == "1.0 GiB"
+
+    def test_unallocated_falls_back_to_logical_estimate(self) -> None:
+        ops = MagicMock()
+        ops.filesystem_usage.return_value = usage()  # no "unallocated" key
+        page = self._page_with_mounts(
+            ops, [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "aaa"}],
+        )
+        slices = page._internal_stats_section()["fields"][0]["slices"]
+        allocated = 20409483264 + 1073741824 + 8388608
+        assert slices[-1] == {
+            "label": "Unallocated",
+            "value": 211618365440 - allocated,
+            "color": "#999999",
+        }
+
+    def test_multiple_filesystems_get_a_selector(self) -> None:
         ops = MagicMock()
         ops.filesystem_usage.side_effect = [
             usage(),  # / mount
@@ -361,19 +401,29 @@ class TestInternalStatsSection:
                 {"target": "/home", "source": "/dev/mapper/crypt", "uuid": "bbb"},
             ],
         )
-        section = page._internal_stats_section()
-        rows = section["fields"][0]["rows"]
+        page._selected_internal_fs = "/home"
+        selector, chart = page._internal_stats_section()["fields"]
 
-        assert len(rows) == 6  # Data/Metadata/System × 2 mounts
-        assert rows[0] == {
-            "Filesystem": "/",
-            "Section": "Data",
-            "Size": "19.0 GiB",
-            "Used": "17.6 GiB",
-            "Used %": "92.7%",
-        }
-        home_data = [r for r in rows if r["Filesystem"] == "/home" and r["Section"] == "Data"][0]
-        assert home_data["Used %"] == "75.0%"
+        assert selector["widget"] == "dropdown"
+        assert selector["options"] == ["/", "/home"]
+        assert selector["selected"] == "/home"
+        assert chart["label"] == "/home"
+        assert chart["slices"][0] == {"label": "Data", "value": 750000000, "color": "#0072b2"}
+
+    def test_unknown_selection_falls_back_to_first(self) -> None:
+        ops = MagicMock()
+        ops.filesystem_usage.return_value = usage()
+        page = self._page_with_mounts(
+            ops,
+            [
+                {"target": "/", "source": "/dev/nvme0n1p3", "uuid": "aaa"},
+                {"target": "/home", "source": "/dev/sdb1", "uuid": "bbb"},
+            ],
+        )
+        page._selected_internal_fs = "/gone"
+        selector, chart = page._internal_stats_section()["fields"]
+        assert selector["selected"] == "/"
+        assert chart["label"] == "/"
 
     def test_dedupes_mounts_by_uuid(self) -> None:
         ops = MagicMock()
@@ -385,24 +435,30 @@ class TestInternalStatsSection:
                 {"target": "/var", "source": "/dev/nvme0n1p3", "uuid": "aaa"},
             ],
         )
-        section = page._internal_stats_section()
-        rows = section["fields"][0]["rows"]
-        # one group only, using the shortest target (/)
-        assert len(rows) == 3
-        assert all(r["Filesystem"] == "/" for r in rows)
+        fields = page._internal_stats_section()["fields"]
+        # one group only, using the shortest target (/), so no selector
+        assert len(fields) == 1
+        assert fields[0]["label"] == "/"
 
     def test_mounts_error_falls_back_to_root(self) -> None:
         ops = MagicMock()
         ops.btrfs_mounts.side_effect = RuntimeError("findmnt broken")
         ops.filesystem_usage.return_value = usage()
-        section = make_page(ops)._internal_stats_section()
-        rows = section["fields"][0]["rows"]
-        assert len(rows) == 3
-        assert all(r["Filesystem"] == "/" for r in rows)
+        fields = make_page(ops)._internal_stats_section()["fields"]
+        assert len(fields) == 1
+        assert fields[0]["label"] == "/"
 
     def test_no_device_size_returns_none(self) -> None:
         ops = MagicMock()
         ops.filesystem_usage.return_value = usage(device_size=0)
+        page = self._page_with_mounts(
+            ops, [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "aaa"}],
+        )
+        assert page._internal_stats_section() is None
+
+    def test_no_sections_returns_none(self) -> None:
+        ops = MagicMock()
+        ops.filesystem_usage.return_value = {"overall": {"device_size": 1000}}
         page = self._page_with_mounts(
             ops, [{"target": "/", "source": "/dev/nvme0n1p3", "uuid": "aaa"}],
         )

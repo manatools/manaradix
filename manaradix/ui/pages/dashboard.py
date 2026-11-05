@@ -253,7 +253,13 @@ class DashboardPage:
         }
 
     def _internal_stats_section(self) -> dict | None:
-        """Data/Metadata/System usage per btrfs filesystem."""
+        """Data/Metadata/System space breakdown per btrfs filesystem.
+
+        Rendered as a donut chart: used bytes per section, the allocated
+        but unused remainder of the chunks, and the unallocated device
+        space.  With more than one filesystem a dropdown selects which
+        one the chart shows (half-width cell, one chart at a time).
+        """
         try:
             mounts = self.app.btrfs_ops.btrfs_mounts()
         except Exception as exc:
@@ -264,7 +270,7 @@ class DashboardPage:
 
         # One group per unique filesystem: subvolume mounts of the same fs
         # share a uuid — keep the shortest target (the most top-level
-        # mount, e.g. / over /var) so rows are not double-counted.
+        # mount, e.g. / over /var) so filesystems are not listed twice.
         by_uuid: dict[str, dict] = {}
         for m in mounts:
             uuid = m.get("uuid", "")
@@ -272,61 +278,84 @@ class DashboardPage:
                 by_uuid[uuid] = m
         groups = sorted(by_uuid.values(), key=lambda m: m["target"])
 
-        rows: list[dict] = []
+        charts: dict[str, dict] = {}
         for mount in groups:
-            overall = self._usage(mount["target"]).get("overall", {})
-            if not overall.get("device_size"):
-                continue
-            for section, label in (
-                ("data", _("Data")),
-                ("metadata", _("Metadata")),
-                ("system", _("System")),
-            ):
-                s = overall.get(section)
-                if not s:
-                    continue
-                pct = f"{(s['used'] / s['size'] * 100):.1f}%" if s["size"] else "-"
-                rows.append({
-                    "Filesystem": mount["target"],
-                    "Section": label,
-                    "Size": self._fmt_bytes(s["size"]),
-                    "Used": self._fmt_bytes(s["used"]),
-                    "Used %": pct,
-                })
-        if not rows:
+            chart = self._internal_usage_chart(mount["target"])
+            if chart is not None:
+                charts[mount["target"]] = chart
+        if not charts:
             return None
 
-        if len(groups) > _MAX_ROWS_DIRECT:
-            options = [m["target"] for m in groups]
-            selected = self._selected_internal_fs if self._selected_internal_fs in options else options[0]
-            return {
-                "title": _("Internal Filesystem Usage"),
-                "id": "internal",
-                "column": 0,
-                "fields": [
-                    Widget.dropdown(
-                        id="internal_fs_selector",
-                        label=_("Filesystem"),
-                        options=options,
-                        selected=selected,
-                        on_change=self.on_internal_fs_selected,
-                    ),
-                    Widget.tree(
-                        id="internal_stats",
-                        rows=[r for r in rows if r["Filesystem"] == selected],
-                        selectable=False,
-                    ),
-                ],
-            }
-
+        options = list(charts)
+        fields: list[dict] = []
+        selected = options[0]
+        if len(options) > 1:
+            if self._selected_internal_fs in charts:
+                selected = self._selected_internal_fs
+            fields.append(
+                Widget.dropdown(
+                    id="internal_fs_selector",
+                    label=_("Filesystem"),
+                    options=options,
+                    selected=selected,
+                    on_change=self.on_internal_fs_selected,
+                )
+            )
+        fields.append(charts[selected])
         return {
             "title": _("Internal Filesystem Usage"),
             "id": "internal",
             "column": 0,
-            "fields": [
-                Widget.tree(id="internal_stats", rows=rows, selectable=False),
-            ],
+            "fields": fields,
         }
+
+    def _internal_usage_chart(self, mount: str) -> dict | None:
+        """Donut chart descriptor of *mount*'s space, or None without data."""
+        overall = self._usage(mount).get("overall", {})
+        device_size = overall.get("device_size")
+        if not device_size:
+            return None
+        sections = [
+            (overall[key], label, color)
+            for key, label, color in (
+                ("data", _("Data"), "#0072b2"),
+                ("metadata", _("Metadata"), "#e69f00"),
+                ("system", _("System"), "#cc79a7"),
+            )
+            if overall.get(key)
+        ]
+        if not sections:
+            return None
+
+        slices = [
+            {"label": label, "value": s["used"], "color": color}
+            for s, label, color in sections
+        ]
+        allocated = sum(s["size"] for s, _label, _color in sections)
+        used = sum(s["used"] for s, _label, _color in sections)
+        slices.append({
+            "label": _("Allocated, unused"),
+            "value": max(allocated - used, 0),
+            "color": "#56b4e9",
+        })
+        # The parsed raw figure is exact (DUP/RAID chunks count twice on
+        # the device); the logical estimate is a fallback for old output.
+        unallocated = overall.get("unallocated", max(device_size - allocated, 0))
+        slices.append({
+            "label": _("Unallocated"),
+            "value": unallocated,
+            "color": "#999999",
+        })
+        return Widget.pie(
+            id="internal_stats",
+            label=mount,
+            slices=slices,
+            # Bare percentage: "x% used" no longer fits the hole once
+            # the chart shares a half-width cell with the legend.
+            center_text=f"{used / device_size * 100:.1f}%",
+            donut_ratio=0.55,
+            value_format=self._fmt_bytes,
+        )
 
     def _snapshot_usage_section(self) -> dict:
         """Snapshot count and disk usage from the SQLite store.
