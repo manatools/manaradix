@@ -96,9 +96,10 @@ cleanly (`msgfmt --check`), and spot-checks actual lookups from compiled
 `/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo`, compiled and
 installed by the RPM spec (`msgfmt` + `%find_lang`).
 
-Mageia contributors translate manaradix on
+Translations are managed on
 [Transifex](https://explore.transifex.com/MageiaLinux/mageia/) (resource
-`manaradix` in the `mageia` project, same as dnfdragora and manafirewall).
+`manaradix` in the Mageia project, alongside dnfdragora and manafirewall);
+anyone can join the language team there.
 `locale/.tx/config` maps the resource to `locale/<lang>.po`; with the
 [tx CLI](https://developers.transifex.com/docs/cli):
 
@@ -126,7 +127,11 @@ cd locale/desktop && tx push -s               # upload the pot after a desktop
                                               # string changes
 ```
 
-## Packaging (Mageia)
+## Packaging
+
+The reference package is the Mageia RPM (`manaradix.spec`); see
+[Packaging for other distributions](packaging.md) for the file layout and
+the package-manager hooks to wire elsewhere.  Mageia workflow:
 
 ```bash
 bm -sl manaradix.spec       # SRPM packaging (source-only)

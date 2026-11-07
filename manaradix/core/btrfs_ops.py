@@ -182,8 +182,9 @@ class BtrfsOps:
         print(ops.list_snapshots("/"))
     """
 
-    # Mageia installs btrfs-progs under /usr/sbin; resolve via PATH with a
-    # fallback so the elevated (pkexec) environment still finds it.
+    # Some distributions install btrfs-progs under /usr/sbin only; resolve
+    # via PATH with a fallback so the elevated (pkexec) environment, whose
+    # PATH may lack sbin, still finds it.
     BTRFS_BIN = shutil.which("btrfs") or "/usr/sbin/btrfs"
     FINMNT_BIN = "/usr/bin/findmnt"
 

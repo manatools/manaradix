@@ -1,14 +1,16 @@
-# Manaradix — Btrfs Snapshot Management for Mageia
+# Manaradix — Btrfs Snapshot Management
 
-A system utility for **Mageia 10** and **Cauldron** providing a unified
+A system utility for Linux distributions on Btrfs, providing a unified
 graphical and text interface for managing Btrfs snapshots, subvolumes,
 and filesystem parameters. Built on top of `python-manatools` using the `aui`
 (Abstract UI) backend so a single codebase renders in Qt, GTK, and ncurses
 frontends.
 
 Conceptually similar to openSUSE's `btrfsmaintenance` + `btrfs-assistant` and
-Garuda's `btrfs-assistant`, but tailored to Mageia's infrastructure and
-packaging conventions.
+Garuda's `btrfs-assistant`. Developed on Mageia (10 and Cauldron), which
+ships the reference RPM package, but it depends only on btrfs-progs,
+systemd, polkit, D-Bus, and GRUB — see [Packaging](docs/packaging.md) for other
+distributions.
 
 ## Screenshots
 
@@ -32,26 +34,29 @@ The Qt frontend. The same pages render in GTK and ncurses.
 |---|---|---|
 | Python | 3.11+ | Core runtime |
 | `btrfs-progs` | 6.7+ | `/usr/bin/btrfs` for all filesystem operations |
-| `python-manatools` | Mageia 10 official repos | UI abstraction layer (GUI; includes the `aui` backend) |
+| `python-manatools` | with the `aui` backend | UI abstraction layer (GUI) |
 | systemd | 255+ | Timers for automated snapshots |
 | polkit | 0.120+ | Privilege escalation for non-root users |
 | grub2 | — | Boot-from-snapshot support |
 
 ## Installation
 
+Install the `manaradix` package from your distribution's repositories,
+e.g. on Mageia:
+
 ```bash
 urpmi manaradix
 ```
 
-(or Rpmdrake / GNOME Software once the package is available for your
-release). The package installs the CLI/GUI launcher, man pages
+The package installs the CLI/GUI launcher, man pages
 (`man manaradix`, `man 5 manaradix-config`), polkit rules, the setup
 profiles, the bus-activated D-Bus service, and the tray applet (a
 notification-area watchdog that autostarts at login and reports low
 disk space, device errors, and snapshots due for pruning). See
 [docs/install.md](docs/install.md) and
 [docs/tray-applet.md](docs/tray-applet.md) for details and
-post-install steps.
+post-install steps, and [docs/packaging.md](docs/packaging.md) to package
+manaradix for another distribution.
 
 ## Development Setup
 
@@ -113,7 +118,7 @@ in `.venv/pyvenv.cfg` (no recreation needed).
 | `tomlkit` | ≥ 0.12.0 | TOML config file parsing (`/etc/manaradix/config.toml`) |
 | `pytest` | ≥ 8.0 | Test runner (dev only) |
 | `pytest-cov` | ≥ 5.0 | Coverage reporting (dev only) |
-| `python-manatools` | Mageia 10 official repos | UI abstraction layer (GUI; `python3-manatools` on Mageia) |
+| `python-manatools` | with the `aui` backend | UI abstraction layer (GUI; often packaged as `python3-manatools`) |
 
 The Dashboard page shows disk usage per physical disk, a table of all
 btrfs filesystems (label, devices, sizes, free space, used percentage),
@@ -242,7 +247,7 @@ without blocking the window. See `docs/usage-tracker.md`.
 
 ### First-run setup wizard
 
-When the system has no snapshots and no snapshot policies (a stock Mageia
+When the system has no snapshots and no snapshot policies (a fresh
 btrfs install), the GUI opens on a **Setup Wizard** tab proposing a setup
 profile for this system — desktop, server, or kiosk — auto-selected from
 the detected role (graphical → desktop, headless → server) and switchable
@@ -603,9 +608,10 @@ is at `locale/manaradix.pot`.  System-installed ``.mo`` files go to
 ``/usr/share/locale/<lang>/LC_MESSAGES/manaradix.mo``, compiled and
 installed by the RPM spec (``msgfmt`` + ``%find_lang``).
 
-Mageia contributors translate manaradix on
+Translations are managed on
 [Transifex](https://explore.transifex.com/MageiaLinux/mageia/) (resource
-`manaradix` in the `mageia` project, same as dnfdragora and manafirewall).
+`manaradix` in the Mageia project, alongside dnfdragora and manafirewall);
+anyone can join the language team there.
 `locale/.tx/config` maps the resource to `locale/<lang>.po`; with the
 [tx CLI](https://developers.transifex.com/docs/cli):
 

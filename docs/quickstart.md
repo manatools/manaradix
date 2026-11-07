@@ -23,7 +23,7 @@ by python-manatools; you can set it directly instead
 
 ## First run: the setup wizard
 
-When the system has no snapshots and no snapshot policies (a stock Mageia
+When the system has no snapshots and no snapshot policies (a fresh
 btrfs install), the GUI opens on a **Setup Wizard** tab proposing a setup
 profile for this system — desktop, server, or kiosk — auto-selected from
 the detected role (graphical → desktop, headless → server) and switchable

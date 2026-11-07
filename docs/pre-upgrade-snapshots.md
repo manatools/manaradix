@@ -46,6 +46,10 @@ stays registered until it is removed. Mageia ≥ 9 is usr-merged, so the
 pattern `/usr /etc` matches essentially every transaction — an upgrade
 matches because the *old* versions of the files are removed.
 
+On non-RPM distributions the same script is wired to the native
+pre-transaction hook instead (apt `DPkg::Pre-Invoke`, pacman
+`PreTransaction`) — see [Packaging](packaging.md#pre-upgrade-trigger).
+
 This is exactly the "before the upgrade starts" hook, on every frontend:
 
 | Frontend | Hook fires? |

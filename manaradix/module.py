@@ -211,7 +211,7 @@ def run_app(
     except ImportError:
         logger.error(
             "python-manatools is required for the UI. "
-            "Install it as a system package on Mageia."
+            "Install it from your distribution's packages."
         )
         sys.exit(1)
 
@@ -313,7 +313,7 @@ def _build_parser() -> argparse.ArgumentParser:
     """Build the full argument parser with subcommands."""
     parser = argparse.ArgumentParser(
         description="Manaradix — Btrfs snapshot, subvolume, "
-        "and filesystem management utility for Mageia",
+        "and filesystem management utility for Linux",
     )
     _add_global_args(parser)
     parser.add_argument(

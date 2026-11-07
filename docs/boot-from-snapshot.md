@@ -20,5 +20,5 @@ you a read-only recovery environment. The script only lists snapshots of
 the root subvolume; pre-upgrade and other read-only snapshot types appear
 in the menu.
 
-Note: this requires GRUB (the Mageia bootloader); other bootloaders are
+Note: this requires GRUB; other bootloaders are
 detected and the option is hidden in the setup wizard accordingly.

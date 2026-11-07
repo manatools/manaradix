@@ -1,14 +1,16 @@
-# Manaradix — Btrfs Snapshot Management for Mageia
+# Manaradix — Btrfs Snapshot Management
 
-A system utility for **Mageia 10** and **Cauldron** providing a unified
+A system utility for Linux distributions on Btrfs, providing a unified
 graphical and text interface for managing Btrfs snapshots, subvolumes,
 and filesystem parameters. Built on top of `python-manatools` using the `aui`
 (Abstract UI) backend so a single codebase renders in Qt, GTK, and ncurses
 frontends.
 
 Conceptually similar to openSUSE's `btrfsmaintenance` + `btrfs-assistant` and
-Garuda's `btrfs-assistant`, but tailored to Mageia's infrastructure and
-packaging conventions.
+Garuda's `btrfs-assistant`. Developed on Mageia (10 and Cauldron), which
+ships the reference RPM package, but it depends only on btrfs-progs,
+systemd, polkit, D-Bus, and GRUB — see [Packaging](packaging.md) for other
+distributions.
 
 The Qt frontend. The same pages render in GTK and ncurses.
 
@@ -54,7 +56,8 @@ The Qt frontend. The same pages render in GTK and ncurses.
 
 | Where | What |
 |---|---|
-| [Install](install.md) | Installing from Mageia repositories |
+| [Install](install.md) | Installing from distribution packages |
+| [Packaging](packaging.md) | Packaging manaradix for other distributions |
 | [Quick start](quickstart.md) | Launching the GUI and the setup wizard |
 | [CLI reference](cli.md) | Every command, option, and exit code |
 | [Configuration](configuration.md) | `/etc/manaradix/config.toml` reference |

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "manaradix"
 version = "0.3.0"
-description = "Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
+description = "Btrfs snapshot, subvolume, and filesystem management utility for Linux"
 readme = "README.md"
 license = {text = "GPLv2+"}
 requires-python = ">=3.11"
@@ -26,9 +26,9 @@ classifiers = [
     "Topic :: System :: Systems Administration",
 ]
 
-# python-manatools (in Mageia 10 official repositories) provides the UI
-# layer; its aui backend is part of the released version.  It is a system
-# package on Mageia, so it is declared in the RPM spec, not here.
+# python-manatools provides the UI layer; its aui backend is part of the
+# released version.  It is installed as a system package, so distribution
+# packages declare it (e.g. Requires in manaradix.spec), not this file.
 # btrfs-progs, systemd, polkit, and grub2 are system-level dependencies.
 dependencies = [
     "tomlkit>=0.12.0",

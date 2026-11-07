@@ -1,6 +1,6 @@
 """First-run setup wizard logic.
 
-On a stock Mageia install with plain btrfs partitioning, manaradix finds
+On a fresh install with plain btrfs partitioning, manaradix finds
 an empty system: no snapshots, no policies, no configuration.  This module
 detects that state (``needs_setup``) and proposes a **setup profile** (see
 :mod:`manaradix.core.templates`) — desktop, server, kiosk, ... — adapted

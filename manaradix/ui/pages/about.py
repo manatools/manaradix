@@ -67,7 +67,7 @@ class AboutPage:
                         id="about_description",
                         text=_(
                             "Btrfs snapshot, subvolume, and filesystem "
-                            "management utility for Mageia"
+                            "management utility for Linux"
                         ),
                     ),
                     Widget.label(

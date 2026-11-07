@@ -1,7 +1,7 @@
 """StatusNotifierItem (SNI) tray icon over the session bus.
 
-Hand-rolled over python3-dbus (no ayatana-appindicator/pystray in the
-Mageia 10 repositories), following the system-tray patterns dnfdragora
+Hand-rolled over python3-dbus (no ayatana-appindicator/pystray
+dependency), following the system-tray patterns dnfdragora
 uses.  The item exports a ``org.kde.StatusNotifierItem`` object with
 the minimal ``org.freedesktop.DBus.Properties`` surface, registers with
 ``org.kde.StatusNotifierWatcher``, and pushes state changes through the

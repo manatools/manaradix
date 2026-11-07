@@ -620,12 +620,8 @@ msgid "Open manaradix"
 msgstr "Apri manaradix"
 
 #: manaradix/tray/app.py:407 manaradix/ui/pages/about.py:69
-msgid "Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
-msgstr ""
-"Utilità di gestione di snapshot, subvolume e filesystem Btrfs per "
-"MageiaUtilità di gestione di snapshot, subvolumi e filesystem btrfs per "
-"MageiaUtilità di gestione di snapshot, subvolume e filesystem Btrfs per "
-"Mageia"
+msgid "Btrfs snapshot, subvolume, and filesystem management utility for Linux"
+msgstr "Utilità di gestione di snapshot, subvolume e filesystem Btrfs per Linux"
 
 #: manaradix/tray/dbus_menu.py:70
 msgid "Check now"

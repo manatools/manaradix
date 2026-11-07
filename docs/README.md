@@ -8,14 +8,15 @@ repository root).
 
 | Document | Contents |
 |---|---|
-| [Install](install.md) | Installing from Mageia repositories, system requirements |
+| [Install](install.md) | Installing from distribution packages, system requirements |
+| [Packaging](packaging.md) | File layout and hooks for packaging on other distributions |
 | [Quick start](quickstart.md) | GUI launch, setup wizard, first snapshots |
 | [CLI reference](cli.md) | All commands, options, exit codes, privilege model |
 | [Configuration](configuration.md) | `/etc/manaradix/config.toml` reference |
 | [Automated snapshots](automated-snapshots.md) | systemd timers, unit naming, pruning |
 | [Boot from snapshot](boot-from-snapshot.md) | GRUB recovery menu |
 | [Setup profiles](profiles.md) | Desktop/server/kiosk profiles, template schema |
-| [Pre-upgrade snapshots](pre-upgrade-snapshots.md) | The rpm file trigger mechanism |
+| [Pre-upgrade snapshots](pre-upgrade-snapshots.md) | The package-manager trigger mechanism |
 
 ## Interfaces
 

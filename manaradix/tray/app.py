@@ -405,7 +405,7 @@ class TrayApp:
             self._notifier.notify(
                 f"Manaradix {__version__}\n",
                 _("Btrfs snapshot, subvolume, and filesystem "
-                  "management utility for Mageia")
+                  "management utility for Linux")
                 + "\nhttps://github.com/manatools/manaradix",
                 actions=["open", _("Open manaradix")],
             )

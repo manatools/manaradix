@@ -1,4 +1,4 @@
-"""Manaradix — Btrfs snapshot, subvolume, and filesystem management for Mageia."""
+"""Manaradix — Btrfs snapshot, subvolume, and filesystem management for Linux."""
 
 from manaradix.i18n import init_i18n
 
