@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix desktop files translation\n"
 "Report-Msgid-Bugs-To: i18n-discuss@ml.mageia.org\n"
-"POT-Creation-Date: 2026-11-04 17:43+0100\n"
+"POT-Creation-Date: 2026-11-07 20:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,22 +33,22 @@ msgctxt "Keywords"
 msgid "btrfs;snapshot;tray;notification;health;disk;"
 msgstr ""
 
-#: data/desktop/manaradix.desktop
+#: data/desktop/org.mageia.manaradix.desktop
 msgctxt "Name"
 msgid "Manaradix"
 msgstr ""
 
-#: data/desktop/manaradix.desktop
+#: data/desktop/org.mageia.manaradix.desktop
 msgctxt "GenericName"
 msgid "Btrfs Snapshot Manager"
 msgstr ""
 
-#: data/desktop/manaradix.desktop
+#: data/desktop/org.mageia.manaradix.desktop
 msgctxt "Comment"
 msgid "Manage Btrfs snapshots, subvolumes, and filesystem parameters"
 msgstr ""
 
-#: data/desktop/manaradix.desktop
+#: data/desktop/org.mageia.manaradix.desktop
 msgctxt "Keywords"
 msgid "btrfs;snapshot;subvolume;filesystem;backup;restore;"
 msgstr ""

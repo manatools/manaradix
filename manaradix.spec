@@ -77,8 +77,12 @@ install -D -m 0644 data/polkit/org.mageia.manaradix.policy \
     %{buildroot}%{_datadir}/polkit-1/actions/org.mageia.manaradix.policy
 
 # --- Desktop launcher ---
-install -D -m 0644 data/desktop/manaradix.desktop \
-    %{buildroot}%{_datadir}/applications/manaradix.desktop
+install -D -m 0644 data/desktop/org.mageia.manaradix.desktop \
+    %{buildroot}%{_datadir}/applications/org.mageia.manaradix.desktop
+
+# --- AppStream metadata (software centers; id matches the desktop file) ---
+install -D -m 0644 data/metainfo/org.mageia.manaradix.metainfo.xml \
+    %{buildroot}%{_metainfodir}/org.mageia.manaradix.metainfo.xml
 
 # --- Tray applet autostart (per-login user process, session bus) ---
 install -D -m 0644 data/desktop/manaradix-tray.desktop \
@@ -149,7 +153,8 @@ done
 %{python3_sitelib}/manaradix/
 %{python3_sitelib}/manaradix-%{version}*.dist-info/
 %{_datadir}/polkit-1/actions/org.mageia.manaradix.policy
-%{_datadir}/applications/manaradix.desktop
+%{_datadir}/applications/org.mageia.manaradix.desktop
+%{_metainfodir}/org.mageia.manaradix.metainfo.xml
 %{_sysconfdir}/xdg/autostart/manaradix-tray.desktop
 %{_datadir}/icons/hicolor/
 %{_datadir}/manaradix/templates/

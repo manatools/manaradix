@@ -10,6 +10,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+#: Reverse-DNS application id (manatools convention, as dnfdragora's
+#: ``org.mageia.dnfdragora``): the basename of the shipped desktop file
+#: (``data/desktop/org.mageia.manaradix.desktop``) and the AppStream
+#: component id (``data/metainfo/org.mageia.manaradix.metainfo.xml``).
+#: Set as the window's app id so Wayland compositors match the running
+#: GUI to its launcher (icon + name in the task manager / dock).
+APP_ID = "org.mageia.manaradix"
+
 _LOGO_NAME = "manaradix.svg"
 _LOGO_PNG_NAME = "manaradix.png"
 

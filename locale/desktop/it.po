@@ -37,22 +37,22 @@ msgctxt "Keywords"
 msgid "btrfs;snapshot;tray;notification;health;disk;"
 msgstr "btrfs;snapshot;barra di sistema;notifica;salute;disco;"
 
-#: data/desktop/manaradix.desktop
+#: data/desktop/org.mageia.manaradix.desktop
 msgctxt "Name"
 msgid "Manaradix"
 msgstr "Manaradix"
 
-#: data/desktop/manaradix.desktop
+#: data/desktop/org.mageia.manaradix.desktop
 msgctxt "GenericName"
 msgid "Btrfs Snapshot Manager"
 msgstr "Gestore degli snapshot Btrfs"
 
-#: data/desktop/manaradix.desktop
+#: data/desktop/org.mageia.manaradix.desktop
 msgctxt "Comment"
 msgid "Manage Btrfs snapshots, subvolumes, and filesystem parameters"
 msgstr "Gestisci snapshot, subvolume e parametri del filesystem Btrfs"
 
-#: data/desktop/manaradix.desktop
+#: data/desktop/org.mageia.manaradix.desktop
 msgctxt "Keywords"
 msgid "btrfs;snapshot;subvolume;filesystem;backup;restore;"
 msgstr "btrfs;snapshot;subvolume;filesystem;backup;ripristino;"

@@ -30,7 +30,7 @@ import logging
 from pathlib import Path
 from typing import Any, Callable
 
-from manaradix.core.assets import logo_path
+from manaradix.core.assets import APP_ID, logo_path
 from manaradix.i18n import _
 
 logger = logging.getLogger(__name__)
@@ -89,6 +89,9 @@ class AuiRenderer:
         self._active_factory = factory
 
         if self._factory is None:
+            # Before the first dialog: GTK registers its Gtk.Application
+            # with this id, Qt calls setDesktopFileName().
+            self._set_desktop_file_name()
             try:
                 YUI.application().setApplicationTitle("Manaradix")
             except Exception as exc:  # cosmetic only
@@ -517,6 +520,24 @@ class AuiRenderer:
             self._handlers[widget.id()] = (kind, callback)
 
     # -- Application icon ---------------------------------------------------
+
+    def _set_desktop_file_name(self) -> None:
+        """Tie the window to its desktop entry via the reverse-DNS app id.
+
+        Assigns :data:`manaradix.core.assets.APP_ID` to the manatools
+        ``desktop_file_name`` property (Qt: ``setDesktopFileName``; GTK:
+        prgname + ``Gtk.Application`` id), so Wayland compositors map the
+        window's app id to ``org.mageia.manaradix.desktop`` and show the
+        right icon and name.  Must run before the first dialog is shown.
+        Older manatools without the property just store an attribute.
+        Failure is cosmetic only.
+        """
+        try:
+            from manatools.aui.yui import YUI
+
+            YUI.application().desktop_file_name = APP_ID
+        except Exception as exc:  # cosmetic only
+            logger.debug("Could not set desktop file name: %s", exc)
 
     def _set_app_icon(self) -> None:
         """Apply the manaradix logo as the application/window icon.

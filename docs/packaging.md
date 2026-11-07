@@ -34,7 +34,8 @@ Install the Python package with your usual PEP 517 tooling (`pip install .`,
 | `data/systemd/manaradix-dbus.service` | systemd system unit dir (never enabled — bus-activated) |
 | `data/systemd/manaradix-usage.{service,timer}` | systemd system unit dir (enable the timer once on install) |
 | `data/libexec/manaradix-pre-upgrade` | `/usr/libexec/manaradix/pre-upgrade` (mode 0755) |
-| `data/desktop/manaradix.desktop` | `/usr/share/applications/` |
+| `data/desktop/org.mageia.manaradix.desktop` | `/usr/share/applications/` |
+| `data/metainfo/org.mageia.manaradix.metainfo.xml` | `/usr/share/metainfo/` (AppStream, for software centers) |
 | `data/desktop/manaradix-tray.desktop` | `/etc/xdg/autostart/` |
 | `data/icons/hicolor/*` | `/usr/share/icons/hicolor/` |
 | `data/images/manaradix.png` | `/usr/share/manaradix/images/` |
@@ -52,7 +53,8 @@ Paths that are fixed in code or data files:
   demand when the flag is enabled and the file is missing.
 - `/etc/manaradix/config.toml` — configuration.
 
-The D-Bus name and polkit action ids keep the upstream
+The D-Bus name, polkit action ids, and the application id (desktop file,
+AppStream component, Wayland app id) keep the upstream
 `org.mageia.manaradix` namespace on every distribution — they are part of
 the public interface ([D-Bus interface](api/dbus.md)), not a branding
 detail, so do not rename them downstream.

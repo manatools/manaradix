@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 Matteo Pasotti -->
+<component type="desktop-application">
+  <id>org.mageia.manaradix</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0-or-later</project_license>
+  <name>Manaradix</name>
+  <developer id="org.mageia">
+    <name>ManaTools</name>
+  </developer>
+  <summary>Manage Btrfs snapshots, subvolumes, and filesystem parameters</summary>
+  <summary xml:lang="it">Gestisci snapshot, subvolume e parametri del filesystem Btrfs</summary>
+  <summary xml:lang="zh-CN">管理 Btrfs 快照、子卷和文件系统参数</summary>
+  <description>
+    <p>
+      Manaradix is a system utility for Btrfs-based Linux systems: it
+      creates, browses, restores, and prunes snapshots, schedules automatic
+      snapshots with systemd timers, takes a snapshot before every package
+      upgrade, and adds read-only snapshots to the GRUB boot menu.
+    </p>
+    <p xml:lang="it">
+      Manaradix è un'utilità di sistema per sistemi Linux su Btrfs: crea,
+      esplora, ripristina ed elimina gli snapshot, pianifica snapshot
+      automatici con i timer di systemd, scatta uno snapshot prima di ogni
+      aggiornamento dei pacchetti e aggiunge gli snapshot in sola lettura
+      al menu di avvio di GRUB.
+    </p>
+    <p xml:lang="zh-CN">
+      Manaradix 是面向 Btrfs Linux 系统的系统工具：创建、浏览、还原和清理快照，
+      通过 systemd 定时器自动创建快照，在每次软件包升级前创建快照，
+      并将只读快照加入 GRUB 启动菜单。
+    </p>
+    <p>
+      It is written in Python 3 on manatools AUI, so the same interface runs
+      with Qt, GTK, or ncurses. A notification-area applet warns about low
+      disk space, device errors, and snapshots due for pruning.
+    </p>
+    <p xml:lang="it">
+      È scritto in Python 3 su manatools AUI, quindi la stessa interfaccia
+      funziona con Qt, GTK o ncurses. Un'applet nell'area di notifica
+      avvisa di spazio su disco in esaurimento, errori dei dispositivi e
+      snapshot da eliminare.
+    </p>
+    <p xml:lang="zh-CN">
+      它基于 manatools AUI 用 Python 3 编写，同一界面可在 Qt、GTK 或 ncurses 下运行。
+      通知区域小程序会提示磁盘空间不足、设备错误以及需要清理的快照。
+    </p>
+  </description>
+  <launchable type="desktop-id">org.mageia.manaradix.desktop</launchable>
+  <provides>
+    <binary>manaradix</binary>
+  </provides>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/manatools/manaradix/main/docs/assets/screenshots/dashboard.png</image>
+      <caption>Dashboard</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/manatools/manaradix/main/docs/assets/screenshots/snapshots.png</image>
+      <caption>Snapshots</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/manatools/manaradix/main/docs/assets/screenshots/policies.png</image>
+      <caption>Snapshot policies</caption>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://github.com/manatools/manaradix</url>
+  <url type="bugtracker">https://github.com/manatools/manaradix/issues</url>
+  <url type="translate">https://explore.transifex.com/MageiaLinux/mageia/</url>
+  <categories>
+    <category>System</category>
+    <category>Utility</category>
+  </categories>
+  <keywords>
+    <keyword>btrfs</keyword>
+    <keyword>snapshot</keyword>
+    <keyword>subvolume</keyword>
+    <keyword>backup</keyword>
+    <keyword>restore</keyword>
+  </keywords>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.3.0" date="2026-11-05"/>
+  </releases>
+</component>

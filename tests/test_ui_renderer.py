@@ -705,6 +705,21 @@ class TestAppIcon:
             renderer._set_app_icon()  # must not raise
 
 
+class TestDesktopFileName:
+    def test_sets_reverse_dns_app_id(self) -> None:
+        renderer = AuiRenderer([])
+        fake_app = MagicMock()
+        with patch("manatools.aui.yui.YUI.application", return_value=fake_app):
+            renderer._set_desktop_file_name()
+        assert fake_app.desktop_file_name == "org.mageia.manaradix"
+
+    def test_failure_is_cosmetic(self) -> None:
+        renderer = AuiRenderer([])
+        with patch("manatools.aui.yui.YUI.application",
+                   side_effect=RuntimeError("no app")):
+            renderer._set_desktop_file_name()  # must not raise
+
+
 # ---------------------------------------------------------------------------
 # Event dispatch
 # ---------------------------------------------------------------------------
