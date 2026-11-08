@@ -1,0 +1,1276 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the manaradix package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+# Translators:
+# Yuri Chornoivan <yurchor@ukr.net>, 2026
+# Dimitrios Glentadakis <dglent@free.fr>, 2026
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: manaradix 0.2.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-25 19:06+0100\n"
+"PO-Revision-Date: 2026-11-05 15:14+0000\n"
+"Last-Translator: Dimitrios Glentadakis <dglent@free.fr>, 2026\n"
+"Language-Team: Greek (https://app.transifex.com/MageiaLinux/teams/9361/el/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: el\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: manaradix/module.py:298
+#, python-format
+msgid "Path to config file (default: %(default)s)"
+msgstr "Διαδρομή του αρχείου διαμόρφωσης (εξ ορισμού: %(default)s)"
+
+#: manaradix/module.py:631
+#, python-format
+msgid "Created snapshot: %s"
+msgstr "Δημιουργήθηκε το στιγμιότυπο: %s"
+
+#: manaradix/module.py:632
+#, python-format
+msgid "  Subvolume:   %s"
+msgstr "  Υποτόμος:        %s"
+
+#: manaradix/module.py:633
+#, python-format
+msgid "  Path:        %s"
+msgstr "  Διαδρομή:        %s"
+
+#: manaradix/module.py:634
+#, python-format
+msgid "  Type:        %s"
+msgstr "  Τύπος:           %s"
+
+#: manaradix/module.py:636
+#, python-format
+msgid "  Schedule:    %s"
+msgstr "  Προγραμματισμός: %s"
+
+#: manaradix/module.py:638
+#, python-format
+msgid "  Description: %s"
+msgstr "  Περιγραφή:       %s"
+
+#: manaradix/module.py:695
+msgid "No snapshots found."
+msgstr "Δεν βρέθηκαν στιγμιότυπα."
+
+#: manaradix/module.py:727
+#, python-format
+msgid "Deleted snapshot: %s"
+msgstr "Διαγράφηκε το στιγμιότυπο: %s"
+
+#: manaradix/module.py:767
+#, python-format
+msgid "[DRY RUN] Would delete %d snapshot(s):"
+msgstr "[ΔΟΚΙΜΑΣΤΙΚΗ ΕΚΤΕΛΕΣΗ] Θα διαγράφονταν %d στιγμιότυπα:"
+
+#: manaradix/module.py:771
+#, python-format
+msgid "[DRY RUN] Nothing to prune (%d kept, 0 excess)."
+msgstr ""
+"[ΔΟΚΙΜΑΣΤΙΚΗ ΕΚΤΕΛΕΣΗ] Δεν υπάρχουν στιγμιότυπα προς εκκαθάριση "
+"(διατηρούνται %d, δεν υπάρχει πλεόνασμα)."
+
+#: manaradix/module.py:773
+#, python-format
+msgid "Pruned %d snapshot(s):"
+msgstr "Εκκαθαρίστηκαν %d στιγμιότυπα:"
+
+#: manaradix/module.py:777
+#, python-format
+msgid "Nothing to prune (%d kept, no excess)."
+msgstr ""
+"Δεν υπάρχουν στιγμιότυπα προς εκκαθάριση (διατηρούνται %d, δεν υπάρχει "
+"πλεόνασμα)."
+
+#: manaradix/module.py:792
+msgid "Setup not needed: snapshots or policies already exist."
+msgstr "Δεν απαιτείται αρχική ρύθμιση: υπάρχουν ήδη στιγμιότυπα ή πολιτικές."
+
+#: manaradix/module.py:797
+msgid "Setup needed, but no btrfs filesystem was found on this system."
+msgstr ""
+"Απαιτείται αρχική ρύθμιση, αλλά δεν βρέθηκε σύστημα αρχείων btrfs σε αυτό το"
+" σύστημα."
+
+#: manaradix/module.py:802
+msgid "Setup needed: no snapshots and no snapshot policies are configured."
+msgstr ""
+"Απαιτείται αρχική ρύθμιση: δεν έχουν διαμορφωθεί στιγμιότυπα ή πολιτικές "
+"στιγμιοτύπων."
+
+#: manaradix/module.py:803
+#, python-format
+msgid "Detected role: %s"
+msgstr "Εντοπίστηκε ο ρόλος: %s"
+
+#: manaradix/module.py:805 manaradix/module.py:853
+#: manaradix/core/setup_wizard.py:263 manaradix/ui/pages/setup.py:90
+msgid "No setup profiles are available on this system."
+msgstr "Δεν υπάρχουν διαθέσιμα προφίλ αρχικής ρύθμισης σε αυτό το σύστημα."
+
+#: manaradix/module.py:807
+#, python-format
+msgid "Default profile: %s"
+msgstr "Εξ ορισμού προφίλ: %s"
+
+#: manaradix/module.py:808
+msgid "Run 'manaradix setup apply' to apply it."
+msgstr "Εκτελέστε την εντολή 'manaradix setup apply' για να το εφαρμόσετε."
+
+#: manaradix/module.py:823
+#, python-format
+msgid "[DRY RUN] Would apply the setup profile %s:"
+msgstr "[ΔΟΚΙΜΑΣΤΙΚΗ ΕΚΤΕΛΕΣΗ] Θα εφαρμοζόταν το προφίλ αρχικής ρύθμισης %s:"
+
+#: manaradix/module.py:825
+#, python-format
+msgid "Applied the setup profile %s:"
+msgstr "Εφαρμόστηκε το προφίλ αρχικής ρύθμισης %s:"
+
+#: manaradix/module.py:830
+#, python-format
+msgid "  %s: %s (retention: %s)"
+msgstr "  %s: %s (διατήρηση: %s)"
+
+#: manaradix/module.py:837
+msgid "would be installed"
+msgstr "θα γινόταν εγκατάσταση"
+
+#: manaradix/module.py:839
+msgid "not available"
+msgstr "δεν είναι διαθέσιμο"
+
+#: manaradix/module.py:842 manaradix/ui/pages/settings.py:190
+#: manaradix/ui/pages/setup.py:271
+msgid "installed"
+msgstr "εγκατεστημένο"
+
+#: manaradix/module.py:842 manaradix/ui/pages/settings.py:190
+#: manaradix/ui/pages/setup.py:271
+msgid "not installed"
+msgstr "δεν είναι εγκατεστημένο"
+
+#: manaradix/module.py:843
+#, python-format
+msgid "  GRUB recovery menu: %s"
+msgstr "  Μενού ανάκτησης GRUB: %s"
+
+#: manaradix/module.py:856
+msgid "Available setup profiles:"
+msgstr "Διαθέσιμα προφίλ αρχικής ρύθμισης:"
+
+#: manaradix/module.py:879
+msgid "No activities are configured."
+msgstr "Δεν έχουν διαμορφωθεί δραστηριότητες."
+
+#: manaradix/module.py:882
+msgid "Activity status:"
+msgstr "Κατάσταση δραστηριοτήτων:"
+
+#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:513
+#: manaradix/ui/pages/triggers.py:313
+msgid "never"
+msgstr "ποτέ"
+
+#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:515
+#: manaradix/ui/pages/triggers.py:316
+#, python-format
+msgid "%s (%s)"
+msgstr "%s (%s)"
+
+#: manaradix/module.py:946
+msgid "The manaradix D-Bus service is running."
+msgstr "Η υπηρεσία D-Bus του manaradix εκτελείται."
+
+#: manaradix/module.py:950
+msgid ""
+"The manaradix D-Bus service is not running; it starts automatically on first"
+" use."
+msgstr ""
+"Η υπηρεσία D-Bus του manaradix δεν εκτελείται. Ξεκινά αυτόματα κατά την "
+"πρώτη χρήση."
+
+#: manaradix/module.py:969
+msgid "The manaradix tray applet is running."
+msgstr "Η μικροεφαρμογή του manaradix στο πλαίσιο συστήματος εκτελείται."
+
+#: manaradix/module.py:973
+msgid ""
+"The manaradix tray applet is not running; it starts automatically at login."
+msgstr ""
+"Η μικροεφαρμογή του manaradix στο πλαίσιο συστήματος δεν εκτελείται. Ξεκινά "
+"αυτόματα κατά τη σύνδεση."
+
+#: manaradix/module.py:1021
+#, python-format
+msgid "Status: %s"
+msgstr "Κατάσταση: %s"
+
+#: manaradix/module.py:1023
+#, python-format
+msgid "Last started: %s"
+msgstr "Τελευταία έναρξη: %s"
+
+#: manaradix/module.py:1025
+#, python-format
+msgid "Last finished: %s"
+msgstr "Τελευταία ολοκλήρωση: %s"
+
+#: manaradix/module.py:1027
+#, python-format
+msgid "Last error: %s"
+msgstr "Τελευταίο σφάλμα: %s"
+
+#: manaradix/module.py:1038
+msgid "No usage data available. Run 'manaradix usage collect' first."
+msgstr ""
+"Δεν υπάρχουν διαθέσιμα δεδομένα χρήσης. Εκτελέστε πρώτα την εντολή "
+"'manaradix usage collect'."
+
+#: manaradix/module.py:1041
+msgid "Snapshot disk usage (last collected):"
+msgstr "Χρήση δίσκου από στιγμιότυπα (τελευταία συλλογή δεδομένων):"
+
+#: manaradix/module.py:1076
+#, python-format
+msgid "ID:          %s"
+msgstr "Αναγνωριστικό:     %s"
+
+#: manaradix/module.py:1077
+#, python-format
+msgid "Subvolume:   %s"
+msgstr "Υποτόμος:          %s"
+
+#: manaradix/module.py:1078
+#, python-format
+msgid "Path:        %s"
+msgstr "Διαδρομή:          %s"
+
+#: manaradix/module.py:1079
+#, python-format
+msgid "Date:        %s"
+msgstr "Ημερομηνία:        %s"
+
+#: manaradix/module.py:1080
+#, python-format
+msgid "Type:        %s"
+msgstr "Τύπος:             %s"
+
+#: manaradix/module.py:1081
+#, python-format
+msgid "Read-only:   %s"
+msgstr "Μόνο για ανάγνωση: %s"
+
+#: manaradix/module.py:1082
+#, python-format
+msgid "Schedule:    %s"
+msgstr "Προγραμματισμός:   %s"
+
+#: manaradix/module.py:1083
+#, python-format
+msgid "Description: %s"
+msgstr "Περιγραφή:         %s"
+
+#: manaradix/utils/pkexec.py:152
+#, python-format
+msgid ""
+"error: %s not found. Install polkit to use privileged manaradix commands."
+msgstr ""
+"σφάλμα: δεν βρέθηκε το %s. Εγκαταστήστε το polkit για να χρησιμοποιήσετε "
+"εντολές του manaradix με αυξημένα δικαιώματα."
+
+#: manaradix/utils/pkexec.py:158
+#, python-format
+msgid "error: pkexec failed: %s"
+msgstr "σφάλμα: αποτυχία του pkexec: %s"
+
+#: manaradix/core/health.py:175
+#, python-format
+msgid "Disk space critical on %s"
+msgstr "Κρίσιμη έλλειψη χώρου στο %s"
+
+#: manaradix/core/health.py:177
+#, python-format
+msgid "%(percent)d%% of %(total)s used, only %(free)s free"
+msgstr ""
+"Χρησιμοποιείται το %(percent)d%% από %(total)s, απομένουν μόνο %(free)s "
+"ελεύθερα"
+
+#: manaradix/core/health.py:180
+#, python-format
+msgid "Disk space low on %s"
+msgstr "Λίγος διαθέσιμος χώρος στο %s"
+
+#: manaradix/core/health.py:182
+#, python-format
+msgid "%(percent)d%% of %(total)s used, %(free)s free"
+msgstr ""
+"Χρησιμοποιείται το %(percent)d%% από %(total)s, απομένουν %(free)s ελεύθερα"
+
+#: manaradix/core/health.py:191
+msgid "Free some space, or let the retention profile prune old snapshots."
+msgstr ""
+"Ελευθερώστε χώρο ή αφήστε το προφίλ διατήρησης να εκκαθαρίσει τα παλιά "
+"στιγμιότυπα."
+
+#: manaradix/core/health.py:224
+#, python-format
+msgid "Data integrity errors on %s"
+msgstr "Σφάλματα ακεραιότητας δεδομένων στο %s"
+
+#: manaradix/core/health.py:226
+#, python-format
+msgid ""
+"%(corruption)d corruption, %(generation)d generation errors recorded by "
+"btrfs."
+msgstr ""
+"Το btrfs κατέγραψε %(corruption)d σφάλματα αλλοίωσης και %(generation)d "
+"σφάλματα γενιάς."
+
+#: manaradix/core/health.py:230
+msgid "Check the device and restore from the newest good snapshot."
+msgstr ""
+"Ελέγξτε τη συσκευή και επαναφέρετε τα δεδομένα από το πιο πρόσφατο έγκυρο "
+"στιγμιότυπο."
+
+#: manaradix/core/health.py:240
+#, python-format
+msgid "IO errors on %s"
+msgstr "Σφάλματα εισόδου/εξόδου στο %s"
+
+#: manaradix/core/health.py:242
+#, python-format
+msgid ""
+"%(write)d write, %(read)d read, %(flush)d flush errors recorded by btrfs."
+msgstr ""
+"Το btrfs κατέγραψε %(write)d σφάλματα εγγραφής, %(read)d ανάγνωσης και "
+"%(flush)d εκκένωσης."
+
+#: manaradix/core/health.py:247
+msgid "Inspect the device, cabling, and enclosure."
+msgstr "Ελέγξτε τη συσκευή, την καλωδίωση και το περίβλημα."
+
+#: manaradix/core/health.py:258
+#, python-format
+msgid "SMART health failing on %s"
+msgstr "Ο έλεγχος SMART αναφέρει βλάβη στο %s"
+
+#: manaradix/core/health.py:259
+msgid "The drive reports an imminent failure.  Back up your data now."
+msgstr ""
+"Ο δίσκος αναφέρει επικείμενη βλάβη. Δημιουργήστε τώρα αντίγραφα ασφαλείας "
+"των δεδομένων σας."
+
+#: manaradix/core/health.py:261
+msgid "Replace the drive as soon as possible."
+msgstr "Αντικαταστήστε τον δίσκο το συντομότερο δυνατό."
+
+#: manaradix/core/health.py:271
+#, python-format
+msgid "Drive running hot on %s"
+msgstr "Υψηλή θερμοκρασία δίσκου στο %s"
+
+#: manaradix/core/health.py:272
+#, python-format
+msgid "The drive is at %(temp)d °C."
+msgstr "Η θερμοκρασία του δίσκου είναι %(temp)d °C."
+
+#: manaradix/core/health.py:275
+msgid "Check airflow and cooling."
+msgstr "Ελέγξτε τη ροή αέρα και την ψύξη."
+
+#: manaradix/core/health.py:305
+msgid "Scrub found errors"
+msgstr "Ο έλεγχος ακεραιότητας εντόπισε σφάλματα"
+
+#: manaradix/core/health.py:306
+#, python-format
+msgid "%d errors were found by the last scrub."
+msgstr "Εντοπίστηκαν %d σφάλματα κατά τον τελευταίο έλεγχο ακεραιότητας."
+
+#: manaradix/core/health.py:307
+msgid "Run a new scrub and inspect the devices."
+msgstr "Εκτελέστε νέο έλεγχο ακεραιότητας και ελέγξτε τις συσκευές."
+
+#: manaradix/core/health.py:319
+msgid "Scrub appears stuck"
+msgstr "Ο έλεγχος ακεραιότητας φαίνεται να μην προχωρά"
+
+#: manaradix/core/health.py:321
+#, python-format
+msgid "The scrub has been running for more than %d hours."
+msgstr "Ο έλεγχος ακεραιότητας εκτελείται για περισσότερες από %d ώρες."
+
+#: manaradix/core/health.py:323
+msgid "Check the scrub progress in the GUI."
+msgstr "Ελέγξτε την πρόοδο του ελέγχου ακεραιότητας στη γραφική διεπαφή."
+
+#: manaradix/core/health.py:333
+msgid "No scrub recorded"
+msgstr "Δεν έχει καταγραφεί έλεγχος ακεραιότητας"
+
+#: manaradix/core/health.py:335
+msgid ""
+"No scrub run is recorded.  Regular scrubs catch bit-rot on long-lived "
+"servers."
+msgstr ""
+"Δεν έχει καταγραφεί εκτέλεση ελέγχου ακεραιότητας. Οι τακτικοί έλεγχοι "
+"ακεραιότητας εντοπίζουν τη σταδιακή αλλοίωση δεδομένων σε διακομιστές με "
+"μακροχρόνια λειτουργία."
+
+#: manaradix/core/health.py:338
+msgid "Run a scrub now and schedule it regularly."
+msgstr ""
+"Εκτελέστε τώρα έναν έλεγχο ακεραιότητας και προγραμματίστε την τακτική "
+"εκτέλεσή του."
+
+#: manaradix/core/health.py:347
+msgid "Last scrub is stale"
+msgstr "Έχει περάσει πολύς καιρός από τον τελευταίο έλεγχο ακεραιότητας"
+
+#: manaradix/core/health.py:349
+#, python-format
+msgid "The last scrub is %d days old; run a new one."
+msgstr ""
+"Ο τελευταίος έλεγχος ακεραιότητας έγινε πριν από %d ημέρες. Εκτελέστε έναν "
+"νέο."
+
+#: manaradix/core/health.py:351
+msgid "Run a scrub now."
+msgstr "Εκτελέστε τώρα έναν έλεγχο ακεραιότητας."
+
+#: manaradix/core/health.py:440
+#, python-format
+msgid "Too many %(tier)s snapshots on %(subvol)s"
+msgstr "Υπερβολικά πολλά στιγμιότυπα κατηγορίας %(tier)s στο %(subvol)s"
+
+#: manaradix/core/health.py:444
+#, python-format
+msgid "%(count)d snapshots kept, retention caps at %(cap)d."
+msgstr ""
+"Διατηρούνται %(count)d στιγμιότυπα, ενώ το όριο διατήρησης είναι %(cap)d."
+
+#: manaradix/core/health.py:446
+msgid "Delete the oldest ones, or adjust the retention on the Policies page."
+msgstr ""
+"Διαγράψτε τα παλαιότερα ή προσαρμόστε τη διατήρηση στη σελίδα «Πολιτικές»."
+
+#: manaradix/core/health.py:460
+#, python-format
+msgid "Too many snapshots on %s (kiosk)"
+msgstr "Υπερβολικά πολλά στιγμιότυπα στο %s (τερματικό ειδικής χρήσης)"
+
+#: manaradix/core/health.py:462
+#, python-format
+msgid "Kiosk profiles keep at most %(max)d snapshots; %(count)d exist."
+msgstr ""
+"Τα προφίλ τερματικών ειδικής χρήσης διατηρούν το πολύ %(max)d στιγμιότυπα. "
+"Υπάρχουν %(count)d."
+
+#: manaradix/core/health.py:465
+msgid "Delete the oldest snapshots and keep the last good state."
+msgstr ""
+"Διαγράψτε τα παλαιότερα στιγμιότυπα και διατηρήστε την τελευταία έγκυρη "
+"κατάσταση."
+
+#: manaradix/core/health.py:479
+#, python-format
+msgid "Free space below %d%% on %s"
+msgstr "Ελεύθερος χώρος κάτω από %d%% στο %s"
+
+#: manaradix/core/health.py:483
+msgid "The kiosk is nearly full; new snapshots may fail."
+msgstr ""
+"Ο χώρος αποθήκευσης του τερματικού ειδικής χρήσης έχει σχεδόν εξαντληθεί. Η "
+"δημιουργία νέων στιγμιοτύπων ενδέχεται να αποτύχει."
+
+#: manaradix/core/health.py:485
+msgid "Consider pausing the hourly and daily snapshot schedules."
+msgstr ""
+"Εξετάστε το ενδεχόμενο παύσης της ωριαίας και της ημερήσιας δημιουργίας "
+"στιγμιοτύπων."
+
+#: manaradix/core/health.py:505
+#, python-format
+msgid "%(tier)s snapshots older than %(days)d days on %(subvol)s"
+msgstr ""
+"Στιγμιότυπα κατηγορίας %(tier)s παλαιότερα των %(days)d ημερών στο "
+"%(subvol)s"
+
+#: manaradix/core/health.py:511
+#, python-format
+msgid "%(count)d snapshots, oldest from %(date)s."
+msgstr "%(count)d στιγμιότυπα, το παλαιότερο με ημερομηνία %(date)s."
+
+#: manaradix/core/health.py:513
+msgid "Delete the old ones, or extend the retention policy."
+msgstr ""
+"Διαγράψτε τα παλιά ή παρατείνετε την περίοδο διατήρησης στην πολιτική."
+
+#: manaradix/core/setup_wizard.py:179 manaradix/core/setup_wizard.py:205
+msgid "Boot snapshots are not available: the root filesystem is not btrfs."
+msgstr ""
+"Δεν διατίθενται στιγμιότυπα κατά την εκκίνηση: το ριζικό σύστημα αρχείων δεν"
+" είναι btrfs."
+
+#: manaradix/core/setup_wizard.py:185 manaradix/ui/pages/setup.py:208
+#: manaradix/ui/pages/setup.py:232
+msgid "Not available on this system"
+msgstr "Δεν είναι διαθέσιμο σε αυτό το σύστημα"
+
+#: manaradix/core/setup_wizard.py:211
+msgid ""
+"The GRUB recovery menu is not available: it needs a btrfs root filesystem "
+"and GRUB."
+msgstr ""
+"Το μενού ανάκτησης GRUB δεν είναι διαθέσιμο: απαιτεί ριζικό σύστημα αρχείων "
+"btrfs και GRUB."
+
+#: manaradix/core/setup_wizard.py:217
+msgid ""
+"Pre-upgrade snapshots are not available: the root filesystem is not btrfs."
+msgstr ""
+"Δεν διατίθενται στιγμιότυπα πριν από την αναβάθμιση: το ριζικό σύστημα "
+"αρχείων δεν είναι btrfs."
+
+#: manaradix/core/setup_wizard.py:258
+#, python-format
+msgid "Unknown setup profile: %s"
+msgstr "Άγνωστο προφίλ αρχικής ρύθμισης: %s"
+
+#: manaradix/core/setup_wizard.py:270
+#, python-format
+msgid ""
+"The %s profile does not apply to this system: no btrfs subvolume matches its"
+" policies."
+msgstr ""
+"Το προφίλ %s δεν μπορεί να εφαρμοστεί σε αυτό το σύστημα: κανένας υποτόμος "
+"btrfs δεν αντιστοιχεί στις πολιτικές του."
+
+#: manaradix/core/template_strings.py:18
+msgid "Desktop workstation"
+msgstr "Επιτραπέζιος σταθμός εργασίας"
+
+#: manaradix/core/template_strings.py:20
+msgid ""
+"Daily and weekly snapshots with a boot-time recovery point, plus the GRUB "
+"recovery menu — suited for a graphical workstation."
+msgstr ""
+"Ημερήσια και εβδομαδιαία στιγμιότυπα με σημείο ανάκτησης κατά την εκκίνηση, "
+"καθώς και μενού ανάκτησης GRUB - κατάλληλο για σταθμό εργασίας με γραφικό "
+"περιβάλλον."
+
+#: manaradix/core/template_strings.py:23
+msgid "Server"
+msgstr "Διακομιστής"
+
+#: manaradix/core/template_strings.py:25
+msgid ""
+"Frequent hourly snapshots with long retention, extra coverage for data "
+"subvolumes, a boot-time recovery point and the GRUB recovery menu."
+msgstr ""
+"Συχνά ωριαία στιγμιότυπα με μακρά περίοδο διατήρησης, πρόσθετη κάλυψη για "
+"τους υποτόμους δεδομένων, σημείο ανάκτησης κατά την εκκίνηση και μενού "
+"ανάκτησης GRUB."
+
+#: manaradix/core/template_strings.py:28
+msgid "Kiosk"
+msgstr "Τερματικό ειδικής χρήσης"
+
+#: manaradix/core/template_strings.py:30
+msgid ""
+"Minimal setup for a single-purpose device: a snapshot at every boot with the"
+" GRUB recovery menu, no periodic snapshots."
+msgstr ""
+"Ελάχιστη διαμόρφωση για συσκευή ειδικής χρήσης: ένα στιγμιότυπο σε κάθε "
+"εκκίνηση με μενού ανάκτησης GRUB, χωρίς περιοδικά στιγμιότυπα."
+
+#: manaradix/dbus/service.py:94
+#, python-format
+msgid "Unknown method: %s"
+msgstr "Άγνωστη μέθοδος: %s"
+
+#: manaradix/dbus/service.py:100
+#, python-format
+msgid "Unhandled method: %s"
+msgstr "Μέθοδος χωρίς χειρισμό: %s"
+
+#: manaradix/dbus/service.py:124
+#, python-format
+msgid "Snapshot not found: %s"
+msgstr "Δεν βρέθηκε το στιγμιότυπο: %s"
+
+#: manaradix/dbus/service.py:134
+#, python-format
+msgid "Invalid snapshot type: %s"
+msgstr "Μη έγκυρος τύπος στιγμιοτύπου: %s"
+
+#: manaradix/dbus/wire.py:1038
+msgid "error: 'manaradix dbus serve' must run as root (system service)."
+msgstr ""
+"σφάλμα: η εντολή 'manaradix dbus serve' πρέπει να εκτελείται ως root "
+"(υπηρεσία συστήματος)."
+
+#: manaradix/dbus/wire.py:1054
+msgid "error: the manaradix D-Bus service is already running."
+msgstr "σφάλμα: η υπηρεσία D-Bus του manaradix εκτελείται ήδη."
+
+#: manaradix/tray/app.py:365
+#, python-format
+msgid "Manaradix: %d issue(s)"
+msgstr "Manaradix: %d προβλήματα"
+
+#: manaradix/tray/app.py:369
+msgid "Manaradix"
+msgstr "Manaradix"
+
+#: manaradix/tray/app.py:369
+msgid "No issues found"
+msgstr "Δεν βρέθηκαν προβλήματα"
+
+#: manaradix/tray/app.py:384 manaradix/tray/app.py:410
+#: manaradix/tray/dbus_menu.py:64
+msgid "Open manaradix"
+msgstr "Άνοιγμα του manaradix"
+
+#: manaradix/tray/app.py:407 manaradix/ui/pages/about.py:69
+msgid ""
+"Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
+msgstr ""
+"Εργαλείο διαχείρισης στιγμιοτύπων, υποτόμων και συστημάτων αρχείων Btrfs για"
+" τη Mageia"
+
+#: manaradix/tray/dbus_menu.py:70
+msgid "Check now"
+msgstr "Έλεγχος τώρα"
+
+#: manaradix/tray/dbus_menu.py:75 manaradix/ui/pages/about.py:38
+#: manaradix/ui/pages/about.py:63
+msgid "About"
+msgstr "Περί"
+
+#: manaradix/tray/dbus_menu.py:86
+msgid "Quit"
+msgstr "Έξοδος"
+
+#: manaradix/ui/renderer.py:343
+msgid "(no data)"
+msgstr "(χωρίς δεδομένα)"
+
+#: manaradix/ui/pages/about.py:27
+msgid ""
+"Manaradix is free software: you can redistribute it and/or modify it under "
+"the terms of the GNU General Public License as published by the Free "
+"Software Foundation, either version 2 of the License, or (at your option) "
+"any later version."
+msgstr ""
+"Το Manaradix είναι ελεύθερο λογισμικό: μπορείτε να το αναδιανείμετε ή/και να"
+" το τροποποιήσετε υπό τους όρους της Γενικής Άδειας Δημόσιας Χρήσης GNU, "
+"όπως δημοσιεύεται από το Ίδρυμα Ελεύθερου Λογισμικού, είτε της έκδοσης 2 της"
+" Άδειας είτε (κατ' επιλογήν σας) οποιασδήποτε μεταγενέστερης έκδοσης."
+
+#: manaradix/ui/pages/about.py:75
+#, python-format
+msgid "Version: %s"
+msgstr "Έκδοση: %s"
+
+#: manaradix/ui/pages/about.py:79
+#, python-format
+msgid "Author: %s"
+msgstr "Δημιουργός: %s"
+
+#: manaradix/ui/pages/about.py:83
+#, python-format
+msgid "Email: %s"
+msgstr "Ηλ. αλληλογραφία: %s"
+
+#: manaradix/ui/pages/about.py:87
+#, python-format
+msgid "Copyright: %s"
+msgstr "Πνευματικά δικαιώματα: %s"
+
+#: manaradix/ui/pages/about.py:91
+#, python-format
+msgid "License: %s"
+msgstr "Άδεια χρήσης: %s"
+
+#: manaradix/ui/pages/about.py:95
+#, python-format
+msgid "Website: %s"
+msgstr "Ιστότοπος: %s"
+
+#: manaradix/ui/pages/about.py:100
+msgid "License"
+msgstr "Άδεια χρήσης"
+
+#: manaradix/ui/pages/dashboard.py:54
+msgid "Dashboard"
+msgstr "Πίνακας ελέγχου"
+
+#: manaradix/ui/pages/dashboard.py:114 manaradix/ui/pages/dashboard.py:138
+#: manaradix/ui/pages/dashboard.py:154
+msgid "Physical Disks"
+msgstr "Φυσικοί δίσκοι"
+
+#: manaradix/ui/pages/dashboard.py:117
+msgid "No physical disks found."
+msgstr "Δεν βρέθηκαν φυσικοί δίσκοι."
+
+#: manaradix/ui/pages/dashboard.py:144
+msgid "Physical Disk"
+msgstr "Φυσικός δίσκος"
+
+#: manaradix/ui/pages/dashboard.py:166 manaradix/ui/pages/dashboard.py:223
+#: manaradix/ui/pages/dashboard.py:243
+msgid "Btrfs Filesystems"
+msgstr "Συστήματα αρχείων Btrfs"
+
+#: manaradix/ui/pages/dashboard.py:170
+msgid "No btrfs filesystems found."
+msgstr "Δεν βρέθηκαν συστήματα αρχείων btrfs."
+
+#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:309
+msgid "Filesystem"
+msgstr "Σύστημα αρχείων"
+
+#: manaradix/ui/pages/dashboard.py:281
+msgid "Data"
+msgstr "Δεδομένα"
+
+#: manaradix/ui/pages/dashboard.py:282
+msgid "Metadata"
+msgstr "Μεταδεδομένα"
+
+#: manaradix/ui/pages/dashboard.py:283
+msgid "System"
+msgstr "Σύστημα"
+
+#: manaradix/ui/pages/dashboard.py:303 manaradix/ui/pages/dashboard.py:323
+msgid "Internal Filesystem Usage"
+msgstr "Εσωτερική χρήση χώρου του συστήματος αρχείων"
+
+#: manaradix/ui/pages/dashboard.py:348
+msgid "Collecting usage data..."
+msgstr "Συλλογή δεδομένων χρήσης..."
+
+#: manaradix/ui/pages/dashboard.py:350
+#, python-format
+msgid "Last updated: %s"
+msgstr "Τελευταία ενημέρωση: %s"
+
+#: manaradix/ui/pages/dashboard.py:354
+#, python-format
+msgid "Last collection failed: %s"
+msgstr "Αποτυχία της τελευταίας συλλογής δεδομένων: %s"
+
+#: manaradix/ui/pages/dashboard.py:356
+msgid "No usage data collected yet"
+msgstr "Δεν έχουν συλλεχθεί ακόμη δεδομένα χρήσης"
+
+#: manaradix/ui/pages/dashboard.py:379
+msgid "Snapshot Usage"
+msgstr "Χρήση χώρου από στιγμιότυπα"
+
+#: manaradix/ui/pages/dashboard.py:391
+msgid "Force Usage Data Update"
+msgstr "Εξαναγκασμός ενημέρωσης δεδομένων χρήσης"
+
+#: manaradix/ui/pages/dashboard.py:401 manaradix/ui/pages/dashboard.py:409
+msgid "Recent Snapshots"
+msgstr "Πρόσφατα στιγμιότυπα"
+
+#: manaradix/ui/pages/dashboard.py:404
+msgid "No snapshots yet."
+msgstr "Δεν υπάρχουν ακόμη στιγμιότυπα."
+
+#: manaradix/ui/pages/dashboard.py:440 manaradix/ui/pages/dashboard.py:447
+msgid "Active Policies"
+msgstr "Ενεργές πολιτικές"
+
+#: manaradix/ui/pages/dashboard.py:443
+msgid "No active policies."
+msgstr "Δεν υπάρχουν ενεργές πολιτικές."
+
+#: manaradix/ui/pages/dashboard.py:488
+msgid "Activity Status"
+msgstr "Κατάσταση δραστηριοτήτων"
+
+#: manaradix/ui/pages/dashboard.py:521
+msgid "Quick Actions"
+msgstr "Γρήγορες ενέργειες"
+
+#: manaradix/ui/pages/dashboard.py:528
+msgid "Create Snapshot"
+msgstr "Δημιουργία στιγμιοτύπου"
+
+#: manaradix/ui/pages/dashboard.py:533 manaradix/ui/pages/settings.py:164
+msgid "Start Scrub"
+msgstr "Έναρξη ελέγχου ακεραιότητας"
+
+#: manaradix/ui/pages/dashboard.py:538 manaradix/ui/pages/triggers.py:238
+msgid "Refresh"
+msgstr "Ανανέωση"
+
+#: manaradix/ui/pages/dashboard.py:647
+#, python-format
+msgid "%s (property)"
+msgstr "%s (ιδιότητα)"
+
+#: manaradix/ui/pages/dashboard.py:648
+msgid "off"
+msgstr "ανενεργό"
+
+#: manaradix/ui/pages/dashboard.py:667
+#, python-format
+msgid "%d (+%d snapshots)"
+msgstr "%d (+%d στιγμιότυπα)"
+
+#: manaradix/ui/pages/policies.py:31 manaradix/ui/pages/setup.py:36
+msgid "Hourly"
+msgstr "Ωριαία"
+
+#: manaradix/ui/pages/policies.py:32 manaradix/ui/pages/setup.py:37
+msgid "Daily"
+msgstr "Ημερήσια"
+
+#: manaradix/ui/pages/policies.py:33 manaradix/ui/pages/setup.py:38
+msgid "Weekly"
+msgstr "Εβδομαδιαία"
+
+#: manaradix/ui/pages/policies.py:34 manaradix/ui/pages/setup.py:39
+msgid "Monthly"
+msgstr "Μηνιαία"
+
+#: manaradix/ui/pages/policies.py:35 manaradix/ui/pages/setup.py:40
+msgid "Boot"
+msgstr "Εκκίνηση"
+
+#: manaradix/ui/pages/policies.py:39
+msgid "Keep hourly"
+msgstr "Διατήρηση ωριαίων στιγμιοτύπων"
+
+#: manaradix/ui/pages/policies.py:40
+msgid "Keep daily"
+msgstr "Διατήρηση ημερήσιων στιγμιοτύπων"
+
+#: manaradix/ui/pages/policies.py:41
+msgid "Keep weekly"
+msgstr "Διατήρηση εβδομαδιαίων στιγμιοτύπων"
+
+#: manaradix/ui/pages/policies.py:42
+msgid "Keep monthly"
+msgstr "Διατήρηση μηνιαίων στιγμιοτύπων"
+
+#: manaradix/ui/pages/policies.py:43
+msgid "Keep boot"
+msgstr "Διατήρηση στιγμιοτύπων εκκίνησης"
+
+#: manaradix/ui/pages/policies.py:44
+msgid "Keep pre-upgrade"
+msgstr "Διατήρηση στιγμιοτύπων πριν από αναβαθμίσεις"
+
+#: manaradix/ui/pages/policies.py:52
+msgid "Policies"
+msgstr "Πολιτικές"
+
+#: manaradix/ui/pages/policies.py:77 manaradix/ui/pages/policies.py:82
+msgid "Configured Policies"
+msgstr "Διαμορφωμένες πολιτικές"
+
+#: manaradix/ui/pages/policies.py:78
+msgid "No policies configured."
+msgstr "Δεν έχουν διαμορφωθεί πολιτικές."
+
+#: manaradix/ui/pages/policies.py:116 manaradix/ui/pages/policies.py:121
+msgid "Add Policy"
+msgstr "Προσθήκη πολιτικής"
+
+#: manaradix/ui/pages/policies.py:118
+msgid "Subvolume path"
+msgstr "Διαδρομή υποτόμου"
+
+#: manaradix/ui/pages/policies.py:136
+#, python-format
+msgid "On %s"
+msgstr "Στο %s"
+
+#: manaradix/ui/pages/policies.py:158
+#, python-format
+msgid "Edit Policy: %s"
+msgstr "Επεξεργασία πολιτικής: %s"
+
+#: manaradix/ui/pages/policies.py:162 manaradix/ui/pages/setup.py:230
+msgid "Enabled"
+msgstr "Ενεργοποιημένο"
+
+#: manaradix/ui/pages/policies.py:170
+msgid "Apply Policy"
+msgstr "Εφαρμογή πολιτικής"
+
+#: manaradix/ui/pages/policies.py:175
+msgid "Dry-Run Preview"
+msgstr "Προεπισκόπηση δοκιμαστικής εκτέλεσης"
+
+#: manaradix/ui/pages/policies.py:180
+msgid "Remove Policy"
+msgstr "Αφαίρεση πολιτικής"
+
+#: manaradix/ui/pages/policies.py:196 manaradix/ui/pages/policies.py:201
+msgid "systemd Units"
+msgstr "Μονάδες systemd"
+
+#: manaradix/ui/pages/policies.py:197
+msgid "No units installed."
+msgstr "Δεν υπάρχουν εγκατεστημένες μονάδες."
+
+#: manaradix/ui/pages/settings.py:26
+msgid "Settings"
+msgstr "Ρυθμίσεις"
+
+#: manaradix/ui/pages/settings.py:55
+msgid "Global Configuration"
+msgstr "Καθολική διαμόρφωση"
+
+#: manaradix/ui/pages/settings.py:60
+msgid "Default subvolume"
+msgstr "Εξ ορισμού υποτόμος"
+
+#: manaradix/ui/pages/settings.py:65 manaradix/ui/pages/setup.py:224
+msgid "Snapshot directory"
+msgstr "Κατάλογος στιγμιοτύπων"
+
+#: manaradix/ui/pages/settings.py:70 manaradix/ui/pages/setup.py:228
+msgid "Boot-from-snapshot (GRUB menu)"
+msgstr "Εκκίνηση από στιγμιότυπο (μενού GRUB)"
+
+#: manaradix/ui/pages/settings.py:76
+msgid "Snapshot / before system upgrades"
+msgstr "Δημιουργία στιγμιοτύπου του / πριν από αναβαθμίσεις συστήματος"
+
+#: manaradix/ui/pages/settings.py:82
+msgid "Save Settings"
+msgstr "Αποθήκευση ρυθμίσεων"
+
+#: manaradix/ui/pages/settings.py:99
+msgid "Compression"
+msgstr "Συμπίεση"
+
+#: manaradix/ui/pages/settings.py:104
+#, python-format
+msgid "Compression for %s: %s"
+msgstr "Συμπίεση για το %s: %s"
+
+#: manaradix/ui/pages/settings.py:108
+msgid "Algorithm"
+msgstr "Αλγόριθμος"
+
+#: manaradix/ui/pages/settings.py:114
+msgid "Apply Compression"
+msgstr "Εφαρμογή συμπίεσης"
+
+#: manaradix/ui/pages/settings.py:128
+#, python-format
+msgid "running (%s/%s relocated)"
+msgstr "εκτελείται (μετακινήθηκαν %s/%s)"
+
+#: manaradix/ui/pages/settings.py:134
+#, python-format
+msgid "running (%s extents, %s errors)"
+msgstr "εκτελείται (%s εκτάσεις, %s σφάλματα)"
+
+#: manaradix/ui/pages/settings.py:136
+#, python-format
+msgid "errors: %s"
+msgstr "σφάλματα: %s"
+
+#: manaradix/ui/pages/settings.py:141
+msgid "Filesystem Maintenance"
+msgstr "Συντήρηση συστήματος αρχείων"
+
+#: manaradix/ui/pages/settings.py:146
+#, python-format
+msgid "Balance: %s"
+msgstr "Εξισορρόπηση: %s"
+
+#: manaradix/ui/pages/settings.py:150
+msgid "Start Balance"
+msgstr "Έναρξη εξισορρόπησης"
+
+#: manaradix/ui/pages/settings.py:155
+msgid "Cancel Balance"
+msgstr "Ακύρωση εξισορρόπησης"
+
+#: manaradix/ui/pages/settings.py:160
+#, python-format
+msgid "Scrub: %s"
+msgstr "Έλεγχος ακεραιότητας: %s"
+
+#: manaradix/ui/pages/settings.py:169
+msgid "Cancel Scrub"
+msgstr "Ακύρωση ελέγχου ακεραιότητας"
+
+#: manaradix/ui/pages/settings.py:174
+msgid "Defragment /"
+msgstr "Αποκερματισμός του /"
+
+#: manaradix/ui/pages/settings.py:185
+msgid "GRUB Boot Menu"
+msgstr "Μενού εκκίνησης GRUB"
+
+#: manaradix/ui/pages/settings.py:190
+#, python-format
+msgid "GRUB snapshot script: %s"
+msgstr "Σενάριο στιγμιοτύπων GRUB: %s"
+
+#: manaradix/ui/pages/settings.py:194
+msgid "Install GRUB Script"
+msgstr "Εγκατάσταση σεναρίου GRUB"
+
+#: manaradix/ui/pages/settings.py:199
+msgid "Remove GRUB Script"
+msgstr "Αφαίρεση σεναρίου GRUB"
+
+#: manaradix/ui/pages/settings.py:204
+msgid "Update GRUB Config"
+msgstr "Ενημέρωση διαμόρφωσης GRUB"
+
+#: manaradix/ui/pages/setup.py:48 manaradix/ui/pages/setup.py:86
+#: manaradix/ui/pages/setup.py:100
+msgid "Setup Wizard"
+msgstr "Οδηγός αρχικής ρύθμισης"
+
+#: manaradix/ui/pages/setup.py:67
+msgid "Setup Skipped"
+msgstr "Η αρχική ρύθμιση παραλείφθηκε"
+
+#: manaradix/ui/pages/setup.py:72
+msgid ""
+"You can configure snapshots and policies later from the Policies and "
+"Settings pages."
+msgstr ""
+"Μπορείτε να διαμορφώσετε στιγμιότυπα και πολιτικές αργότερα από τις σελίδες "
+"«Πολιτικές» και «Ρυθμίσεις»."
+
+#: manaradix/ui/pages/setup.py:105
+msgid ""
+"No btrfs filesystem was found on this system. Manaradix only manages btrfs "
+"storage, so there is nothing to set up here."
+msgstr ""
+"Δεν βρέθηκε σύστημα αρχείων btrfs σε αυτό το σύστημα. Το Manaradix "
+"διαχειρίζεται μόνο αποθηκευτικό χώρο btrfs, οπότε δεν υπάρχει κάτι προς "
+"ρύθμιση εδώ."
+
+#: manaradix/ui/pages/setup.py:121
+msgid ""
+"No snapshots or snapshot policies are configured yet. Choose a setup profile"
+" for this system and apply it:"
+msgstr ""
+"Δεν έχουν διαμορφωθεί ακόμη στιγμιότυπα ή πολιτικές στιγμιοτύπων. Επιλέξτε "
+"ένα προφίλ αρχικής ρύθμισης για αυτό το σύστημα και εφαρμόστε το:"
+
+#: manaradix/ui/pages/setup.py:127
+msgid "Profile"
+msgstr "Προφίλ"
+
+#: manaradix/ui/pages/setup.py:139
+msgid "Setup Plan"
+msgstr "Σχέδιο αρχικής ρύθμισης"
+
+#: manaradix/ui/pages/setup.py:190
+msgid "Apply Setup"
+msgstr "Εφαρμογή αρχικής ρύθμισης"
+
+#: manaradix/ui/pages/setup.py:195
+msgid "Skip"
+msgstr "Παράλειψη"
+
+#: manaradix/ui/pages/setup.py:198 manaradix/ui/pages/snapshots.py:64
+#: manaradix/ui/pages/triggers.py:224
+msgid "Actions"
+msgstr "Ενέργειες"
+
+#: manaradix/ui/pages/setup.py:206
+#, python-format
+msgid "Subvolume: %s"
+msgstr "Υποτόμος: %s"
+
+#: manaradix/ui/pages/setup.py:217
+msgid "Retention"
+msgstr "Διατήρηση"
+
+#: manaradix/ui/pages/setup.py:241
+msgid "Setup Failed"
+msgstr "Αποτυχία αρχικής ρύθμισης"
+
+#: manaradix/ui/pages/setup.py:245
+#, python-format
+msgid "The setup could not be applied: %s"
+msgstr "Δεν ήταν δυνατή η εφαρμογή της αρχικής ρύθμισης: %s"
+
+#: manaradix/ui/pages/setup.py:255
+msgid "The setup is now in place:"
+msgstr "Η αρχική ρύθμιση έχει πλέον εφαρμοστεί:"
+
+#: manaradix/ui/pages/setup.py:268
+#, python-format
+msgid "Subvolume: %s — %s (retention: %s)"
+msgstr "Υποτόμος: %s - %s (διατήρηση: %s)"
+
+#: manaradix/ui/pages/setup.py:274
+#, python-format
+msgid "GRUB recovery menu: %s"
+msgstr "Μενού ανάκτησης GRUB: %s"
+
+#: manaradix/ui/pages/setup.py:278
+msgid "Setup Applied"
+msgstr "Η αρχική ρύθμιση εφαρμόστηκε"
+
+#: manaradix/ui/pages/snapshots.py:31 manaradix/ui/pages/snapshots.py:103
+msgid "Snapshots"
+msgstr "Στιγμιότυπα"
+
+#: manaradix/ui/pages/snapshots.py:54
+msgid "Error"
+msgstr "Σφάλμα"
+
+#: manaradix/ui/pages/snapshots.py:58
+#, python-format
+msgid "Error: %s"
+msgstr "Σφάλμα: %s"
+
+#: manaradix/ui/pages/snapshots.py:70
+msgid "Target"
+msgstr "Στόχος"
+
+#: manaradix/ui/pages/snapshots.py:77
+msgid "Create Snapshot…"
+msgstr "Δημιουργία στιγμιοτύπου…"
+
+#: manaradix/ui/pages/snapshots.py:82
+msgid "Delete Selected"
+msgstr "Διαγραφή επιλεγμένων"
+
+#: manaradix/ui/pages/snapshots.py:87
+msgid "Restore Selected"
+msgstr "Επαναφορά επιλεγμένων"
+
+#: manaradix/ui/pages/snapshots.py:92
+msgid "Browse Selected"
+msgstr "Περιήγηση στα επιλεγμένα"
+
+#: manaradix/ui/pages/snapshots.py:97
+msgid "Export Selected"
+msgstr "Εξαγωγή επιλεγμένων"
+
+#: manaradix/ui/pages/snapshots.py:128
+msgid "Filters"
+msgstr "Φίλτρα"
+
+#: manaradix/ui/pages/snapshots.py:132
+msgid "Subvolume"
+msgstr "Υποτόμος"
+
+#: manaradix/ui/pages/snapshots.py:139
+msgid "Type"
+msgstr "Τύπος"
+
+#: manaradix/ui/pages/snapshots.py:152
+#, python-format
+msgid "Snapshot Detail: %s"
+msgstr "Λεπτομέρειες στιγμιοτύπου: %s"
+
+#: manaradix/ui/pages/snapshots.py:154
+#, python-format
+msgid "Path: %s"
+msgstr "Διαδρομή: %s"
+
+#: manaradix/ui/pages/snapshots.py:155
+#, python-format
+msgid "Date: %s"
+msgstr "Ημερομηνία: %s"
+
+#: manaradix/ui/pages/snapshots.py:156
+#, python-format
+msgid "Read-only: %s"
+msgstr "Μόνο για ανάγνωση: %s"
+
+#: manaradix/ui/pages/snapshots.py:159
+msgid "Update Description"
+msgstr "Ενημέρωση περιγραφής"
+
+#: manaradix/ui/pages/snapshots.py:164
+msgid "New description"
+msgstr "Νέα περιγραφή"
+
+#: manaradix/ui/pages/snapshots.py:209
+#, python-format
+msgid "Snapshot not found on disk: %s"
+msgstr "Δεν βρέθηκε το στιγμιότυπο στον δίσκο: %s"
+
+#: manaradix/ui/pages/triggers.py:43
+msgid "systemd service (boot)"
+msgstr "υπηρεσία systemd (εκκίνηση)"
+
+#: manaradix/ui/pages/triggers.py:44
+msgid "systemd timer"
+msgstr "χρονοδιακόπτης systemd"
+
+#: manaradix/ui/pages/triggers.py:51
+msgid "Triggers"
+msgstr "Εναύσματα"
+
+#: manaradix/ui/pages/triggers.py:169
+msgid "script missing"
+msgstr "λείπει το σενάριο"
+
+#: manaradix/ui/pages/triggers.py:171
+msgid "enabled"
+msgstr "ενεργοποιημένο"
+
+#: manaradix/ui/pages/triggers.py:171
+msgid "disabled"
+msgstr "απενεργοποιημένο"
+
+#: manaradix/ui/pages/triggers.py:180
+msgid "rpm file trigger"
+msgstr "έναυσμα αρχείων rpm"
+
+#: manaradix/ui/pages/triggers.py:183
+msgid "next package update"
+msgstr "επόμενη ενημέρωση πακέτων"
+
+#: manaradix/ui/pages/triggers.py:205
+msgid "No triggers are configured."
+msgstr "Δεν έχουν διαμορφωθεί εναύσματα."
+
+#: manaradix/ui/pages/triggers.py:212
+msgid ""
+"Select a trigger and use Enable/Disable. Schedules and retention are edited "
+"on the Policies tab."
+msgstr ""
+"Επιλέξτε ένα έναυσμα και χρησιμοποιήστε την ενεργοποίηση/απενεργοποίηση. Ο "
+"προγραμματισμός και η διατήρηση τροποποιούνται στην καρτέλα «Πολιτικές»."
+
+#: manaradix/ui/pages/triggers.py:217
+msgid "Configured Triggers"
+msgstr "Διαμορφωμένα εναύσματα"
+
+#: manaradix/ui/pages/triggers.py:228
+msgid "Enable Selected"
+msgstr "Ενεργοποίηση επιλεγμένων"
+
+#: manaradix/ui/pages/triggers.py:233
+msgid "Disable Selected"
+msgstr "Απενεργοποίηση επιλεγμένων"
+
+#: manaradix/ui/pages/triggers.py:323
+msgid "next boot"
+msgstr "επόμενη εκκίνηση"
