@@ -403,7 +403,7 @@ class TrayApp:
         """Show an About notification: version, description, website."""
         try:
             self._notifier.notify(
-                f"Manaradix {__version__}\n",
+                f"Manaradix {__version__}",
                 _("Btrfs snapshot, subvolume, and filesystem "
                   "management utility for Linux")
                 + "\nhttps://github.com/manatools/manaradix",
