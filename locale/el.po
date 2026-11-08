@@ -643,10 +643,10 @@ msgstr "Άνοιγμα του manaradix"
 
 #: manaradix/tray/app.py:407 manaradix/ui/pages/about.py:69
 msgid ""
-"Btrfs snapshot, subvolume, and filesystem management utility for Mageia"
+"Btrfs snapshot, subvolume, and filesystem management utility for Linux"
 msgstr ""
 "Εργαλείο διαχείρισης στιγμιοτύπων, υποτόμων και συστημάτων αρχείων Btrfs για"
-" τη Mageia"
+" το Linux"
 
 #: manaradix/tray/dbus_menu.py:70
 msgid "Check now"
