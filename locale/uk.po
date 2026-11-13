@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: manaradix 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-25 19:06+0100\n"
-"PO-Revision-Date: 2026-11-05 20:20+0200\n"
+"PO-Revision-Date: 2026-11-13 20:46+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "MIME-Version: 1.0\n"
@@ -314,7 +314,7 @@ msgstr ""
 #: manaradix/core/health.py:224
 #, python-format
 msgid "Data integrity errors on %s"
-msgstr ""
+msgstr "Помилки цілісності даних у %s"
 
 #: manaradix/core/health.py:226
 #, python-format
@@ -322,119 +322,130 @@ msgid ""
 "%(corruption)d corruption, %(generation)d generation errors recorded by "
 "btrfs."
 msgstr ""
+"%(corruption)d пошкодження, %(generation)d помилки створення, які записано bt"
+"rfs."
 
 #: manaradix/core/health.py:230
 msgid "Check the device and restore from the newest good snapshot."
-msgstr ""
+msgstr "Перевірити пристрій і відновити дані з найновішого якісного знімка."
 
 #: manaradix/core/health.py:240
 #, python-format
 msgid "IO errors on %s"
-msgstr ""
+msgstr "Помилки введення-виведення на %s"
 
 #: manaradix/core/health.py:242
 #, python-format
 msgid ""
 "%(write)d write, %(read)d read, %(flush)d flush errors recorded by btrfs."
 msgstr ""
+"%(write)d запис, %(read)d читання, %(flush)d помилки витирання записано btrfs"
+"."
 
 #: manaradix/core/health.py:247
 msgid "Inspect the device, cabling, and enclosure."
-msgstr ""
+msgstr "Огляньте пристрій, кабелі та корпус."
 
 #: manaradix/core/health.py:258
 #, python-format
 msgid "SMART health failing on %s"
-msgstr ""
+msgstr "Збій SMART-стану на %s"
 
 #: manaradix/core/health.py:259
 msgid "The drive reports an imminent failure.  Back up your data now."
 msgstr ""
+"Накопичувач повідомляє про неминучий вихід із ладу. Створіть резервну копію с"
+"воїх даних зараз."
 
 #: manaradix/core/health.py:261
 msgid "Replace the drive as soon as possible."
-msgstr ""
+msgstr "Замініть накопичувач якомога швидше."
 
 #: manaradix/core/health.py:271
 #, python-format
 msgid "Drive running hot on %s"
-msgstr ""
+msgstr "Диск перегрівається на %s"
 
 #: manaradix/core/health.py:272
 #, python-format
 msgid "The drive is at %(temp)d °C."
-msgstr ""
+msgstr "Температура накопичувача становить %(temp)d °C."
 
 #: manaradix/core/health.py:275
 msgid "Check airflow and cooling."
-msgstr ""
+msgstr "Перевірте потік повітря та охолодження."
 
 #: manaradix/core/health.py:305
 msgid "Scrub found errors"
-msgstr ""
+msgstr "Під час перевірки виявлено помилки"
 
 #: manaradix/core/health.py:306
 #, python-format
 msgid "%d errors were found by the last scrub."
-msgstr ""
+msgstr "Під час останньої перевірки було виявлено %d помилок."
 
 #: manaradix/core/health.py:307
 msgid "Run a new scrub and inspect the devices."
-msgstr ""
+msgstr "Запустіть нову процедуру перевірки та огляньте пристрої."
 
 #: manaradix/core/health.py:319
 msgid "Scrub appears stuck"
-msgstr ""
+msgstr "Схоже, процес перевірки завис"
 
 #: manaradix/core/health.py:321
 #, python-format
 msgid "The scrub has been running for more than %d hours."
-msgstr ""
+msgstr "Процес перевірки триває вже понад %d годин."
 
 #: manaradix/core/health.py:323
 msgid "Check the scrub progress in the GUI."
-msgstr ""
+msgstr "Перевірте хід виконання операції перевірки у графічному інтерфейсі."
 
 #: manaradix/core/health.py:333
 msgid "No scrub recorded"
-msgstr ""
+msgstr "Перевірок не записано"
 
 #: manaradix/core/health.py:335
 msgid ""
 "No scrub run is recorded.  Regular scrubs catch bit-rot on long-lived "
 "servers."
 msgstr ""
+"Жодного сеансу перевірки цілісності даних не зафіксовано. Регулярні перевірки"
+" дозволяють виявити деградацію даних на серверах, що працюють протягом тривал"
+"ого часу."
 
 #: manaradix/core/health.py:338
 msgid "Run a scrub now and schedule it regularly."
-msgstr ""
+msgstr "Запустіть перевірку зараз і налаштуйте її регулярне виконання."
 
 #: manaradix/core/health.py:347
 msgid "Last scrub is stale"
-msgstr ""
+msgstr "Остання перевірка застаріла"
 
 #: manaradix/core/health.py:349
 #, python-format
 msgid "The last scrub is %d days old; run a new one."
-msgstr ""
+msgstr "Останню перевірку було виконано %d днів тому; запустіть нову."
 
 #: manaradix/core/health.py:351
 msgid "Run a scrub now."
-msgstr ""
+msgstr "Запустіть перевірку негайно."
 
 #: manaradix/core/health.py:440
 #, python-format
 msgid "Too many %(tier)s snapshots on %(subvol)s"
-msgstr ""
+msgstr "Забагато знімків рівня %(tier)s на %(subvol)s"
 
 #: manaradix/core/health.py:444
 #, python-format
 msgid "%(count)d snapshots kept, retention caps at %(cap)d."
-msgstr ""
+msgstr "Збережено %(count)d знімків; обмеження зберігання — %(cap)d."
 
 #: manaradix/core/health.py:446
 msgid "Delete the oldest ones, or adjust the retention on the Policies page."
 msgstr ""
+"Вилучіть найстаріші записи або змініть налаштування зберігання на сторінці пр"
+"авил."
 
 #: manaradix/core/health.py:460
 #, python-format
@@ -445,41 +456,46 @@ msgstr "Забагато знімків на %s (кіоск)"
 #, python-format
 msgid "Kiosk profiles keep at most %(max)d snapshots; %(count)d exist."
 msgstr ""
+"Профілі кіосків зберігають щонайбільше %(max)d знімків; наразі є %(count)d."
 
 #: manaradix/core/health.py:465
 msgid "Delete the oldest snapshots and keep the last good state."
-msgstr ""
+msgstr "Вилучіть найстаріші знімки і збережіть останній якісний стан."
 
 #: manaradix/core/health.py:479
 #, python-format
 msgid "Free space below %d%% on %s"
-msgstr ""
+msgstr "Вільного місця менше %d%% на %s"
 
 #: manaradix/core/health.py:483
 msgid "The kiosk is nearly full; new snapshots may fail."
 msgstr ""
+"Кіоск майже заповнений; спроба створення нових знімків може зазнати невдачі."
 
 #: manaradix/core/health.py:485
 msgid "Consider pausing the hourly and daily snapshot schedules."
 msgstr ""
+"Розгляньте можливість призупинення розкладу створення погодинних і щоденних з"
+"німків."
 
 #: manaradix/core/health.py:505
 #, python-format
 msgid "%(tier)s snapshots older than %(days)d days on %(subvol)s"
-msgstr ""
+msgstr "Знімки (рівень %(tier)s) старіші за %(days)d днів на %(subvol)s"
 
 #: manaradix/core/health.py:511
 #, python-format
 msgid "%(count)d snapshots, oldest from %(date)s."
-msgstr ""
+msgstr "%(count)d знімків, найстаріший — від %(date)s."
 
 #: manaradix/core/health.py:513
 msgid "Delete the old ones, or extend the retention policy."
-msgstr ""
+msgstr "Вилучіть старі знімки або розширте правила зберігання."
 
 #: manaradix/core/setup_wizard.py:179 manaradix/core/setup_wizard.py:205
 msgid "Boot snapshots are not available: the root filesystem is not btrfs."
 msgstr ""
+"Знімки для завантаження недоступні: коренева файлова система — не btrfs."
 
 #: manaradix/core/setup_wizard.py:185 manaradix/ui/pages/setup.py:208
 #: manaradix/ui/pages/setup.py:232
@@ -491,11 +507,14 @@ msgid ""
 "The GRUB recovery menu is not available: it needs a btrfs root filesystem "
 "and GRUB."
 msgstr ""
+"Меню відновлення GRUB недоступне: для нього потрібні коренева файлова система"
+" btrfs і GRUB."
 
 #: manaradix/core/setup_wizard.py:217
 msgid ""
 "Pre-upgrade snapshots are not available: the root filesystem is not btrfs."
 msgstr ""
+"Знімки перед оновленням недоступні: коренева файлова система — не btrfs."
 
 #: manaradix/core/setup_wizard.py:258
 #, python-format
@@ -508,6 +527,8 @@ msgid ""
 "The %s profile does not apply to this system: no btrfs subvolume matches its"
 " policies."
 msgstr ""
+"Профіль %s не застосовується до цієї системи: жоден підтом btrfs не відповіда"
+"є його правилам."
 
 #: manaradix/core/template_strings.py:18
 msgid "Desktop workstation"
@@ -518,6 +539,9 @@ msgid ""
 "Daily and weekly snapshots with a boot-time recovery point, plus the GRUB "
 "recovery menu — suited for a graphical workstation."
 msgstr ""
+"Щоденні та щотижневі знімки з контрольною точкою відновлення на момент завант"
+"аження, а також меню відновлення GRUB — підходить для графічної робочої станц"
+"ії."
 
 #: manaradix/core/template_strings.py:23
 msgid "Server"
@@ -528,6 +552,9 @@ msgid ""
 "Frequent hourly snapshots with long retention, extra coverage for data "
 "subvolumes, a boot-time recovery point and the GRUB recovery menu."
 msgstr ""
+"Часті погодинні знімки з тривалим терміном зберігання, додатковий захист для "
+"окремих підтомів даних, точка відновлення на момент завантаження та меню відн"
+"овлення GRUB."
 
 #: manaradix/core/template_strings.py:28
 msgid "Kiosk"
@@ -538,6 +565,9 @@ msgid ""
 "Minimal setup for a single-purpose device: a snapshot at every boot with the"
 " GRUB recovery menu, no periodic snapshots."
 msgstr ""
+"Мінімальне налаштування для вузькоспеціалізованого пристрою: створення знімка"
+" системи під час кожного завантаження через меню відновлення GRUB; періодичні"
+" знімки не створюються."
 
 #: manaradix/dbus/service.py:94
 #, python-format
@@ -562,10 +592,12 @@ msgstr "Некоректний тип знімка: %s"
 #: manaradix/dbus/wire.py:1038
 msgid "error: 'manaradix dbus serve' must run as root (system service)."
 msgstr ""
+"помилка: «manaradix dbus serve» має виконуватися від імені root (як системна "
+"служба)."
 
 #: manaradix/dbus/wire.py:1054
 msgid "error: the manaradix D-Bus service is already running."
-msgstr ""
+msgstr "помилка: службу D-Bus manaradix вже запущено."
 
 #: manaradix/tray/app.py:365
 #, python-format
@@ -586,9 +618,10 @@ msgid "Open manaradix"
 msgstr "Відкрити manaradix"
 
 #: manaradix/tray/app.py:407 manaradix/ui/pages/about.py:69
-msgid ""
-"Btrfs snapshot, subvolume, and filesystem management utility for Linux"
+msgid "Btrfs snapshot, subvolume, and filesystem management utility for Linux"
 msgstr ""
+"Допоміжна програма для керування знімками, підтомами та файловими системами B"
+"trfs у Linux"
 
 #: manaradix/tray/dbus_menu.py:70
 msgid "Check now"
@@ -755,7 +788,7 @@ msgstr "Створити знімок"
 
 #: manaradix/ui/pages/dashboard.py:533 manaradix/ui/pages/settings.py:164
 msgid "Start Scrub"
-msgstr ""
+msgstr "Запустити перевірку"
 
 #: manaradix/ui/pages/dashboard.py:538 manaradix/ui/pages/triggers.py:238
 msgid "Refresh"
@@ -813,7 +846,7 @@ msgstr "Продовжувати щомісяця"
 
 #: manaradix/ui/pages/policies.py:43
 msgid "Keep boot"
-msgstr ""
+msgstr "Продовжити завантаження"
 
 #: manaradix/ui/pages/policies.py:44
 msgid "Keep pre-upgrade"
@@ -953,7 +986,7 @@ msgstr "Скасувати балансування"
 #: manaradix/ui/pages/settings.py:160
 #, python-format
 msgid "Scrub: %s"
-msgstr ""
+msgstr "Перевірка: %s"
 
 #: manaradix/ui/pages/settings.py:169
 msgid "Cancel Scrub"
@@ -998,18 +1031,24 @@ msgid ""
 "You can configure snapshots and policies later from the Policies and "
 "Settings pages."
 msgstr ""
+"Ви можете налаштувати знімки і правила пізніше на сторінках «Правила» і «Пара"
+"метри»."
 
 #: manaradix/ui/pages/setup.py:105
 msgid ""
 "No btrfs filesystem was found on this system. Manaradix only manages btrfs "
 "storage, so there is nothing to set up here."
 msgstr ""
+"У цій системі не знайдено файлової системи btrfs. Manaradix працює лише зі сх"
+"овищами btrfs, тому тут нічого налаштовувати."
 
 #: manaradix/ui/pages/setup.py:121
 msgid ""
 "No snapshots or snapshot policies are configured yet. Choose a setup profile"
 " for this system and apply it:"
 msgstr ""
+"Знімки або правила створення знімків ще не налаштовані. Виберіть профіль нала"
+"штувань для цієї системи та застосуйте його:"
 
 #: manaradix/ui/pages/setup.py:127
 msgid "Profile"
@@ -1191,6 +1230,8 @@ msgid ""
 "Select a trigger and use Enable/Disable. Schedules and retention are edited "
 "on the Policies tab."
 msgstr ""
+"Виберіть перемикач і скористайтеся можливістю «Увімкнути/Вимкнути». Розклади "
+"і правила зберігання даних можна змінити на вкладці «Правила»."
 
 #: manaradix/ui/pages/triggers.py:217
 msgid "Configured Triggers"
