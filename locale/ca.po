@@ -2,25 +2,26 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the manaradix package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-# 
+#
 # Translators:
 # Yuri Chornoivan <yurchor@ukr.net>, 2026
 # Robert Antoni Buj i Gelonch <rbuj@fedoraproject.org>, 2026
 # Davidmp <medipas@gmail.com>, 2026
-# 
+#
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: manaradix 0.2.2\n"
+"Project-Id-Version: manaradix 0.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-25 19:06+0100\n"
+"POT-Creation-Date: 2026-11-05 21:43+0100\n"
 "PO-Revision-Date: 2026-11-05 15:14+0000\n"
 "Last-Translator: Davidmp <medipas@gmail.com>, 2026\n"
-"Language-Team: Catalan (https://app.transifex.com/MageiaLinux/teams/9361/ca/)\n"
+"Language-Team: Catalan (https://app.transifex.com/MageiaLinux/teams/9361/"
+"ca/)\n"
+"Language: ca\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: ca\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: manaradix/module.py:298
@@ -172,12 +173,12 @@ msgstr "No hi ha cap activitat configurada."
 msgid "Activity status:"
 msgstr "Estat de l'activitat:"
 
-#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:513
+#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:542
 #: manaradix/ui/pages/triggers.py:313
 msgid "never"
 msgstr "mai"
 
-#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:515
+#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:544
 #: manaradix/ui/pages/triggers.py:316
 #, python-format
 msgid "%s (%s)"
@@ -189,11 +190,11 @@ msgstr "El servei D-Bus de manaradix s'executa."
 
 #: manaradix/module.py:950
 msgid ""
-"The manaradix D-Bus service is not running; it starts automatically on first"
-" use."
+"The manaradix D-Bus service is not running; it starts automatically on first "
+"use."
 msgstr ""
-"El servei D-Bus de manaradix no s'executa. S'inicia automàticament durant el"
-" primer ús."
+"El servei D-Bus de manaradix no s'executa. S'inicia automàticament durant el "
+"primer ús."
 
 #: manaradix/module.py:969
 msgid "The manaradix tray applet is running."
@@ -331,8 +332,8 @@ msgstr ""
 #: manaradix/core/health.py:230
 msgid "Check the device and restore from the newest good snapshot."
 msgstr ""
-"Comproveu el dispositiu i restaureu-lo a partir de la instantània vàlida més"
-" recent."
+"Comproveu el dispositiu i restaureu-lo a partir de la instantània vàlida més "
+"recent."
 
 #: manaradix/core/health.py:240
 #, python-format
@@ -448,8 +449,7 @@ msgstr "%(count)d instantànies conservades, límits de retenció a %(cap)d."
 #: manaradix/core/health.py:446
 msgid "Delete the oldest ones, or adjust the retention on the Policies page."
 msgstr ""
-"Suprimiu les més antigues o ajusteu-ne la retenció a la pàgina de "
-"polítiques."
+"Suprimiu les més antigues o ajusteu-ne la retenció a la pàgina de polítiques."
 
 #: manaradix/core/health.py:460
 #, python-format
@@ -533,8 +533,8 @@ msgstr "Perfil de configuració desconegut: %s"
 #: manaradix/core/setup_wizard.py:270
 #, python-format
 msgid ""
-"The %s profile does not apply to this system: no btrfs subvolume matches its"
-" policies."
+"The %s profile does not apply to this system: no btrfs subvolume matches its "
+"policies."
 msgstr ""
 "El perfil %s no s'aplica en aquest sistema: cap subvolum de btrfs no "
 "coincideix amb les seves polítiques."
@@ -548,8 +548,8 @@ msgid ""
 "Daily and weekly snapshots with a boot-time recovery point, plus the GRUB "
 "recovery menu — suited for a graphical workstation."
 msgstr ""
-"Instantànies diàries i setmanals amb un punt de recuperació a l'arrencada, a"
-" més del menú de recuperació del GRUB; adequat per a una estació de treball "
+"Instantànies diàries i setmanals amb un punt de recuperació a l'arrencada, a "
+"més del menú de recuperació del GRUB; adequat per a una estació de treball "
 "gràfica."
 
 #: manaradix/core/template_strings.py:23
@@ -562,8 +562,8 @@ msgid ""
 "subvolumes, a boot-time recovery point and the GRUB recovery menu."
 msgstr ""
 "Captures horàries freqüents amb un període de retenció llarg, cobertura "
-"addicional per a subvolums de dades, un punt de recuperació per al moment de"
-" l'arrencada i el menú de recuperació del GRUB."
+"addicional per a subvolums de dades, un punt de recuperació per al moment de "
+"l'arrencada i el menú de recuperació del GRUB."
 
 #: manaradix/core/template_strings.py:28
 msgid "Kiosk"
@@ -571,8 +571,8 @@ msgstr "Quiosc"
 
 #: manaradix/core/template_strings.py:30
 msgid ""
-"Minimal setup for a single-purpose device: a snapshot at every boot with the"
-" GRUB recovery menu, no periodic snapshots."
+"Minimal setup for a single-purpose device: a snapshot at every boot with the "
+"GRUB recovery menu, no periodic snapshots."
 msgstr ""
 "Configuració mínima per a un dispositiu d'ús específic: una instantània a "
 "cada arrencada mitjançant el menú de recuperació del GRUB; sense "
@@ -627,11 +627,10 @@ msgid "Open manaradix"
 msgstr "Obre el Manaradix"
 
 #: manaradix/tray/app.py:407 manaradix/ui/pages/about.py:69
-msgid ""
-"Btrfs snapshot, subvolume, and filesystem management utility for Linux"
+msgid "Btrfs snapshot, subvolume, and filesystem management utility for Linux"
 msgstr ""
-"Utilitat de gestió d'instantànies, subvolums i sistemes de fitxers Btrfs per"
-" a Linux"
+"Utilitat de gestió d'instantànies, subvolums i sistemes de fitxers Btrfs per "
+"a Linux"
 
 #: manaradix/tray/dbus_menu.py:70
 msgid "Check now"
@@ -646,7 +645,7 @@ msgstr "Quant a"
 msgid "Quit"
 msgstr "Surt"
 
-#: manaradix/ui/renderer.py:343
+#: manaradix/ui/renderer.py:346 manaradix/ui/renderer.py:397
 msgid "(no data)"
 msgstr "(sense dades)"
 
@@ -658,8 +657,8 @@ msgid ""
 "any later version."
 msgstr ""
 "El Manaradix és programari lliure: podeu redistribuir-lo i/o modificar-lo "
-"segons els termes de la Llicència Pública General GNU tal com ha publicat la"
-" Free Software Foundation, ja sigui la versió 2 de la Llicència o (a la "
+"segons els termes de la Llicència Pública General GNU tal com ha publicat la "
+"Free Software Foundation, ja sigui la versió 2 de la Llicència o (a la "
 "vostra elecció) qualsevol versió posterior."
 
 #: manaradix/ui/pages/about.py:75
@@ -722,98 +721,106 @@ msgstr "Sistemes de fitxers Btrfs"
 msgid "No btrfs filesystems found."
 msgstr "No s'ha trobat cap sistema de fitxers btrfs."
 
-#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:309
+#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:298
 msgid "Filesystem"
 msgstr "Sistema de fitxers"
 
-#: manaradix/ui/pages/dashboard.py:281
-msgid "Data"
-msgstr "Dades"
-
-#: manaradix/ui/pages/dashboard.py:282
-msgid "Metadata"
-msgstr "Metadades"
-
-#: manaradix/ui/pages/dashboard.py:283
-msgid "System"
-msgstr "Sistema"
-
-#: manaradix/ui/pages/dashboard.py:303 manaradix/ui/pages/dashboard.py:323
+#: manaradix/ui/pages/dashboard.py:306
 msgid "Internal Filesystem Usage"
 msgstr "Ús intern del sistema de fitxers"
 
-#: manaradix/ui/pages/dashboard.py:348
+#: manaradix/ui/pages/dashboard.py:321
+msgid "Data"
+msgstr "Dades"
+
+#: manaradix/ui/pages/dashboard.py:322
+msgid "Metadata"
+msgstr "Metadades"
+
+#: manaradix/ui/pages/dashboard.py:323
+msgid "System"
+msgstr "Sistema"
+
+#: manaradix/ui/pages/dashboard.py:337
+msgid "Allocated, unused"
+msgstr "Assignat, no usat"
+
+#: manaradix/ui/pages/dashboard.py:345
+msgid "Unallocated"
+msgstr "Sense assignar"
+
+#: manaradix/ui/pages/dashboard.py:377
 msgid "Collecting usage data..."
 msgstr "Es recullen dades d'ús..."
 
-#: manaradix/ui/pages/dashboard.py:350
+#: manaradix/ui/pages/dashboard.py:379
 #, python-format
 msgid "Last updated: %s"
 msgstr "Darrera actualització: %s"
 
-#: manaradix/ui/pages/dashboard.py:354
+#: manaradix/ui/pages/dashboard.py:383
 #, python-format
 msgid "Last collection failed: %s"
 msgstr "La darrera recollida de dades ha fallat: %s"
 
-#: manaradix/ui/pages/dashboard.py:356
+#: manaradix/ui/pages/dashboard.py:385
 msgid "No usage data collected yet"
 msgstr "Encara no s'han recollit dades d'ús."
 
-#: manaradix/ui/pages/dashboard.py:379
+#: manaradix/ui/pages/dashboard.py:408
 msgid "Snapshot Usage"
 msgstr "Ús d'instantànies"
 
-#: manaradix/ui/pages/dashboard.py:391
+#: manaradix/ui/pages/dashboard.py:420
 msgid "Force Usage Data Update"
 msgstr "Força l'actualització de les dades d'ús"
 
-#: manaradix/ui/pages/dashboard.py:401 manaradix/ui/pages/dashboard.py:409
+#: manaradix/ui/pages/dashboard.py:430 manaradix/ui/pages/dashboard.py:438
 msgid "Recent Snapshots"
 msgstr "Instantànies recents"
 
-#: manaradix/ui/pages/dashboard.py:404
+#: manaradix/ui/pages/dashboard.py:433
 msgid "No snapshots yet."
 msgstr "Encara no hi ha instantànies."
 
-#: manaradix/ui/pages/dashboard.py:440 manaradix/ui/pages/dashboard.py:447
+#: manaradix/ui/pages/dashboard.py:469 manaradix/ui/pages/dashboard.py:476
 msgid "Active Policies"
 msgstr "Polítiques actives"
 
-#: manaradix/ui/pages/dashboard.py:443
+#: manaradix/ui/pages/dashboard.py:472
 msgid "No active policies."
 msgstr "No hi ha polítiques actives."
 
-#: manaradix/ui/pages/dashboard.py:488
+#: manaradix/ui/pages/dashboard.py:517
 msgid "Activity Status"
 msgstr "Estat de l'activitat"
 
-#: manaradix/ui/pages/dashboard.py:521
+#: manaradix/ui/pages/dashboard.py:550
 msgid "Quick Actions"
 msgstr "Accions ràpides"
 
-#: manaradix/ui/pages/dashboard.py:528
+#: manaradix/ui/pages/dashboard.py:557
 msgid "Create Snapshot"
 msgstr "Crea una instantània"
 
-#: manaradix/ui/pages/dashboard.py:533 manaradix/ui/pages/settings.py:164
+#: manaradix/ui/pages/dashboard.py:562 manaradix/ui/pages/settings.py:164
 msgid "Start Scrub"
 msgstr "Comença la fregada"
 
-#: manaradix/ui/pages/dashboard.py:538 manaradix/ui/pages/triggers.py:238
+#: manaradix/ui/pages/dashboard.py:567 manaradix/ui/pages/triggers.py:238
 msgid "Refresh"
 msgstr "Actualitza"
 
-#: manaradix/ui/pages/dashboard.py:647
+#: manaradix/ui/pages/dashboard.py:676
 #, python-format
 msgid "%s (property)"
 msgstr "%s (propietat)"
 
-#: manaradix/ui/pages/dashboard.py:648
+#: manaradix/ui/pages/dashboard.py:677
 msgid "off"
 msgstr "no actiu"
 
-#: manaradix/ui/pages/dashboard.py:667
+#: manaradix/ui/pages/dashboard.py:696
 #, python-format
 msgid "%d (+%d snapshots)"
 msgstr "%d (+%d instantànies)"
@@ -1055,8 +1062,8 @@ msgstr ""
 
 #: manaradix/ui/pages/setup.py:121
 msgid ""
-"No snapshots or snapshot policies are configured yet. Choose a setup profile"
-" for this system and apply it:"
+"No snapshots or snapshot policies are configured yet. Choose a setup profile "
+"for this system and apply it:"
 msgstr ""
 "Encara no hi ha instantànies ni polítiques d'instantànies configurades. "
 "Trieu un perfil de configuració per a aquest sistema i apliqueu-lo:"
