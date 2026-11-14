@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: manaradix 0.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-25 19:06+0100\n"
-"PO-Revision-Date: 2026-11-13 20:46+0200\n"
+"POT-Creation-Date: 2026-11-05 21:43+0100\n"
+"PO-Revision-Date: 2026-11-14 11:34+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
+"Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: uk\n"
 "Plural-Forms: nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != 11 "
 "? 0 : n % 1 == 0 && n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > "
 "14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || (n % 100"
@@ -93,8 +93,8 @@ msgstr "Налаштовування непотрібне: знімки або �
 #: manaradix/module.py:797
 msgid "Setup needed, but no btrfs filesystem was found on this system."
 msgstr ""
-"Потрібне налаштовування, але у цій системі не знайдено файлової системи btrfs"
-"."
+"Потрібне налаштовування, але у цій системі не знайдено файлової системи "
+"btrfs."
 
 #: manaradix/module.py:802
 msgid "Setup needed: no snapshots and no snapshot policies are configured."
@@ -169,12 +169,12 @@ msgstr "Дій не налаштовано."
 msgid "Activity status:"
 msgstr "Стан дій:"
 
-#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:513
+#: manaradix/module.py:886 manaradix/ui/pages/dashboard.py:542
 #: manaradix/ui/pages/triggers.py:313
 msgid "never"
 msgstr "ніколи"
 
-#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:515
+#: manaradix/module.py:888 manaradix/ui/pages/dashboard.py:544
 #: manaradix/ui/pages/triggers.py:316
 #, python-format
 msgid "%s (%s)"
@@ -186,8 +186,8 @@ msgstr "Запущено службу D-Bus manaradix."
 
 #: manaradix/module.py:950
 msgid ""
-"The manaradix D-Bus service is not running; it starts automatically on first"
-" use."
+"The manaradix D-Bus service is not running; it starts automatically on first "
+"use."
 msgstr ""
 "Службу D-Bus manaradix не запущено; її буде запущено автоматично при першому "
 "використанні."
@@ -277,8 +277,8 @@ msgstr "Опис: %s"
 msgid ""
 "error: %s not found. Install polkit to use privileged manaradix commands."
 msgstr ""
-"помилка: не знайдено %s. Встановіть polkit для використання привілейованих ко"
-"манд manaradix."
+"помилка: не знайдено %s. Встановіть polkit для використання привілейованих "
+"команд manaradix."
 
 #: manaradix/utils/pkexec.py:158
 #, python-format
@@ -308,8 +308,8 @@ msgstr "Використано %(percent)d%% з %(total)s, вільно %(free)s
 #: manaradix/core/health.py:191
 msgid "Free some space, or let the retention profile prune old snapshots."
 msgstr ""
-"Звільніть трохи місця або надайте змогу профілю заощадження витерти застарілі"
-" знімки."
+"Звільніть трохи місця або надайте змогу профілю заощадження витерти "
+"застарілі знімки."
 
 #: manaradix/core/health.py:224
 #, python-format
@@ -322,8 +322,8 @@ msgid ""
 "%(corruption)d corruption, %(generation)d generation errors recorded by "
 "btrfs."
 msgstr ""
-"%(corruption)d пошкодження, %(generation)d помилки створення, які записано bt"
-"rfs."
+"%(corruption)d пошкодження, %(generation)d помилки створення, які записано "
+"btrfs."
 
 #: manaradix/core/health.py:230
 msgid "Check the device and restore from the newest good snapshot."
@@ -339,8 +339,8 @@ msgstr "Помилки введення-виведення на %s"
 msgid ""
 "%(write)d write, %(read)d read, %(flush)d flush errors recorded by btrfs."
 msgstr ""
-"%(write)d запис, %(read)d читання, %(flush)d помилки витирання записано btrfs"
-"."
+"%(write)d запис, %(read)d читання, %(flush)d помилки витирання записано "
+"btrfs."
 
 #: manaradix/core/health.py:247
 msgid "Inspect the device, cabling, and enclosure."
@@ -354,8 +354,8 @@ msgstr "Збій SMART-стану на %s"
 #: manaradix/core/health.py:259
 msgid "The drive reports an imminent failure.  Back up your data now."
 msgstr ""
-"Накопичувач повідомляє про неминучий вихід із ладу. Створіть резервну копію с"
-"воїх даних зараз."
+"Накопичувач повідомляє про неминучий вихід із ладу. Створіть резервну копію "
+"своїх даних зараз."
 
 #: manaradix/core/health.py:261
 msgid "Replace the drive as soon as possible."
@@ -410,9 +410,9 @@ msgid ""
 "No scrub run is recorded.  Regular scrubs catch bit-rot on long-lived "
 "servers."
 msgstr ""
-"Жодного сеансу перевірки цілісності даних не зафіксовано. Регулярні перевірки"
-" дозволяють виявити деградацію даних на серверах, що працюють протягом тривал"
-"ого часу."
+"Жодного сеансу перевірки цілісності даних не зафіксовано. Регулярні "
+"перевірки дозволяють виявити деградацію даних на серверах, що працюють "
+"протягом тривалого часу."
 
 #: manaradix/core/health.py:338
 msgid "Run a scrub now and schedule it regularly."
@@ -444,8 +444,8 @@ msgstr "Збережено %(count)d знімків; обмеження збер
 #: manaradix/core/health.py:446
 msgid "Delete the oldest ones, or adjust the retention on the Policies page."
 msgstr ""
-"Вилучіть найстаріші записи або змініть налаштування зберігання на сторінці пр"
-"авил."
+"Вилучіть найстаріші записи або змініть налаштування зберігання на сторінці "
+"правил."
 
 #: manaradix/core/health.py:460
 #, python-format
@@ -475,8 +475,8 @@ msgstr ""
 #: manaradix/core/health.py:485
 msgid "Consider pausing the hourly and daily snapshot schedules."
 msgstr ""
-"Розгляньте можливість призупинення розкладу створення погодинних і щоденних з"
-"німків."
+"Розгляньте можливість призупинення розкладу створення погодинних і щоденних "
+"знімків."
 
 #: manaradix/core/health.py:505
 #, python-format
@@ -507,8 +507,8 @@ msgid ""
 "The GRUB recovery menu is not available: it needs a btrfs root filesystem "
 "and GRUB."
 msgstr ""
-"Меню відновлення GRUB недоступне: для нього потрібні коренева файлова система"
-" btrfs і GRUB."
+"Меню відновлення GRUB недоступне: для нього потрібні коренева файлова "
+"система btrfs і GRUB."
 
 #: manaradix/core/setup_wizard.py:217
 msgid ""
@@ -524,11 +524,11 @@ msgstr "Невідомий профіль налаштування: %s"
 #: manaradix/core/setup_wizard.py:270
 #, python-format
 msgid ""
-"The %s profile does not apply to this system: no btrfs subvolume matches its"
-" policies."
+"The %s profile does not apply to this system: no btrfs subvolume matches its "
+"policies."
 msgstr ""
-"Профіль %s не застосовується до цієї системи: жоден підтом btrfs не відповіда"
-"є його правилам."
+"Профіль %s не застосовується до цієї системи: жоден підтом btrfs не "
+"відповідає його правилам."
 
 #: manaradix/core/template_strings.py:18
 msgid "Desktop workstation"
@@ -539,9 +539,9 @@ msgid ""
 "Daily and weekly snapshots with a boot-time recovery point, plus the GRUB "
 "recovery menu — suited for a graphical workstation."
 msgstr ""
-"Щоденні та щотижневі знімки з контрольною точкою відновлення на момент завант"
-"аження, а також меню відновлення GRUB — підходить для графічної робочої станц"
-"ії."
+"Щоденні та щотижневі знімки з контрольною точкою відновлення на момент "
+"завантаження, а також меню відновлення GRUB — підходить для графічної "
+"робочої станції."
 
 #: manaradix/core/template_strings.py:23
 msgid "Server"
@@ -553,8 +553,8 @@ msgid ""
 "subvolumes, a boot-time recovery point and the GRUB recovery menu."
 msgstr ""
 "Часті погодинні знімки з тривалим терміном зберігання, додатковий захист для "
-"окремих підтомів даних, точка відновлення на момент завантаження та меню відн"
-"овлення GRUB."
+"окремих підтомів даних, точка відновлення на момент завантаження та меню "
+"відновлення GRUB."
 
 #: manaradix/core/template_strings.py:28
 msgid "Kiosk"
@@ -562,12 +562,12 @@ msgstr "Кіоск"
 
 #: manaradix/core/template_strings.py:30
 msgid ""
-"Minimal setup for a single-purpose device: a snapshot at every boot with the"
-" GRUB recovery menu, no periodic snapshots."
+"Minimal setup for a single-purpose device: a snapshot at every boot with the "
+"GRUB recovery menu, no periodic snapshots."
 msgstr ""
-"Мінімальне налаштування для вузькоспеціалізованого пристрою: створення знімка"
-" системи під час кожного завантаження через меню відновлення GRUB; періодичні"
-" знімки не створюються."
+"Мінімальне налаштування для вузькоспеціалізованого пристрою: створення "
+"знімка системи під час кожного завантаження через меню відновлення GRUB; "
+"періодичні знімки не створюються."
 
 #: manaradix/dbus/service.py:94
 #, python-format
@@ -620,8 +620,8 @@ msgstr "Відкрити manaradix"
 #: manaradix/tray/app.py:407 manaradix/ui/pages/about.py:69
 msgid "Btrfs snapshot, subvolume, and filesystem management utility for Linux"
 msgstr ""
-"Допоміжна програма для керування знімками, підтомами та файловими системами B"
-"trfs у Linux"
+"Допоміжна програма для керування знімками, підтомами та файловими системами "
+"Btrfs у Linux"
 
 #: manaradix/tray/dbus_menu.py:70
 msgid "Check now"
@@ -636,7 +636,7 @@ msgstr "Про програму"
 msgid "Quit"
 msgstr "Вийти"
 
-#: manaradix/ui/renderer.py:343
+#: manaradix/ui/renderer.py:346 manaradix/ui/renderer.py:397
 msgid "(no data)"
 msgstr "(немає даних)"
 
@@ -712,98 +712,106 @@ msgstr "Файлові системи Btrfs"
 msgid "No btrfs filesystems found."
 msgstr "Не знайдено файлових систем btrfs."
 
-#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:309
+#: manaradix/ui/pages/dashboard.py:229 manaradix/ui/pages/dashboard.py:298
 msgid "Filesystem"
 msgstr "Файлова система"
 
-#: manaradix/ui/pages/dashboard.py:281
-msgid "Data"
-msgstr "Дані"
-
-#: manaradix/ui/pages/dashboard.py:282
-msgid "Metadata"
-msgstr "Метадані"
-
-#: manaradix/ui/pages/dashboard.py:283
-msgid "System"
-msgstr "Система"
-
-#: manaradix/ui/pages/dashboard.py:303 manaradix/ui/pages/dashboard.py:323
+#: manaradix/ui/pages/dashboard.py:306
 msgid "Internal Filesystem Usage"
 msgstr "Внутрішнє використання файловою системою"
 
-#: manaradix/ui/pages/dashboard.py:348
+#: manaradix/ui/pages/dashboard.py:321
+msgid "Data"
+msgstr "Дані"
+
+#: manaradix/ui/pages/dashboard.py:322
+msgid "Metadata"
+msgstr "Метадані"
+
+#: manaradix/ui/pages/dashboard.py:323
+msgid "System"
+msgstr "Система"
+
+#: manaradix/ui/pages/dashboard.py:337
+msgid "Allocated, unused"
+msgstr "Розподілено, не використано"
+
+#: manaradix/ui/pages/dashboard.py:345
+msgid "Unallocated"
+msgstr "Не розподілено"
+
+#: manaradix/ui/pages/dashboard.py:377
 msgid "Collecting usage data..."
 msgstr "Збираємо дані щодо використання…"
 
-#: manaradix/ui/pages/dashboard.py:350
+#: manaradix/ui/pages/dashboard.py:379
 #, python-format
 msgid "Last updated: %s"
 msgstr "Востаннє оновлено: %s"
 
-#: manaradix/ui/pages/dashboard.py:354
+#: manaradix/ui/pages/dashboard.py:383
 #, python-format
 msgid "Last collection failed: %s"
 msgstr "Остання помилка при збиранні: %s"
 
-#: manaradix/ui/pages/dashboard.py:356
+#: manaradix/ui/pages/dashboard.py:385
 msgid "No usage data collected yet"
 msgstr "Даних щодо використання ще не зібрано"
 
-#: manaradix/ui/pages/dashboard.py:379
+#: manaradix/ui/pages/dashboard.py:408
 msgid "Snapshot Usage"
 msgstr "Використання знімками"
 
-#: manaradix/ui/pages/dashboard.py:391
+#: manaradix/ui/pages/dashboard.py:420
 msgid "Force Usage Data Update"
 msgstr "Примусове оновлення даних щодо використання"
 
-#: manaradix/ui/pages/dashboard.py:401 manaradix/ui/pages/dashboard.py:409
+#: manaradix/ui/pages/dashboard.py:430 manaradix/ui/pages/dashboard.py:438
 msgid "Recent Snapshots"
 msgstr "Нещодавні знімки"
 
-#: manaradix/ui/pages/dashboard.py:404
+#: manaradix/ui/pages/dashboard.py:433
 msgid "No snapshots yet."
 msgstr "Знімків ще немає."
 
-#: manaradix/ui/pages/dashboard.py:440 manaradix/ui/pages/dashboard.py:447
+#: manaradix/ui/pages/dashboard.py:469 manaradix/ui/pages/dashboard.py:476
 msgid "Active Policies"
 msgstr "Активні правила"
 
-#: manaradix/ui/pages/dashboard.py:443
+#: manaradix/ui/pages/dashboard.py:472
 msgid "No active policies."
 msgstr "Немає активних правил."
 
-#: manaradix/ui/pages/dashboard.py:488
+#: manaradix/ui/pages/dashboard.py:517
 msgid "Activity Status"
 msgstr "Стан дії"
 
-#: manaradix/ui/pages/dashboard.py:521
+#: manaradix/ui/pages/dashboard.py:550
 msgid "Quick Actions"
 msgstr "Швидкі дії"
 
-#: manaradix/ui/pages/dashboard.py:528
+#: manaradix/ui/pages/dashboard.py:557
 msgid "Create Snapshot"
 msgstr "Створити знімок"
 
-#: manaradix/ui/pages/dashboard.py:533 manaradix/ui/pages/settings.py:164
+#: manaradix/ui/pages/dashboard.py:562 manaradix/ui/pages/settings.py:164
 msgid "Start Scrub"
 msgstr "Запустити перевірку"
 
-#: manaradix/ui/pages/dashboard.py:538 manaradix/ui/pages/triggers.py:238
+#: manaradix/ui/pages/dashboard.py:567 manaradix/ui/pages/triggers.py:238
 msgid "Refresh"
 msgstr "Освіжити"
 
-#: manaradix/ui/pages/dashboard.py:647
+#: manaradix/ui/pages/dashboard.py:676
 #, python-format
 msgid "%s (property)"
 msgstr "%s (властивість)"
 
-#: manaradix/ui/pages/dashboard.py:648
+#: manaradix/ui/pages/dashboard.py:677
 msgid "off"
 msgstr "вимкнено"
 
-#: manaradix/ui/pages/dashboard.py:667
+#: manaradix/ui/pages/dashboard.py:696
 #, python-format
 msgid "%d (+%d snapshots)"
 msgstr "%d (+%d знімків)"
@@ -1031,24 +1039,24 @@ msgid ""
 "You can configure snapshots and policies later from the Policies and "
 "Settings pages."
 msgstr ""
-"Ви можете налаштувати знімки і правила пізніше на сторінках «Правила» і «Пара"
-"метри»."
+"Ви можете налаштувати знімки і правила пізніше на сторінках «Правила» і "
+"«Параметри»."
 
 #: manaradix/ui/pages/setup.py:105
 msgid ""
 "No btrfs filesystem was found on this system. Manaradix only manages btrfs "
 "storage, so there is nothing to set up here."
 msgstr ""
-"У цій системі не знайдено файлової системи btrfs. Manaradix працює лише зі сх"
-"овищами btrfs, тому тут нічого налаштовувати."
+"У цій системі не знайдено файлової системи btrfs. Manaradix працює лише зі "
+"сховищами btrfs, тому тут нічого налаштовувати."
 
 #: manaradix/ui/pages/setup.py:121
 msgid ""
-"No snapshots or snapshot policies are configured yet. Choose a setup profile"
-" for this system and apply it:"
+"No snapshots or snapshot policies are configured yet. Choose a setup profile "
+"for this system and apply it:"
 msgstr ""
-"Знімки або правила створення знімків ще не налаштовані. Виберіть профіль нала"
-"штувань для цієї системи та застосуйте його:"
+"Знімки або правила створення знімків ще не налаштовані. Виберіть профіль "
+"налаштувань для цієї системи та застосуйте його:"
 
 #: manaradix/ui/pages/setup.py:127
 msgid "Profile"
