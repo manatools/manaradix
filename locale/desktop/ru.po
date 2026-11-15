@@ -1,0 +1,65 @@
+# Translators:
+# AlexL <loginov.alex.valer@gmail.com>, 2026
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: manaradix desktop files translation\n"
+"Report-Msgid-Bugs-To: i18n-discuss@ml.mageia.org\n"
+"POT-Creation-Date: 2026-11-07 20:30+0100\n"
+"PO-Revision-Date: 2026-11-05 15:11+0000\n"
+"Last-Translator: AlexL <loginov.alex.valer@gmail.com>, 2026\n"
+"Language-Team: Russian (https://app.transifex.com/MageiaLinux/teams/9361/"
+"ru/)\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Name"
+msgid "Manaradix Tray"
+msgstr "Трей Manaradix"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "GenericName"
+msgid "Btrfs Snapshot Health Monitor"
+msgstr "Монитор состояния снимков Btrfs"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Comment"
+msgid ""
+"Monitor disk space, device health, and snapshot retention from the system "
+"tray"
+msgstr ""
+"Отслеживание места на диске, состояния устройства и сохранения снимков из "
+"системного трея"
+
+#: data/desktop/manaradix-tray.desktop
+msgctxt "Keywords"
+msgid "btrfs;snapshot;tray;notification;health;disk;"
+msgstr "btrfs;snapshot;tray;notification;health;disk;снимок;трей;уведомление;состояние;диск;"
+
+#: data/desktop/org.mageia.manaradix.desktop
+msgctxt "Name"
+msgid "Manaradix"
+msgstr "Manaradix"
+
+#: data/desktop/org.mageia.manaradix.desktop
+msgctxt "GenericName"
+msgid "Btrfs Snapshot Manager"
+msgstr "Менеджер снимков Btrfs"
+
+#: data/desktop/org.mageia.manaradix.desktop
+msgctxt "Comment"
+msgid "Manage Btrfs snapshots, subvolumes, and filesystem parameters"
+msgstr "Управление снимками, подтомами и параметрами файловой системы Btrfs"
+
+#: data/desktop/org.mageia.manaradix.desktop
+msgctxt "Keywords"
+msgid "btrfs;snapshot;subvolume;filesystem;backup;restore;"
+msgstr ""
+"btrfs;snapshot;subvolume;filesystem;backup;restore;снимок;подтом;файловая "
+"система;резервное копирование;восстановление;"
